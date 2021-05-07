@@ -6,5 +6,5 @@ Bead::Bead(){
 Bead::~Bead(){
 }
 
-Bead::Bead(const Bead &cbb){
+Bead::Bead(const Bead &b){
 }

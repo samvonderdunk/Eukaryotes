@@ -4,14 +4,13 @@
 #include "Header.hh"
 
 class Bead {
- public:
-  int type;
+	public:
 
-  Bead();
-  explicit Bead(const Bead &cbb);
-  virtual ~Bead();
+		Bead();
+		explicit Bead(const Bead &b);
+		virtual ~Bead();
 
-  virtual Bead* Clone() const=0;
+		virtual Bead* Clone() const=0;
 };
 
 #endif

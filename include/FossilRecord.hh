@@ -12,13 +12,13 @@
 class FossilRecord
 {
 	public:
-		std::list<Prokaryote*> FossilList;
+	std::list<Prokaryote*> FossilList;
 
-		typedef std::list<Prokaryote*>::iterator iterpps;
+	typedef std::list<Prokaryote*>::iterator iterpps;
   	FossilRecord();
   	~FossilRecord();
-		void EraseFossil(unsigned long long fossilID);
+	void EraseFossil(unsigned long long fossilID);
   	void BuryFossil(Prokaryote *P);
-		void ExhibitFossils();
+	void ExhibitFossils();
 };
 #endif
