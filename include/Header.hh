@@ -76,10 +76,10 @@ const int TimeZero=0;
 const int default_SimTime=1000000;
 
 //Population parameters
-const double diffusion_rate = 0.;  // >1: multiple Margolus steps per time step, <1: probability of single Margolus step each time step.
-const double death_rate = 0.001;
-const double repl_rate = 1.0;
-const int repl_scale = 3;  //Neighbourhood for replication, standard=3x3.
+const double death_rate_host = 0.001;
+const double death_rate_symbiont = 0.001;
+const double nutrient_abundance = 100.;
+const double max_organelle_density = 100.;	//k, number of organelles at what point nutrients will be completely depleted.
 
 //Variables defined in World.cc
 extern int Time;

@@ -2,7 +2,8 @@
 
 Organelle::Organelle()
 {
-	stage=0;
+	Stage=0;
+	privilige=true;
 	ExpressedGenes=NULL;
 	G=NULL;
 }
@@ -41,8 +42,10 @@ void Organelle::UpdateState()
 {
 	int* readout[5] = {0, 0, 0, 0, 0};	//States of the five cell-cycle regulators.
 	i_bead it;
+
 	int eval_state = Stage;
 	if (Stage == 2   &&   G->fork_position != G->terminus_position)	eval_state--;	//You cannot proceed to G2 without finishing replication.
+	privilige = true;
 
 	//Fill in the readout.
 	it = ExpressedGenes->begin();
@@ -62,6 +65,7 @@ void Organelle::UpdateState()
 	//Compare readout (expression states) with cell-cycle states.
 	if (EvaluateState(eval_state, readout) == 5) Stage = eval_state + 1;	//Success!
 	else if (EvaluateState(3, readout) == 5)	Stage = 5;	//Marked for death during attempted mitosis.
+	else if (Stage == 2   &&   G->fork_position != G->terminus_position)	privilige = false;
 }
 
 int Organelle::EvaluateState(int eval_state, int* readout)
