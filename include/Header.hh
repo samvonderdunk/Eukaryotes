@@ -42,6 +42,8 @@ const int HS=100;	//Host size, i.e. maximal number of symbionts inside a cell be
 //Genome parameters
 const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
 const int nr_household_genes = 50;
+const double leakage_to_host = 0.01;
+const double leakage_to_symbiont = 0.01;
 
 //Mutation parameters
 const double gene_threshold_mu = 0.0005;

@@ -7,12 +7,18 @@
 // For future use.
 
 class Transporter : public Bead {
- public:
+	public:
+		int type;
+		int threshold;
+		bool sequence[sequence_length];
+		int expression;
+		int express;
 
-  Transporter();
-  ~Transporter();
-  explicit Transporter(const Transporter &tp);
-  virtual Bead* Clone() const;
+		Transporter();
+		explicit Transporter(const Transporter &tp);
+		virtual Bead* Clone() const;
+		void RandomTransporter();
+		~Transporter();
 
 };
 

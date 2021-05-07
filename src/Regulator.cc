@@ -8,15 +8,7 @@ Regulator::Regulator() : Bead()
   activity = 0;
   for(int i=0; i<sequence_length; i++) sequence[i] = 0;
   expression = 0;
-}
-
-Regulator::Regulator(int t, int th, int act, bool bd_dom[], int expr) : Bead()
-{
-	type=t;
-	threshold=th;
-	activity=act;
-	for(int i=0; i<binding_length; i++) binding_domain[i] = bd_dom[i];
-	expression=expr;
+	express = 0;
 }
 
 Regulator::Regulator(const Regulator &reg) : Bead(reg)
@@ -26,10 +18,7 @@ Regulator::Regulator(const Regulator &reg) : Bead(reg)
   activity=reg.activity;
   for(int i=0; i<sequence_length; i++) sequence[i] = reg.sequence[i];
   expression=reg.expression;
-}
-
-Regulator::~Regulator()
-{
+	express=reg.xpr;
 }
 
 Bead* Regulator::Clone() const
@@ -44,4 +33,9 @@ void Regulator::RandomRegulator()
   activity = (int)(uniform()*(2*WeightRange+1) - WeightRange);
   for (int i=0; i<sequence_length; i++)	sequence[k] = (uniform()>0.5) ? true : false;
   expression = 0;
+	express = 0;
+}
+
+Regulator::~Regulator()
+{
 }

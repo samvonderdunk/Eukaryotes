@@ -11,15 +11,15 @@ class Regulator : public Bead {
 		int threshold; //At what regulatory effect does the gene start to become expressed.
 		int activity;
 		bool sequence[sequence_length];
-		int expression;
+		int expression;	//Current expression state.
+		int express;		//New expression state.
 
 		Regulator();
-		Regulator(int typ, int thr, int act, bool seq[], int exp);
 		explicit Regulator(const Regulator &reg);
-		~Regulator();
-
 		virtual Bead* Regulator() const;
 		void RandomRegulator();
+		~Regulator();
+
 };
 
 #endif
