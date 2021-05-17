@@ -32,7 +32,6 @@ Genome::~Genome()
 
 
 
-
 void Genome::UpdateExpression(list<Bead*>* ExpressedGenes)
 {
 	i_bead it;
@@ -67,6 +66,8 @@ void Genome::UpdateExpression(list<Bead*>* ExpressedGenes)
 	}
 }
 
+
+
 void Genome::EraseExpression(list<Bead*>* ExpressedGenes)
 {
 	i_bead it;
@@ -85,6 +86,8 @@ void Genome::EraseExpression(list<Bead*>* ExpressedGenes)
 		// ExpressedGenes=NULL;
 	}
 }
+
+
 
 void Genome::SetExpression(list<Bead*>* ExpressedGenes, bool Updating)
 {
@@ -108,7 +111,6 @@ void Genome::SetExpression(list<Bead*>* ExpressedGenes, bool Updating)
 
 
 
-
 Genome::i_bead Genome::RegulatorCompetition(i_bead i_bsite, list<Bead*>* ExpressedGenes)
 {
 	//Optimise this, many possibilities:
@@ -117,8 +119,6 @@ Genome::i_bead Genome::RegulatorCompetition(i_bead i_bsite, list<Bead*>* Express
 	//	--> only calculate binding affinity once.
 	//	--> obtain binding affinity from some stored variable or look-up in hash-table?
 	//	--> sort the affinities before rolling the die to shorten the second part.
-
-
 	Bsite* bsite = dynamic_cast<Bsite*>(*i_bsite);
 	i_bead it;
 	double affinity, p_bind, z_partition = 1.;
@@ -164,6 +164,85 @@ Genome::i_bead Genome::RegulatorCompetition(i_bead i_bsite, list<Bead*>* Express
 
 
 
+void Genome::ReplicateStep(double resource)
+{
+	i_bead it, start, end;
+	Bead* bead;
+	int gene_length = 0;
+	int repl_remaining_steps;
+	double res_int, res_fract;
+	double fract_repl_remaining;
+	char wb;
+
+	if (relative_replication)	//Modify resource to represent relative replication. Still, the fractional part of the resulting (normalised) resource is seen as a probability.
+	{
+		fract_repl_remaining = resource / rel_repl_full;
+		resource = fract_repl_remaining * terminus_position;
+	}
+
+	res_fract = modf(resource, &res_int);	//Split double into its integer and fractional parts.
+	repl_remaining_steps = (int) res_int;
+	if (uniform() < res_fract)	repl_remaining_steps++;	//Regard fractional replication step as probability.
+
+	if (repl_remaining_steps==0)	return;	//Nothing to do if no beads are allowed to replicate.
+
+	start = BeadList->begin();
+	advance(start, fork_position);	//Now it points to the the first bead to be replicated in this replication step.
+	end = start;	//End starts at start.
+
+	//This loop sets "end".
+	while ((distance(BeadList->begin(),end) < terminus_position) && repl_remaining_steps > 0)	//The maximal position of end is defined by pos_anti_ori - 1 (pointing to the last bead of the parental genome). pos_anti_ori holds the number of genes in the parental genome, so if your distance to the first bead is pos_anti_ori, you are actually one past the last bead of the parental genome. The first replication step, this will point to NULL, but in consecutive steps it will point to a child bead; we want to point to an end point that does not change, hence the last bead of the parental genome.
+	{
+		wb = WhatBead(*end);
+		if(wb=='R' || wb=='T')	repl_remaining_steps--;	//Genes for sure count for the repl_step_size.
+		else if(!gene_replication)	repl_remaining_steps--;	//TFBSs count if replicate_entire_genes is set to false.
+		gene_length++;
+		end++;
+	}
+	end--;
+
+	bool last_round = false;
+	it = start;	//Loop over a number of beads (how many we will replicate in one step).
+	if(start == end)	last_round = true;	//We go straight into the last round.
+	while (it != BeadList->end())
+	{
+		//Copy bead.
+		wb = WhatBead(*it);
+		bead=(*it)->Clone();
+		(*BeadList).push_back(bead);
+		g_length++;
+		switch wb
+		{
+			case 'R':	gnr_regulators++;
+			case 'T': gnr_transporters++;
+			case 'B': gnr_bsites++;
+			case 'H': gnr_houses++;
+		}
+
+		it++;
+		if (last_round)	break;
+		if (it == end)	last_round = true;	//We have apparently hit the last bead of the parental genome, so time for one final replication step.
+	}
+
+
+	if (g_length > 500)	//We only check after the full replication step, not after each replicated bead.
+	{
+		printf("Warning: genome sizes reached extravagant size (%d) during replication.\nExiting just to be safe...\n", g_length);
+		cout << PrintContent(NULL, true, false) << endl;
+		exit(1);
+	}
+
+	fork_position += gene_length;	//Move the fork to the right.
+	if (fork_position >= terminus_position)	//If this is the final replication step.
+	{
+		fork_position = terminus_position;
+		assert(g_length == 2*terminus_position);
+	}
+
+}
+
+
+
 void Genome::SplitGenome(Genome* parentG)	//Used to split a genome upon division
 {
 	//Find the fork with i_split.
@@ -175,6 +254,7 @@ void Genome::SplitGenome(Genome* parentG)	//Used to split a genome upon division
 
 	DevelopChildrenGenomes(parentG);
 }
+
 
 
 void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators of parental genome, but copies it to child and then acts on variables of child genome.
@@ -324,6 +404,8 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 
 	}	//END of mutations.
 }
+
+
 
 void Genome::PotentialTypeChange(i_bead it)
 {

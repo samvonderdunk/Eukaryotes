@@ -27,6 +27,8 @@ class Genome {
 	void SetExpression(list<Bead*>* ExpressedGenes, bool Updating);
 	i_bead RegulatorCompetition(i_bead i_bsite, list<Bead*>* ExpressedGenes);
 
+	void ReplicateStep(double resource);
+
 	void SplitGenome(Genome* parentG);
 	void DevelopChildrenGenomes(Genome* parentG);
 	void PotentialTypeChange(i_bead ii);

@@ -122,3 +122,11 @@ void Organelle::Mitosis(Organelle* parent, unsigned long long id_count)
 		fitness = 1. - abs(nr_household_genes - G->gnr_houses) / (float)10;
 	}
 }
+
+void Organelle::Replicate(double resource)
+{
+	if (G->fork_position < G->terminus_position)
+	{
+		G->ReplicateStep(resource);
+	}
+}

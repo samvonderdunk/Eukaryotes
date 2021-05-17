@@ -22,6 +22,7 @@ class Organelle{
 		int EvaluateState(int eval_state);
 
 		void Mitosis(Organelle* parent, unsigned long long id_count);
+		void Replicate(double resource);
 
 };
 

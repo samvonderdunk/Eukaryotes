@@ -39,6 +39,10 @@ const int NR=50;
 const int NC=550;	//Gradient is over columns.
 const int HS=100;	//Host size, i.e. maximal number of symbionts inside a cell beside the host.
 
+//Main settings
+relative_replication = false;	//Remove selection against genome size by scaling replication length with genome length.
+gene_replication = false;	//Only genes take time to replicate.
+
 //Genome parameters
 const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
 const int nr_household_genes = 50;
