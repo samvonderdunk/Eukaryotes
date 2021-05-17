@@ -97,10 +97,10 @@ void Population::UpdatePopulation()
 				Space[neigh.first][neigh.second]->Host->Mitosis(Space[i][j]->Host, id_count);
 				for (s=0;s<HS;s++)
 				{
-					if (Space[i][j]->Symbionts[s] != NULL && uniform() < 0.5)
+					if (Space[i][j]->Symbionts[s] != NULL && uniform() < 0.5)	//Transfer the symbiont to the new cell (just a matter of using the right pointers).
 					{
-						Space[neigh.first][neigh.second]->Symbionts[s] = new Organelle();
-						Space[neigh.first][neigh.second]->Symbionts[s]->Mitosis(Space[i][j]->Symbionts[s], id_count)
+						Space[neigh.first][neigh.second]->Symbionts[s] = Space[i][j]->Symbionts[s];
+						Space[i][j]->Symbionts = NULL;
 					}
 				}
 			}
