@@ -20,6 +20,11 @@ class Cell{
 		void RegulatorTransport();	//Including leakage.
 		bool ActiveTransport(i_bead it, list<Bead*>* SourceCompartment, list<Bead*>* TargetCompartment);
 
+		void DNATransferToHost();
+		void DNATransfertoSymbiont(int s);
+		void TransferGene(i_bead it, Organelle* Source, Organelle* Target);
+		void TransferBead(i_bead it, Organelle* Target);
+
 };
 
 #endif

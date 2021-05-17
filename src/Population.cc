@@ -95,6 +95,7 @@ void Population::UpdatePopulation()
 				Space[neigh.first][neigh.second] = new Cell();
 				Space[neigh.first][neigh.second]->Host = new Organelle();
 				Space[neigh.first][neigh.second]->Host->Mitosis(Space[i][j]->Host, id_count);
+				Space[neigh.first][neigh.second]->DNATransferToHost();
 				for (s=0;s<HS;s++)
 				{
 					if (Space[i][j]->Symbionts[s] != NULL && uniform() < 0.5)	//Transfer the symbiont to the new cell (just a matter of using the right pointers).
@@ -116,6 +117,7 @@ void Population::UpdatePopulation()
 						id_count++;
 						Space[i][j]->Symbionts[x] = new Organelle();
 						Space[i][j]->Symbionts[x]->Mitosis(Space[i][j]->Symbionts[s], id_count);
+						Space[i][j]->DNATransfertoSymbiont(x);	//As with the host, only the novel symbiont gets transfer mutations.
 					}
 				}
 			}

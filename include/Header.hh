@@ -79,6 +79,16 @@ const double house_duplication_mu = 0.0001;
 const double house_deletion_mu = 0.0001;
 const double house_shuffle_mu = 0.001;
 
+//Transfer mutations.
+const double regulator_transfer_mu_HtoS = 0.0001;
+const double regulator_transfer_mu_StoH = 0.0001;
+const double transporter_transfer_mu_HtoS = 0.0001;
+const double transporter_transfer_mu_StoH = 0.0001;
+const double bsite_transfer_mu_HtoS = 0.0001;
+const double bsite_transfer_mu_StoH = 0.0001;
+const double house_transfer_mu_HtoS = 0.0001;
+const double house_transfer_mu_StoH = 0.0001;
+
 //Regulatory parameters
 const double k_zero = 0.0000001;
 const double epsilon = 1.00;
