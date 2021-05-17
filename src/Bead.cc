@@ -1,6 +1,7 @@
 #include "Bead.hh"
 
 Bead::Bead(){
+	duplicate=false;
 }
 
 Bead::~Bead(){

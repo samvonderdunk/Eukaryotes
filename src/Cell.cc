@@ -34,6 +34,8 @@ void Cell::UpdateOrganelles()
 
 	Host->UpdateState();
 	for (i=0;i<HS;i++)	Symbionts[i]->UpdateState();
+
+	//RegulatorTransport();	//You can do it here if leaking proteins should not affect cell-cycle stage (or before UpdateExpression(), which would be identical).
 }
 
 void Cell::RegulatorTransport()

@@ -6,12 +6,12 @@
 // Household genes, required for normal fitness.
 
 class House : public Bead {
- public:
+	public:
 
-  House();
-  ~House();
-  explicit House(const House &house);
-  virtual Bead* Clone() const;
+		House();
+		~House();
+		explicit House(const House &house);
+		virtual Bead* Clone() const;
 
 };
 

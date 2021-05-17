@@ -5,6 +5,7 @@
 
 class Bead {
 	public:
+		bool duplicate;
 
 		Bead();
 		explicit Bead(const Bead &b);

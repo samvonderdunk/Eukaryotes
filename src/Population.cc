@@ -29,6 +29,7 @@ Population::~Population()
 void Population::UpdatePopulation()
 {
 	//Possible speedups by sorting the symbionts in between certain dynamics...
+	//Currently, update order of cells is random, but per cell it is fixed (first host, then all symbionts in order); this should be changed in the future.
 
 	int update_order[NR*NC];
 	int u, i, j, s, x;
@@ -44,6 +45,8 @@ void Population::UpdatePopulation()
 
 		if (Space[i][j] != NULL)	//There is life at this site; so there is a host -- we do host dynamics here, symbiont dynamics are done mostly in Cell.cc??
 		{
+
+			//Here mix the symbionts if any, and them put them all in the first few spaces. So that we get fair order of updating but do not waste time on empty spots.
 
 			//Basal death events for hosts and symbionts.
 			if (uniform() < death_rate_host)

@@ -15,11 +15,7 @@ class Genome {
   typedef std::list<Bead*>::iterator i_bead;
   typedef std::list<Bead*>::reverse_iterator ri_bead;
 
-  int g_length;
-  int gnr_regulators;
-	int gnr_bsites;
-	int gnr_transporters;
-  int gnr_houses;
+  int g_length, gnr_regulators, gnr_bsites, gnr_transporters, gnr_houses;
   int fork_position, terminus_position;	//position of the replication fork and the terminus, where it stops.
   bool is_mutated;
 
@@ -27,10 +23,41 @@ class Genome {
   ~Genome();
 
 	void UpdateExpression(list<Bead*>* ExpressedGenes);
-	void EraseExpressedGenes(list<Bead*>* ExpressedGenes);
+	void EraseExpression(list<Bead*>* ExpressedGenes);
+	void SetExpression(list<Bead*>* ExpressedGenes, bool Updating);
 	i_bead RegulatorCompetition(i_bead i_bsite, list<Bead*>* ExpressedGenes);
 
+	void SplitGenome(Genome* parentG);
+	void DevelopChildrenGenomes(Genome* parentG);
+	void PotentialTypeChange(i_bead ii);
 
+	//Mutation functions.
+	i_bead MutateRegulator(i_bead it, int* pdel_length);
+	i_bead MutateTransporter(i_bead it, int* pdel_length);
+	i_bead MutateBsite(i_bead it, int* pdel_length);
+	i_bead MutateHouse(i_bead it, int* pdel_length);
+
+	int ChangeParameter(int value);
+
+	i_bead DeleteGene(i_bead it, int* pdel_length);
+	i_bead DeleteBead(i_bead it);
+
+	i_bead DuplicateGene(i_bead it, int* pdup_length);
+	i_bead DuplicateBsite(i_bead it);
+	i_bead DuplicateHouse(i_bead it);
+
+	i_bead InventRegulator();
+	i_bead InventTransporter();
+	void InventBsite();
+	void InventHouse();
+
+	i_bead ShuffleGene(i_bead it);
+	i_bead ShuffleBead(i_bead it);
+
+	i_bead FindFirstBsiteInFrontOfGene(i_bead it) const;
+	i_bead FindRandomGenePosition(bool include_houses, bool include_end) const;
+	i_bead FindRandomPosition(bool include_end) const;
+	void CopyPartOfGenomeToTemplate(i_bead begin, i_bead end, list<Bead*>* template_beadlist);
 
 
 	inline char WhatBead(Bead* bead) const
@@ -50,16 +77,30 @@ class Genome {
 		}
 	}
 
-	inline int BindingAffinity(Bead* i_bsite, Bead* i_reg)
+	inline int BindingAffinity(Bead* bead1, Bead* bead2)
 	{
 	//Testing; same as above. In addition, look at faster ways to do bitstring comparisons (or storage of bitstrings).
-		Bsite* bsite = dynamic_cast<Bsite*>(*i_bsite);
-		Regulator* reg = dynamic_cast<Regulator*>(*i_reg);
+	//If this flexible b1/b2 calling does not work, perhaps try with passing the sequence directly? If it is inline, maybe this does not cost anything extra.
+	//In addition, perhaps it could be useful to only store sequences as integers, but unpack them as their true binary strings only in this function...
+		switch (WhatBead(bead1))
+		{
+			case 'R':
+				Regulator* b1 = dynamic_cast<Regulator*>(bead1);
+			case 'B':
+				Bsite* b1 = dynamic_cast<Bsite*>(bead1);
+		}
+		switch (WhatBead(bead2))
+		{
+			case 'R':
+				Regulator* b2 = dynamic_cast<Regulator*>(bead2);
+			case 'B':
+				Bsite* b2 = dynamic_cast<Bsite*>(bead2);
+		}
 
 		int affinity = 0;
 		for (int i=0;i<sequence_length;i++)
 		{
-			if (bsite->sequence[i] != reg->sequence[i])	affinity++;
+			if (b1->sequence[i] != b2->sequence[i])	affinity++;
 		}
 		return affinity;
 	}
