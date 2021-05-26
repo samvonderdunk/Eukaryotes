@@ -3,37 +3,51 @@
 Cell::Cell()
 {
 	Host=NULL;
-	for(int i=0;i<HS;i++)
-	{
-		Symbionts[i]=NULL;
-	}
+	SymbiontList=NULL;
 }
 
 Cell::~Cell()
 {
+	i_symbiont iS;
+
 	delete Host;
 	Host=NULL;
-	for(int i=0;i<HS;i++)
-	{
-		if (Symbionts[i]!=NULL)
-		{
-			delete (Symbionts[i]);
-			Symbionts[i]=NULL;
+
+	if(SymbiontList!=NULL) {
+		iS=SymbiontList->begin();
+		while(iS!=SymbiontList->end()) {
+			delete (*iS);
+			iS++;
 		}
+
+		iS=SymbiontList->erase(SymbiontList->begin(),SymbiontList->end());
+		delete SymbiontList;
+		SymbiontList=NULL;
 	}
 }
 
 void Cell::UpdateOrganelles()
 {
 	int i;
+	i_symbiont iS;
 
 	Host->UpdateExpression();
-	for (i=0;i<HS;i++)	Symbionts[i]->UpdateExpression();
+	iS = SymbiontList->begin();
+	while(iS != SymbiontList->end())
+	{
+		(*iS)->UpdateExpression();
+		iS++;
+	}
 
 	RegulatorTransport();
 
 	Host->UpdateState();
-	for (i=0;i<HS;i++)	Symbionts[i]->UpdateState();
+	iS = SymbiontList->begin();
+	while(iS != SymbiontList->end())
+	{
+		(*iS)->UpdateState();
+		iS++;
+	}
 
 	//RegulatorTransport();	//You can do it here if leaking proteins should not affect cell-cycle stage (or before UpdateExpression(), which would be identical).
 }
@@ -42,15 +56,17 @@ void Cell::RegulatorTransport()
 {
 	i_bead it;
 	int i, nr_native_host_genes;
+	i_symbiont iS;
 
 	nr_native_host_genes = (int) Host->ExpressedGenes->size();
-	for (i=0;i<HS;i++)
+	iS = SymbiontList->begin();
+	while(iS != SymbiontList->end())
 	{
 		//Movement of expressed regulators from symbionts to host.
-		it = Symbionts[i]->ExpressedGenes->begin();
-		while (it != Symbionts[i]->ExpressedGenes->end())
+		it = (*iS)->ExpressedGenes->begin();
+		while (it != (*iS)->ExpressedGenes->end())
 		{
-			if (ActiveTransport(it, Symbionts[i]->ExpressedGenes, Host->ExpressedGenes) || uniform() < leakage_to_host)
+			if (ActiveTransport(it, (*iS)->ExpressedGenes, Host->ExpressedGenes) || uniform() < leakage_to_host)
 			{
 				Host->ExpressedGenes->push_back(*it);
 			}
@@ -61,12 +77,13 @@ void Cell::RegulatorTransport()
 		it = Host->ExpressedGenes->begin();
 		while (distance(Host->ExpressedGenes->begin(), it) < nr_native_host_genes)
 		{
-			if (ActiveTransport(it, Host->ExpressedGenes, Symbionts[i]->ExpressedGenes) || uniform() < leakage_to_symbiont)
+			if (ActiveTransport(it, Host->ExpressedGenes, (*iS)->ExpressedGenes) || uniform() < leakage_to_symbiont)
 			{
-				Symbionts[i]->ExpressedGenes->push_back(*it);
+				(*iS)->ExpressedGenes->push_back(*it);
 			}
 			it++;
 		}
+		iS++;
 	}
 }
 
@@ -82,15 +99,17 @@ void Cell::DNATransferToHost()
 {
 	int i;
 	i_bead it, insertsite;
+	i_symbiont iS;
 
-	for (i=0;i<HS;i++)
+	iS = SymbiontList->begin();
+	while (iS != SymbiontList->end())
 	{
-		if (Symbionts[i] != NULL)
+		if ((*iS) != NULL)
 		{
-			it = Symbionts[i]->G->BeadList->begin();
-			while (it != Symbionts[i]->G->BeadList->end())
+			it = (*iS)->G->BeadList->begin();
+			while (it != (*iS)->G->BeadList->end())
 			{
-				switch Symbionts[i]->G->WhatBead(*it)
+				switch (*iS)->G->WhatBead(*it)
 				{
 					case 'R':
 						if (uniform() < regulator_transfer_mu_StoH)	TransferGene(it, Host);
@@ -102,10 +121,11 @@ void Cell::DNATransferToHost()
 				it++;
 			}
 		}
+		iS++;
 	}
 }
 
-void Cell::DNATransfertoSymbiont(int s)
+void Cell::DNATransfertoSymbiont(Organelle* Symbiont)
 {
 	i_bead it = Host->G->BeadList->begin();
 	while( it != Host->G->BeadList->end() )
@@ -113,11 +133,11 @@ void Cell::DNATransfertoSymbiont(int s)
 		switch Host->G->WhatBead(*it)
 		{
 			case 'R':
-				if (uniform() < regulator_transfer_mu_HtoS) TransferGene(it, Symbionts[s]);
+				if (uniform() < regulator_transfer_mu_HtoS) TransferGene(it, Symbiont);
 			case 'B':
-				if (uniform() < bsite_transfer_mu_HtoS) TransferGene(it, Symbionts[s]);
+				if (uniform() < bsite_transfer_mu_HtoS) TransferGene(it, Symbiont);
 			case 'H':
-				if (uniform() < house_transfer_mu_HtoS) TransferGene(it, Symbionts[s]);
+				if (uniform() < house_transfer_mu_HtoS) TransferGene(it, Symbiont);
 		}
 		it++;
 	}
@@ -200,7 +220,7 @@ void Cell::InitialiseCell(unsigned long long id_count)
 		{
 			Symbiont = new Organelle();
 			Symbiont->InitialiseOrganelle(genome, expression);
-			Symbionts->push_back(Symbiont);
+			SymbiontList->push_back(Symbiont);
 		}
 
 		id_count++;
@@ -214,13 +234,20 @@ void Cell::InitialiseCell(unsigned long long id_count)
 void CellOne::CloneCell(Cell* ImageC, unsigned long long id_count)
 {
 	int i;
+	i_symbiont iS;
+	Organelle* Symbiont;
+
 	Host = new Organelle();
 	Host->CloneOrganelle(ImageC->Host);
 	id_count++;
-	for (i=0;i<HS;i++)
+
+	iS = ImageC->SymbiontList->begin();
+	while(iS != ImageC->SymbiontList->end())
 	{
-		Symbionts[i] = new Organelle();
-		Symbionts[i]->CloneOrganelle(ImageC->Symbionts[i]);
+		Symbiont = new Organelle();
+		Symbiont->CloneOrganelle(*iS);
+		SymbiontList->push_back(Symbiont);
 		id_count++;
+		iS++;
 	}
 }
