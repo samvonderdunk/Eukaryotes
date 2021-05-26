@@ -3,8 +3,7 @@
 Population::Population()
 {
 	int i,j;
-	cell_count=0;
-	organelle_count=0;
+	id_count=0;
 
 	for(i=0;i<NR;i++) for(j=0;j<NC;j++)
 	{
@@ -216,4 +215,32 @@ double Population::CollectNutrients(int i, int j)
 	}
 
 	return (nutrient_abundance / (double)Space[i][j]->nr_symbionts)  *  (1. - (double)organelle_density / max_organelle_density)
+}
+
+void Population::InitialisePopulation()
+{
+	Cell* CellZero;
+	Cell* CellOne;
+	int row, col;
+
+	//First create one Cell.
+	CellZero = new Cell();
+	CellZero->InitialiseCell(id_count);
+
+	//Now fill the field with this cell.
+	for(row=0; row<NR; row++) for(col=0; col<NC; col++){
+		// if(row<20 && col<20)	//Initialise square
+		if (uniform() < 0.1)	//Initialise lower density
+		{
+			id_count_++;	//Make sure the first individual gets p_id_count_ of 1.
+			CellOne = new Cell();
+			CellOne->CloneCell(CellZero, id_count);
+			CellOne->Ancestor = NULL;
+			Space[row][col] = CellOne;
+			//Fossils something...
+		}
+	}
+
+	delete CellZero;	//I cannot delete PP_Copy, because each is actually turned into one of grid spaces. I can however delete this single bit of memory.
+	CellZero = NULL;
 }

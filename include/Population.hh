@@ -26,6 +26,8 @@ class Population
 		void DeathOfHost(int i, int j);
 		coords PickNeighbour(int i, int j);
 		double CollectNutrients(int i, int j);
+
+		void InitialisePopulation();
 };
 
 #endif

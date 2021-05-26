@@ -6,6 +6,8 @@ Organelle::Organelle()
 	privilige=false;
 	ExpressedGenes=NULL;
 	G=NULL;
+	fitness=0.;
+	mutant = false;
 }
 
 Organelle::~Organelle()
@@ -129,4 +131,24 @@ void Organelle::Replicate(double resource)
 	{
 		G->ReplicateStep(resource);
 	}
+}
+
+void Organelle::InitialiseOrganelle(string genome, string expression)
+{
+	mutant = true;
+	G->ReadGenome(genome);
+	G->ReadExpression(expression);
+	G->SetExpression(ExpressedGene, false);
+}
+
+void Organelle::CloneOrganelle(Organelle* ImageO)
+{
+	Stage = ImageO->Stage;
+	privilige = ImageO->privilige;
+	fitness = ImageO->fitness;
+	mutant = ImageO->mutant;
+
+	//First copy the genome, then the expression list can be updated (because we want pointers to the new genome!).
+	G->CloneGenome(ImageO->G);
+	G->SetExpression(ExpressedGenes, false);
 }

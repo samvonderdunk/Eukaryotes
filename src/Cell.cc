@@ -171,3 +171,64 @@ void Cell::TransferBead(i_bead it, Organelle* Target)
 	}
 	Target->G->is_mutated = true;
 }
+
+void Cell::InitialiseCell(unsigned long long id_count)
+{
+	int i=0;
+	ifstream in_genome(genome_initialisation.c_str());
+	ifstream in_expression(expression_initialisation.c_str());
+	string genome;
+	string expression;
+	Organelle* Symbiont;
+
+	if ( !in_genome.is_open() )
+	{
+		printf("Genome file %s could not be opened.\n", genome_initialisation.c_str());
+		exit(1);
+	}
+
+	if ( !in_expression.is_open() )
+	{
+		printf("Expression file %s could not be opened.\n", expression_initialisation.c_str());
+		exit(1);
+	}
+
+	while ( !in_genome.eof() & !in_expression.eof() )
+	{
+		in_genome >> genome;
+		in_expression >> expression;
+
+		if (i==0)
+		{
+			Host = new Organelle();
+			Host->InitialiseOrganelle(genome, expression);
+		}
+
+		else
+		{
+			Symbiont = new Organelle();
+			Symbiont->InitialiseOrganelle(genome, expression);
+			Symbionts->push_back(Symbiont);
+		}
+
+		id_count++;
+		i++;
+	}
+
+	//Print first individuals...
+}
+
+
+void CellOne::CloneCell(Cell* ImageC, unsigned long long id_count)
+{
+	int i;
+	Host = new Organelle();
+	Host->CloneOrganelle(ImageC->Host);
+	id_count++;
+	for (i=0;i<HS;i++)
+	{
+		Symbionts[i] = new Organelle();
+		Symbionts[i]->CloneOrganelle(ImageC->Symbionts[i]);
+		id_count++;
+	}
+}

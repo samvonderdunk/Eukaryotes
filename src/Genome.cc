@@ -919,3 +919,49 @@ void Genome::CopyPartOfGenomeToTemplate(i_bead begin, i_bead end, list<Bead*>* t
 		it++;
 	}
 }
+
+
+void Genome::CloneGenome(const Genome* ImageG)
+{
+	BeadList = new list<Bead*>();
+	CopyPartOfGenome(ImageG->BeadList->begin(),ImageG->BeadList->end());
+
+	g_length = ImageG->g_length;
+	gnr_regulators = ImageG->gnr_regulators;
+	gnr_transporters = ImageG->gnr_transporters;
+	gnr_bsites = ImageG->gnr_bsites;
+	gnr_houses = ImageG->gnr_houses;
+	fork_position = ImageG->fork_position;
+	terminus_position = ImageG->terminus_position;
+	is_mutated = ImageG->is_mutated;
+}
+
+
+void Genome::CopyPartOfGenome(i_bead begin, i_bead end)
+{
+	//Note that no genome and bead counters are set in this function (see e.g. CloneGenome).
+	i_bead it;
+	Bead* bead;
+	it=begin;
+	while(it!=end)
+	{
+		bead=(*it)->Clone();
+		(*BeadList).push_back(bead);
+		it++;
+	}
+}
+
+void Genome::ReadGenome(string genome)
+{
+	BeadList = new list<Bead*>();
+
+	//Here the content of ReadBeadsFromString...
+
+	fork_position = 0;
+	terminus_position = g_length;
+}
+
+void Genome::ReadExpression(string expression)
+{
+
+}

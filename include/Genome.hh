@@ -60,7 +60,11 @@ class Genome {
 	i_bead FindRandomGenePosition(bool include_houses, bool include_end) const;
 	i_bead FindRandomPosition(bool include_end) const;
 	void CopyPartOfGenomeToTemplate(i_bead begin, i_bead end, list<Bead*>* template_beadlist);
+	void CloneGenome(const Genome* ImageG);
+	void CopyPartOfGenome(i_bead begin, i_bead end);
 
+	void ReadGenome(string genome);
+	void ReadExpression(string expression);
 
 	inline char WhatBead(Bead* bead) const
 	//Testing; if this is not working, go back to seperate check functions and/or without inline.

@@ -11,8 +11,8 @@ int Time;
 int initial_seed = time(0);
 unsigned long long seed_draws = 0;
 string folder = "/linuxhome/tmp/sam/Eukaryotes/";
-string genome_init = genome_file;
-string genestate_init = genestate_file;
+string genome_initialisation = genome_file;
+string expression_initialisation = expression_file;
 string backup_reboot = backup_file;
 string anctrace_reboot = anctrace_file;
 int SimTime = default_SimTime;
@@ -89,19 +89,32 @@ void Setup(int argc, char** argv) {
 			continue;
 		}
 
+		/* Format of genome input file:
+			HOST::(G2:3:-2:11101010101... etc...)
+			SYMB::(G4:1:1:0001010100101... etc..)
+			SYMB::(G1:0:-1:000100101010... etc..)
+			etc..
+		*/
+
 		else if(ReadOut=="-i" && (i+1)!=argc)
 		{
-			genome_init = argv[i+1];
-			printf("Genome input: %s\n", genome_init.c_str());
+			genome_initialisation = argv[i+1];
+			printf("Genome input: %s\n", genome_initialisation.c_str());
 			i++;
 			continue;
 		}
 
-		//Define gene expression state for initial individual
+		/* Format of expression input file:
+			HOST::[1,0,1,0,0,0,1,1,0]
+			SYMB::[...]
+			SYMB::[...]
+			etc..
+		*/
+
 		else if(ReadOut=="-g" && (i+1)!=argc)
 		{
-			genestate_init = argv[i+1];
-			printf("Genestate input: %s\n", genestate_init.c_str());
+			expression_initialisation = argv[i+1];
+			printf("Expression input: %s\n", expression_initialisation.c_str());
 			i++;
 			continue;
 		}
@@ -132,7 +145,7 @@ void Setup(int argc, char** argv) {
 
 		else	//Print usage/help.
 		{
-			printf("\nWARNING: OLD HELP MESSAGE\033[93m### Prokaryotes --- usage ###\033[0m\nArgument options:\n   -p [project title]\t\tDefines folder for local storage\n   -s [seed]\t\t\tSet seed for random number generator (e.g. 211)\n   -i [initial genome]\t\te.g. MRCA.g\n   -g [initial expression]\te.g. MRCA_GS.g\n   -e [env]\t\t\tInitial environment (e.g. -3)\n   -b [backup file]\t\tStart from backup (e.g. /path/backup00090000.txt)\n   -a [ancestor file]\t\tContinue ancestor trace (e.g. /path/anctrace00090000.txt)\n   -nomut\t\t\tNo mutations\n   -t [max. time]\t\tSet simulation time (e.g. 100)\n Programmes:\n   -M [nr_mutants]\tGenerate mutants\n   -MS\t\t\tScan neutral mutational path\n   -A [nr_states]\tSimulate state-space transitions [nr. of initial states = max(nr_states, total nr. unique states)]\n   -S\t\t\tFollow single immortal individual/lineage through time [simulating until Time==SimTime]\n");
+			printf("\nWARNING: OLD HELP MESSAGE\033[93m### Prokaryotes --- usage ###\033[0m\nArgument options:\n   -p [project title]\t\tDefines folder for local storage\n   -s [seed]\t\t\tSet seed for random number generator (e.g. 211)\n   -i [genome initialisation file]\t\te.g. CellX.g\n   -g [expression initialisation file]\te.g. CellX_Expr.g\n   -e [env]\t\t\tInitial environment (e.g. -3)\n   -b [backup file]\t\tStart from backup (e.g. /path/backup00090000.txt)\n   -a [ancestor file]\t\tContinue ancestor trace (e.g. /path/anctrace00090000.txt)\n   -nomut\t\t\tNo mutations\n   -t [max. time]\t\tSet simulation time (e.g. 100)\n Programmes:\n   -M [nr_mutants]\tGenerate mutants\n   -MS\t\t\tScan neutral mutational path\n   -A [nr_states]\tSimulate state-space transitions [nr. of initial states = max(nr_states, total nr. unique states)]\n   -S\t\t\tFollow single immortal individual/lineage through time [simulating until Time==SimTime]\n");
 			exit(1);
 		}
 	}

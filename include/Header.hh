@@ -40,8 +40,8 @@ const int NC=550;	//Gradient is over columns.
 const int HS=100;	//Host size, i.e. maximal number of symbionts inside a cell beside the host.
 
 //Main settings
-relative_replication = false;	//Remove selection against genome size by scaling replication length with genome length.
-gene_replication = false;	//Only genes take time to replicate.
+const bool relative_replication = false;	//Remove selection against genome size by scaling replication length with genome length.
+const bool gene_replication = false;	//Only genes take time to replicate.
 
 //Genome parameters
 const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
@@ -108,8 +108,8 @@ extern int Time;
 extern int initial_seed;
 extern unsigned long long seed_draws;
 extern string folder;
-extern string genome_init;
-extern string genestate_init;
+extern string genome_initialisation;
+extern string expression_initialisation;
 extern string backup_reboot;
 extern string anctrace_reboot;
 extern int SimTime;
@@ -122,7 +122,7 @@ inline double uniform()
 }
 
 const string genome_file="";
-const string genestate_file="";
+const string expression_file="";
 const string backup_file="";
 const string anctrace_file="";
 

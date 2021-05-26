@@ -11,6 +11,7 @@ class Organelle{
 		std::list<Bead*>* ExpressedGenes;
 		Genome* G;
 		double fitness;
+		bool mutant;
 
 		typedef std::list<Bead*>::iterator i_bead;
 
@@ -23,6 +24,9 @@ class Organelle{
 
 		void Mitosis(Organelle* parent, unsigned long long id_count);
 		void Replicate(double resource);
+
+		void InitialiseOrganelle(string genome, string expression);
+		void CloneOrganelle(Organelle* ImageO);
 
 };
 
