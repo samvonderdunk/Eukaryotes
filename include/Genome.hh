@@ -15,7 +15,7 @@ class Genome {
   typedef std::list<Bead*>::iterator i_bead;
   typedef std::list<Bead*>::reverse_iterator ri_bead;
 
-  int g_length, gnr_regulators, gnr_bsites, gnr_transporters, gnr_houses;
+  int g_length, gnr_regulators, gnr_bsites, gnr_houses;
   int fork_position, terminus_position;	//position of the replication fork and the terminus, where it stops.
   bool is_mutated;
 
@@ -35,7 +35,6 @@ class Genome {
 
 	//Mutation functions.
 	i_bead MutateRegulator(i_bead it, int* pdel_length);
-	i_bead MutateTransporter(i_bead it, int* pdel_length);
 	i_bead MutateBsite(i_bead it, int* pdel_length);
 	i_bead MutateHouse(i_bead it, int* pdel_length);
 
@@ -49,7 +48,6 @@ class Genome {
 	i_bead DuplicateHouse(i_bead it);
 
 	i_bead InventRegulator();
-	i_bead InventTransporter();
 	void InventBsite();
 	void InventHouse();
 
@@ -74,8 +72,6 @@ class Genome {
 		{
 			case typeid(Regulator):
 				return 'R'
-			case typeid(Transporter):
-				return 'T'
 			case typeid(Bsite):
 				return 'B'
 			case typeid(House):

@@ -94,8 +94,6 @@ void Cell::DNATransferToHost()
 				{
 					case 'R':
 						if (uniform() < regulator_transfer_mu_StoH)	TransferGene(it, Host);
-					case 'T':
-						if (uniform() < transporter_transfer_mu_StoH)	TransferGene(it, Host);
 					case 'B':
 						if (uniform() < bsite_transfer_mu_StoH) TransferBead(it, Host)
 					case 'H':
@@ -116,8 +114,6 @@ void Cell::DNATransfertoSymbiont(int s)
 		{
 			case 'R':
 				if (uniform() < regulator_transfer_mu_HtoS) TransferGene(it, Symbionts[s]);
-			case 'T':
-				if (uniform() < transporter_transfer_mu_HtoS) TransferGene(it, Symbionts[s]);
 			case 'B':
 				if (uniform() < bsite_transfer_mu_HtoS) TransferGene(it, Symbionts[s]);
 			case 'H':
@@ -147,11 +143,7 @@ void Cell::TransferGene(i_bead it, Organelle* Source, Organelle* Target)
 
 	//Increment the number of beads and the number of genes.
 	Target->G->g_length+=copy_length;
-	switch Source->G->WhatBead(it)
-	{
-		case 'R':	Target->G->gnr_regulators++;
-		case 'T': Target->G->gnr_transporters++;
-	}
+	Target->G->gnr_regulators++;
 	Target->G->gnr_bsites+=copy_length-1;	//The length of the whole transferred piece except for the gene (i.e. you will always transfer 1 gene with x bsites and nothing else).
 	Target->G->is_mutated = true;
 }

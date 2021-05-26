@@ -35,7 +35,7 @@ LIBPATH = ../lib
 # Project var
 PROJECT = Eukaryotes
 LIBRARY = mor
-ALL =  Bead.o Regulator.o Bsite.o Transporter.o House.o Genome.o Organelle.o Cell.o Population.o World.o dSFMT.o Fossils.o
+ALL =  Bead.o Regulator.o Bsite.o House.o Genome.o Organelle.o Cell.o Population.o World.o dSFMT.o Fossils.o
 OBJECTS = $(ALL)
 
 

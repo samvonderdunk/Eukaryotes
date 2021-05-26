@@ -6,7 +6,6 @@ Genome::Genome()
 	g_length=0;
 	gnr_genes=0;
 	gnr_bsites=0;
-	gnr_transporters=0;
 	gnr_houses=0;
 	fork_position=0;
 	terminus_position=0;
@@ -42,13 +41,12 @@ void Genome::UpdateExpression(list<Bead*>* ExpressedGenes)
 	while (it != BeadList->end())
 	{
 		wb = WhatBead(*it)
-		if (wb=='R' || wb=='T')
+		if (wb=='R')
 		{
-			if(wb=='R')					Regulator* gene = dynamic_cast<Regulator*>(*it);			//Maybe recasting is not allowed, in which case I should separate the regulators and transporters over if statements.
-			else if(wb=='T')		Transporter* gene = dynamic_cast<Transporter*>(*it);
+			Regulator* reg = dynamic_cast<Regulator*>(*it);
 
-			cum_effects -= gene->threshold;
-			gene->express = max(min((int)cum_effects+1,1),0);	//For the +1, see explanation of the gene threshold in Regulator.hh
+			cum_effects -= reg->threshold;
+			reg->express = max(min((int)cum_effects+1,1),0);	//For the +1, see explanation of the gene threshold in Regulator.hh
 			cum_effects = 0;
 		}
 		else if (wb=='B')
@@ -97,14 +95,13 @@ void Genome::SetExpression(list<Bead*>* ExpressedGenes, bool Updating)
 	while (it != BeadList->end())
 	{
 		wb = WhatBead(*it);
-		if (wb=='R' || wb=='T')
+		if (wb=='R')
 		{
 			//See similar potential issue in UpdateExpression() and in BindingAffinity().
-			if(wb=='R')					Regulator* gene = dynamic_cast<Regulator*>(*it);
-			else if(wb=='T')		Transporter* gene = dynamic_cast<Transporter*>(*it);
+			Regulator* reg = dynamic_cast<Regulator*>(*it);
 
-			if (Updating)								gene->expression = gene->express;		//If we have just updated gene states, expression should be read from "express". Otherwise we might just want to update ExpressedGenes (as in Mitosis).
-			if (gene->expression > 0)		ExpressedGenes->push_back(gene);
+			if (Updating)								reg->expression = reg->express;		//If we have just updated gene states, expression should be read from "express". Otherwise we might just want to update ExpressedGenes (as in Mitosis).
+			if (reg->expression > 0)		ExpressedGenes->push_back(reg);
 		}
 	}
 }
@@ -194,7 +191,7 @@ void Genome::ReplicateStep(double resource)
 	while ((distance(BeadList->begin(),end) < terminus_position) && repl_remaining_steps > 0)	//The maximal position of end is defined by pos_anti_ori - 1 (pointing to the last bead of the parental genome). pos_anti_ori holds the number of genes in the parental genome, so if your distance to the first bead is pos_anti_ori, you are actually one past the last bead of the parental genome. The first replication step, this will point to NULL, but in consecutive steps it will point to a child bead; we want to point to an end point that does not change, hence the last bead of the parental genome.
 	{
 		wb = WhatBead(*end);
-		if(wb=='R' || wb=='T')	repl_remaining_steps--;	//Genes for sure count for the repl_step_size.
+		if(wb=='R')	repl_remaining_steps--;	//Genes for sure count for the repl_step_size.
 		else if(!gene_replication)	repl_remaining_steps--;	//TFBSs count if replicate_entire_genes is set to false.
 		gene_length++;
 		end++;
@@ -214,7 +211,6 @@ void Genome::ReplicateStep(double resource)
 		switch wb
 		{
 			case 'R':	gnr_regulators++;
-			case 'T': gnr_transporters++;
 			case 'B': gnr_bsites++;
 			case 'H': gnr_houses++;
 		}
@@ -274,7 +270,6 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 		switch ( WhatBead(*it) )
 		{
 			case 'R': parentG->gnr_regulators--;
-			case 'T':	parentG->gnr_transporters--;
 			case 'B': parentG->gnr_bsites--;
 			case 'H': parentG->gnr_houses--;
 		}
@@ -285,7 +280,6 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 	parentG->fork_position = 0;
 	//Copy gene numbers, mutations happen next.
 	gnr_regulators = parentG->gnr_regulators;
-	gnr_transporters = parentG->gnr_transporters;
 	gnr_bsites = parentG->gnr_bsites;
 	gnr_houses = parentG->gnr_houses;
 
@@ -307,9 +301,6 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 				case 'R':
 					MutationList->at(index) = true;
 			 		it = MutateRegulator(it, pdel_length);
-				case 'T':
-					MutationList->at(index) = true;
-					it = MutateTransporter(it, pdel_length);
 				case 'B':
 					MutationList->at(index) = true;
 					it = MutateBsite(it, pdel_length);
@@ -342,9 +333,6 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 					case 'R':
 						it=DuplicateGene(it, pdup_length);;
 						gnr_regulators++;
-					case 'T':	//WARNING: Check that this now works for both 'R' and 'T'.
-						it=DuplicateGene(it, pdup_length);
-						gnr_transporters++;
 					case 'B':
 						it=DuplicateBsite(it);
 						gnr_bsites++;
@@ -374,11 +362,6 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 			PotentialTypeChange(it);
 			(*pdup_length)++;
 		}
-		if(uniform() < transporter_innovation_mu)
-		{
-			it = InventTransporter();
-			(*pdup_length)++;
-		}
 		if(uniform() < bsite_innovation_mu)
 		{
 			InventBsite();
@@ -396,7 +379,6 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 		{
 			wb = WhatBead(*it);
 			if(wb=='R' && uniform() < regulator_shuffle_mu)	it=ShuffleGene(it);
-			else if(wb=='T' && uniform() < transporter_shuffle_mu)	it=ShuffleGene(it);
 			else if(wb=='B' && uniform() < bsite_shuffle_mu)	it=ShuffleBead(it);
 			else if(wb=='H' && uniform() < house_shuffle_mu) it=ShuffleBead(it);
 			else	it++;
@@ -507,51 +489,6 @@ Genome::i_bead Genome::MutateRegulator(i_bead it, int* pdel_length)
 
 		if (potential_type_change){
 			PotentialTypeChange(it);	//Check type change, activity or sequence has been mutated.
-		}
-		it++;
-	}
-
-	return it;
-}
-
-Genome::i_bead Genome::MutateTransporter(i_bead it, int* pdel_length)
-{
-	//Future use, so for now I don't care about the types. Maybe later this will be useful, similar to regulators.
-	Transporter* tp;
-	tp = dynamic_cast<Transporter*>(*it);
-	int i;
-
-	double uu = uniform();
-	if(uu < transporter_duplication_mu)
-	{
-		(*it)->duplicate = true;	//Mark for duplication during divison.
-		is_mutated = true;
-		it++;
-	}
-
-	else if(uu < transporter_deletion_mu+transporter_duplication_mu)
-	{
-		it = DeleteGene(it, pdel_length);
-		gnr_transporters--;
-		is_mutated = true;
-	}
-
-	else
-	{
-		if(uniform() < transporter_threshold_mu)	//Parameters mutate independently.
-		{
-			tp->threshold = ChangeGeneParameter(tp->threshold);
-			is_mutated = true;
-		}
-
-		for(i=0; i<sequence_length; i++)
-		{
-			if(uniform() < transporter_sequence_mu)
-			{
-				if (tp->sequence[i] == false) tp->sequence[i] = true;
-				else if (tp->sequence[i] == true) tp->sequence[i] = false;
-				is_mutated = true;
-			}
 		}
 		it++;
 	}
@@ -753,24 +690,6 @@ Genome::i_bead Genome::InventRegulator()
 	return insertsite;
 }
 
-Genome::i_bead Genome::InventTransporter()
-{
-	Transporter* tp;
-	i_bead insertsite;
-
-	tp = new Transporter();
-	tp->RandomTransporter();
-
-	insertsite=FindRandomGenePosition(true,true);
-	insertsite=FindFirstBsiteInFrontOfGene(insertsite);
-	insertsite=BeadList->insert(insertsite, tp);
-
-	g_length++;
-	gnr_transporters++;
-	is_mutated = true;
-	return insertsite;
-}
-
 void Genome::InventBsite()
 {
 	Bsite* bsite;
@@ -875,18 +794,18 @@ Genome::i_bead Genome::FindRandomGenePosition(bool include_houses, bool include_
 	if(include_houses)	add_houses=gnr_houses;
 	if(include_end)	end=1;
 
-	if(gnr_regulators+gnr_transporters+add_houses==0)	return (*BeadList).end();
+	if(gnr_regulators+add_houses==0)	return (*BeadList).end();
 	else
 	{
 		it=(*BeadList).begin();
 		while(it != (*BeadList).end())
 		{
 			wb = WhatBead(*it);
-			if((wb=='R' || wb=='T') || (wb=='H' && include_houses))	pos.push_back(it);
+			if(wb=='R' || wb=='H' && include_houses)	pos.push_back(it);
 			it++;
 		}
 		pos.push_back(it);
-		randpos=(int)(uniform()*(gnr_regulators+gnr_transporters+add_houses+end));	//If you found the first gene, randpos will be 0 (no need to advance to another gene); if you find the last gene, randpos will be gnr_genes-1 which is enough to reach the gnr_genes'th gene.
+		randpos=(int)(uniform()*(gnr_regulators+add_houses+end));	//If you found the first gene, randpos will be 0 (no need to advance to another gene); if you find the last gene, randpos will be gnr_genes-1 which is enough to reach the gnr_genes'th gene.
 		it2 = (*boost::next(pos.begin(),randpos));	//Possibly try advance(ii, randpos) instead.
 		return it2;
 	}
@@ -928,7 +847,6 @@ void Genome::CloneGenome(const Genome* ImageG)
 
 	g_length = ImageG->g_length;
 	gnr_regulators = ImageG->gnr_regulators;
-	gnr_transporters = ImageG->gnr_transporters;
 	gnr_bsites = ImageG->gnr_bsites;
 	gnr_houses = ImageG->gnr_houses;
 	fork_position = ImageG->fork_position;

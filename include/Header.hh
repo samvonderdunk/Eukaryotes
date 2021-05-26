@@ -54,9 +54,6 @@ const double regulator_threshold_mu = 0.0005;
 const double regulator_activity_mu = 0.0005;
 const double regulator_sequence_mu = 0.0001;
 
-const double transporter_threshold_mu = 0.0005;
-const double transporter_sequence_mu = 0.0001;
-
 const double bsite_sequence_mu = 0.0001;
 const double bsite_activity_mu = 0.0005;
 
@@ -64,11 +61,6 @@ const double regulator_duplication_mu = 0.0005;
 const double regulator_deletion_mu = 0.0005;
 const double regulator_innovation_mu = 0.0005;
 const double regulator_shuffle_mu = 0.001;
-
-const double transporter_duplication_mu = 0.0005;
-const double transporter_deletion_mu = 0.0005;
-const double transporter_innovation_mu = 0.0005;
-const double transporter_shuffle_mu = 0.001;
 
 const double bsite_duplication_mu = 0.0005;
 const double bsite_deletion_mu = 0.0005;
@@ -82,8 +74,6 @@ const double house_shuffle_mu = 0.001;
 //Transfer mutations.
 const double regulator_transfer_mu_HtoS = 0.0001;
 const double regulator_transfer_mu_StoH = 0.0001;
-const double transporter_transfer_mu_HtoS = 0.0001;
-const double transporter_transfer_mu_StoH = 0.0001;
 const double bsite_transfer_mu_HtoS = 0.0001;
 const double bsite_transfer_mu_StoH = 0.0001;
 const double house_transfer_mu_HtoS = 0.0001;
