@@ -63,6 +63,8 @@ class Genome {
 
 	void ReadGenome(string genome);
 	void ReadExpression(string expression);
+	void ReadBuffer(string buffer, bool* array, char stop_sign);
+
 
 	inline char WhatBead(Bead* bead) const
 	//Testing; if this is not working, go back to seperate check functions and/or without inline.

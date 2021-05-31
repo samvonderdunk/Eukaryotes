@@ -8,11 +8,25 @@ Regulator::Regulator() : Bead()
   type = 0;
   threshold = 0;
   activity = 0;
-  for(i=0; i<sequence_length; i++) sequence[i] = false;
 	for(i=0; i<signalp_length; i++)	signalp[i] = false;
+  for(i=0; i<sequence_length; i++) sequence[i] = false;
   expression = 0;
 	express = 0;
 }
+
+Regulator::Regulator(int typ, int thr, int act, bool sig[], bool seq[], int exp) : Bead()
+{
+	int i;
+
+	type = typ;
+	threshold = thr;
+	acitivity = act;
+	for(i=0; i<signalp_length; i++)	signalp[i] = sig[i];
+	for(i=0; i<sequence_length; i++) sequence[i] = seq[i];
+  expression = exp;
+	express = 0;
+}
+
 
 Regulator::Regulator(const Regulator &reg) : Bead(reg)
 {
@@ -24,7 +38,7 @@ Regulator::Regulator(const Regulator &reg) : Bead(reg)
   for(i=0; i<sequence_length; i++) sequence[i] = reg.sequence[i];
 	for(i=0; i<signalp_length; i++) signalp[i] = reg.signalp[i];
   expression=reg.expression;
-	express=reg.xpr;
+	express=reg.express;
 }
 
 Bead* Regulator::Clone() const

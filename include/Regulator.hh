@@ -16,6 +16,7 @@ class Regulator : public Bead {
 		int express;		//New expression state.
 
 		Regulator();
+		Regulator(int typ, int thr, int act, bool sig[], bool seq[], int exp);
 		explicit Regulator(const Regulator &reg);
 		virtual Bead* Regulator() const;
 		void RandomRegulator();

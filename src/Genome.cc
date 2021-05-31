@@ -40,7 +40,7 @@ void Genome::UpdateExpression(list<Bead*>* ExpressedGenes)
 	it = BeadList->begin();
 	while (it != BeadList->end())
 	{
-		wb = WhatBead(*it)
+		wb = WhatBead(*it);
 		if (wb=='R')
 		{
 			Regulator* reg = dynamic_cast<Regulator*>(*it);
@@ -94,13 +94,12 @@ void Genome::SetExpression(list<Bead*>* ExpressedGenes, bool Updating)
 	it = BeadList->begin();
 	while (it != BeadList->end())
 	{
-		wb = WhatBead(*it);
-		if (wb=='R')
+		if (WhatBead(*it)=='R')
 		{
 			//See similar potential issue in UpdateExpression() and in BindingAffinity().
 			Regulator* reg = dynamic_cast<Regulator*>(*it);
 
-			if (Updating)								reg->expression = reg->express;		//If we have just updated gene states, expression should be read from "express". Otherwise we might just want to update ExpressedGenes (as in Mitosis).
+			if (Updating)								reg->expression = reg->express;		//If we have just updated gene states, expression should be read from "express". Otherwise we might just want to update ExpressedGenes (as in Mitosis or during initialisation).
 			if (reg->expression > 0)		ExpressedGenes->push_back(reg);
 		}
 	}
@@ -871,15 +870,108 @@ void Genome::CopyPartOfGenome(i_bead begin, i_bead end)
 
 void Genome::ReadGenome(string genome)
 {
+	//Blueprint for this function is ReadBeadsFromString() in Prokaryotes. See that function for detailed comments.
+
+	char* bead, signalp_buffer, sequence_buffer;
+	int success, q, type, threshold, activity;
+	Regulator* reg;
+	House* house;
+	Bsite* bsite;
+
 	BeadList = new list<Bead*>();
 
-	//Here the content of ReadBeadsFromString...
+	bead = strtok((char*)genome.c_str(),".");
+	while (bead != NULL)
+	{
+		if(bead[1] == 'R')
+		{
+			signalp_buffer = new char[signalp_length+2];
+			sequence_buffer = new char[sequence_length+2];
+			success = sscanf(bead, "(G%d:%d:%d:%s:%s)", &type, &threshold, &activity, signalp_buffer, sequence_buffer);
+			if(success != 5) cerr << "Could not find sufficient information for this regulatory gene. Genome file potentially corrupt. \n" << endl;
+
+			ReadBuffer(signalp_buffer, signalp, ':');
+			ReadBuffer(sequence_buffer, sequence, ')');
+
+			reg = new Regulator(type, threshold, activity, signalp, sequence, 0);
+			(*BeadList).push_back(reg);
+			gnr_regulators++;
+			g_length++;
+			delete [] sequence_buffer;
+			delete [] signalp_buffer;
+			sequence_buffer = NULL;
+			signalp_buffer = NULL;
+		}
+		else if(bead[1] == 'H')
+		{
+			house = new House();
+			(*BeadList).push_back(house);
+			gnr_houses++;
+			g_length++;
+		}
+		else
+		{
+			sequence_buffer = new char[sequence_length+2];
+			success = sscanf(bead, "(%d:%s)", &activity, sequence_buffer);
+			if(success != 2) cerr << "Could not find sufficient information for this binding site. Genome file potentially corrupt. \n" << endl;
+
+			ReadBuffer(sequence_buffer, sequence, ')');
+
+			bsite = new Bsite(activity, sequence);
+			(*BeadList).push_back(bsite);
+			g_length++;
+			delete [] sequence_buffer;
+			sequence_buffer = NULL;
+		}
+
+		bead = strtok(NULL, ".");
+	}
 
 	fork_position = 0;
 	terminus_position = g_length;
 }
 
+void Genome::ReadBuffer(string buffer, bool* array, char stop_sign)
+{
+	int q = 0;
+	while(buffer[q] != stop_sign)
+	{
+		array[q] = (buffer[q]=='1');
+		q++;
+	}
+}
+
 void Genome::ReadExpression(string expression)
 {
+	string data;
+	char* token;
+	int i;
+	i_bead it;
+	Regulator* reg;
 
+	data = expression.substr(1,expression.size()-2);
+	token = strtok((char*)data.c_str(),", ");
+
+	it = BeadList->begin();
+	for(i=0; i<gnr_regulators; i++)
+	{
+		while (it != BeadList->end() && WhatBead(*it) != 'R') it++;
+
+		if (it == BeadList->end())
+		{
+			cerr << "Found too many expression states. Expression file potentially corrupt.\n" << endl;
+			exit(1);
+		}
+		else if (token == NULL)
+		{
+			cerr << "Could not find sufficient expression states. Expression file potentially corrupt.\n" << endl;
+			exit(1);
+		}
+
+		reg = dynamic_cast<Regulator*>(*it);
+		reg->expression = atoi(token);
+		token = strtok(NULL, ", ");
+		it++;
+	}
+	
 }
