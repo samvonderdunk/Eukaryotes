@@ -36,6 +36,12 @@ void Population::UpdatePopulation()
 	i_symbiont iS;
 	Organelle* SymbiontCopy;
 
+	// if(Time%TimeSaveGrid==0)	PrintFieldToFile();
+	// if(Time%TimePruneFossils==0 && Time!=0)	PruneFossilRecord();
+	// if(Time%TimeOutputFossils==0 && Time!=0)	Fossils->ExhibitFossils();
+	// if(Time%TimeSaveBackup==0 && Time!=0)	OutputBackup();
+	if(Time%TimeTerminalOutput==0)	ShowGeneralProgress();
+
 	for(u=0; u<NR*NC; u++) update_order[u]=u;
 	random_shuffle(&update_order[0], &update_order[NR*NC]);	//Is also set by initial_seed through srand(initial_seed), see World.cc
 
@@ -228,14 +234,14 @@ void Population::InitialisePopulation()
 {
 	Cell* CellZero;
 	Cell* CellOne;
-	int row, col;
+	int i, j;
 
 	//First create one Cell.
 	CellZero = new Cell();
 	CellZero->InitialiseCell(id_count);
 
 	//Now fill the field with this cell.
-	for(row=0; row<NR; row++) for(col=0; col<NC; col++){
+	for(i=0; i<NR; i++) for(j=0; j<NC; j++){
 		// if(row<20 && col<20)	//Initialise square
 		if (uniform() < 0.1)	//Initialise lower density
 		{
@@ -243,11 +249,42 @@ void Population::InitialisePopulation()
 			CellOne = new Cell();
 			CellOne->CloneCell(CellZero, id_count);
 			CellOne->Ancestor = NULL;
-			Space[row][col] = CellOne;
+			Space[i][j] = CellOne;
 			//Fossils something...
 		}
 	}
 
 	delete CellZero;	//I cannot delete PP_Copy, because each is actually turned into one of grid spaces. I can however delete this single bit of memory.
 	CellZero = NULL;
+}
+
+
+void Population::ShowGeneralProgress()
+{
+	int i, j, host_count=0, symbiont_count=0;
+	int stage_counts[6] = {0, 0, 0, 0, 0, 0};
+	i_symbiont iS;
+
+	for (i=0; i<NR; i++) for(j=0; j<NC; j++)
+	{
+		if ( Space[i][j] != NULL )
+		{
+			host_count++;
+			symbiont_count += Space[i][j]->nr_symbionts;
+			stage_counts[Space[i][j]->Host.Stage]++;
+			iS = Space[i][j]->SymbiontList->begin();
+			while (iS != Space[i][j]->SymbiontList->end())
+			{
+				stage_counts[(*iS).Stage]++;
+				iS++;
+			}
+		}
+	}
+
+	cout << "Time " << Time;
+	cout << "\tHosts " << host_count;
+	cout << "\tSymbionts " << symbiont_count;
+	for (i=0; i<6; i++)	cout << "\tS(" << i << ") " << stage_counts[i];
+	cout << endl;
+
 }

@@ -29,6 +29,8 @@ class Population
 		double CollectNutrients(int i, int j);
 
 		void InitialisePopulation();
+
+		void ShowGeneralProgress();
 };
 
 #endif

@@ -55,6 +55,7 @@ const double epsilon = 1.00;
 //Runtime and output parameters
 const int TimeZero=0;
 const int default_SimTime=1000000;
+const int TimeTerminalOutput=1;
 
 //Population parameters
 const double death_rate_host = 0.001;
