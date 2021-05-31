@@ -11,6 +11,7 @@ class Regulator : public Bead {
 		int threshold; //At what regulatory effect does the gene start to become expressed.
 		int activity;
 		bool sequence[sequence_length];
+		bool signalp[signalp_length];
 		int expression;	//Current expression state.
 		int express;		//New expression state.
 
