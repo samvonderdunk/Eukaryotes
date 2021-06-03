@@ -5,7 +5,6 @@
 #include "Bead.hh"
 #include "Regulator.hh"
 #include "Bsite.hh"
-#include "Transporter.hh"
 #include "House.hh"
 #include <typeinfo>
 
@@ -22,9 +21,8 @@ class Genome {
   Genome();
   ~Genome();
 
-	void UpdateExpression(list<Bead*>* ExpressedGenes);
-	void EraseExpression(list<Bead*>* ExpressedGenes);
-	void SetExpression(list<Bead*>* ExpressedGenes, bool Updating);
+	void UpdateGeneExpression(list<Bead*>* ExpressedGenes);
+	void NativeExpression(list<Bead*>* ExpressedGenes);
 	i_bead RegulatorCompetition(i_bead i_bsite, list<Bead*>* ExpressedGenes);
 
 	void ReplicateStep(double resource);
@@ -32,6 +30,7 @@ class Genome {
 	void SplitGenome(Genome* parentG);
 	void DevelopChildrenGenomes(Genome* parentG);
 	void PotentialTypeChange(i_bead ii);
+	int CountTypeAbundance(int type);
 
 	//Mutation functions.
 	i_bead MutateRegulator(i_bead it, int* pdel_length);
@@ -63,51 +62,12 @@ class Genome {
 
 	void ReadGenome(string genome);
 	void ReadExpression(string expression);
-	void ReadBuffer(string buffer, bool* array, char stop_sign);
+	void ReadBuffer(string buffer, bool* array, char start_sign, char stop_sign);
 
+	int WhatBead(Bead* bead) const;
+	int BindingAffinity(bool* sequenceA, bool* sequenceB) const;
 
-	inline char WhatBead(Bead* bead) const
-	//Testing; if this is not working, go back to seperate check functions and/or without inline.
-	//Advantage of this is that I now have a single function, possible disadvantage may be slower speed.
-	{
-		switch ( (int)(typeid(*bead) )
-		{
-			case typeid(Regulator):
-				return 'R'
-			case typeid(Bsite):
-				return 'B'
-			case typeid(House):
-				return 'H'
-		}
-	}
-
-	inline int BindingAffinity(Bead* bead1, Bead* bead2)
-	{
-	//Testing; same as above. In addition, look at faster ways to do bitstring comparisons (or storage of bitstrings).
-	//If this flexible b1/b2 calling does not work, perhaps try with passing the sequence directly? If it is inline, maybe this does not cost anything extra.
-	//In addition, perhaps it could be useful to only store sequences as integers, but unpack them as their true binary strings only in this function...
-		switch (WhatBead(bead1))
-		{
-			case 'R':
-				Regulator* b1 = dynamic_cast<Regulator*>(bead1);
-			case 'B':
-				Bsite* b1 = dynamic_cast<Bsite*>(bead1);
-		}
-		switch (WhatBead(bead2))
-		{
-			case 'R':
-				Regulator* b2 = dynamic_cast<Regulator*>(bead2);
-			case 'B':
-				Bsite* b2 = dynamic_cast<Bsite*>(bead2);
-		}
-
-		int affinity = 0;
-		for (int i=0;i<sequence_length;i++)
-		{
-			if (b1->sequence[i] != b2->sequence[i])	affinity++;
-		}
-		return affinity;
-	}
+	string Show(list<Bead*>* chromosome, bool terminal, bool only_parent);
 
 };
 #endif

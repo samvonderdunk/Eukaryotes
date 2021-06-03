@@ -1,9 +1,12 @@
 #include "Header.hh"
 #include "Population.hh"
-#include "Prokaryote.hh"
+#include "Cell.hh"
+#include "Organelle.hh"
 #include "Genome.hh"
-#include "Gene.hh"
-#include "TFBS.hh"
+#include "Regulator.hh"
+#include "Bsite.hh"
+#include "House.hh"
+#include "Bead.hh"
 #include "dSFMT.h"
 
 dsfmt_t dsfmt;
@@ -16,6 +19,8 @@ string expression_initialisation = expression_file;
 string backup_reboot = backup_file;
 string anctrace_reboot = anctrace_file;
 int SimTime = default_SimTime;
+bool mutations_on = true;
+bool follow_single_individual = false;
 
 void Setup(int argc, char** argv);
 
@@ -31,12 +36,18 @@ int main(int argc, char** argv) {
 	srand(initial_seed);	//Used to seed random_shuffle(...).
 	printf("\b\nSetup completed...\n\n");
 
+	if (follow_single_individual)
+	{
+		printf("\033[93m### Start ###\033[0m\n");
+		// P = new Population();
+		// P->FollowSingleIndividual();
+	}
 	else
 	{
 		/* ############## Initialisation ############## */
 		printf("\033[93m### Initialisation ###\033[0m\n");
 		P = new Population();
-		if(backup_reboot != "")	P->ContinuePopulationFromBackup();
+		if(backup_reboot != "")	delete P;//P->ContinuePopulationFromBackup();
 		else	P->InitialisePopulation();
 		printf("Initialisation completed...\n\n");
 
@@ -56,7 +67,7 @@ int main(int argc, char** argv) {
 	printf("\033[93m### End ###\033[0m\n");
 	delete P;
 	P = NULL;
-	printf("Prokaryotes completed...\n\n");
+	printf("Eukaryotes completed...\n\n");
 
 }
 
@@ -71,6 +82,10 @@ void Setup(int argc, char** argv) {
 	for(int i=1;i<argc;i++)	//Loop through input arguments.
 	{
 		ReadOut = (char*) argv[i];	//There does not seem to be a quicker way to compare the input arguments with a string.
+
+		/* ############## */
+		/* INPUT SETTINGS */
+		/* ############## */
 
 		if(ReadOut=="-s" && (i+1)!=argc)
 		{
@@ -96,7 +111,7 @@ void Setup(int argc, char** argv) {
 			etc..
 		*/
 
-		else if(ReadOut=="-i" && (i+1)!=argc)
+		else if(ReadOut=="-g" && (i+1)!=argc)
 		{
 			genome_initialisation = argv[i+1];
 			printf("Genome input: %s\n", genome_initialisation.c_str());
@@ -111,7 +126,7 @@ void Setup(int argc, char** argv) {
 			etc..
 		*/
 
-		else if(ReadOut=="-g" && (i+1)!=argc)
+		else if(ReadOut=="-e" && (i+1)!=argc)
 		{
 			expression_initialisation = argv[i+1];
 			printf("Expression input: %s\n", expression_initialisation.c_str());
@@ -141,6 +156,23 @@ void Setup(int argc, char** argv) {
 			printf("Simulation time: %d\n", SimTime);
 			i++;
 			continue;
+		}
+
+		/* ########### */
+		/* RUN OPTIONS */
+		/* ########### */
+
+		else if(ReadOut=="-nomut")
+		{
+			mutations_on = false;
+			printf("Simulating without mutations.\n");
+		}
+
+		//Follow a single immortal individual for many time steps.
+		else if(ReadOut=="-S")
+		{
+			follow_single_individual = true;
+			printf("Following a single, immortal individual through time.\n");
 		}
 
 		else	//Print usage/help.

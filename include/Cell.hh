@@ -26,7 +26,7 @@ class Cell{
 		void TransferGene(i_bead it, Organelle* Source, Organelle* Target);
 		void TransferBead(i_bead it, Organelle* Target);
 
-		void InitialiseCell(unsigned long long id_count);
+		void InitialiseCell();
 		void CloneCell(Cell* ImageC, unsigned long long id_count);
 
 };

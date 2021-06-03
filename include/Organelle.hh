@@ -9,6 +9,7 @@ class Organelle{
 		int Stage;
 		bool privilige;
 		std::list<Bead*>* ExpressedGenes;
+		int nr_native_expressed;
 		Genome* G;
 		double fitness;
 		bool mutant;
@@ -18,15 +19,15 @@ class Organelle{
 		Organelle();
 		~Organelle();
 
-		void UpdateExpression();	//Mostly defers to Genome-level function.
 		void UpdateState();
-		int EvaluateState(int eval_state);
+		int EvaluateState(int eval_state, int* readout);
 
 		void Mitosis(Organelle* parent, unsigned long long id_count);
 		void Replicate(double resource);
 
 		void InitialiseOrganelle(string genome, string expression);
 		void CloneOrganelle(Organelle* ImageO);
+		string ShowExpression();
 
 };
 

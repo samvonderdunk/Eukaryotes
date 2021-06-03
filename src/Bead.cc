@@ -1,11 +1,14 @@
 #include "Bead.hh"
 
-Bead::Bead(){
+Bead::Bead()
+{
 	duplicate=false;
 }
 
-Bead::~Bead(){
+Bead::~Bead()
+{
 }
 
-Bead::Bead(const Bead &b){
+Bead::Bead(const Bead &b)
+{
 }

@@ -4,49 +4,33 @@ Organelle::Organelle()
 {
 	Stage=0;
 	privilige=false;
-	ExpressedGenes=NULL;
-	G=NULL;
-	fitness=0.;
+	fitness=1.;
 	mutant = false;
+	G = NULL;
+	G = new Genome();
+	ExpressedGenes = NULL;
+	ExpressedGenes = new list<Bead*>();
+	nr_native_expressed = 0;
 }
 
 Organelle::~Organelle()
 {
 	i_bead it;
 
-	if(ExpressedGenes!=NULL)
-	{
-		it=ExpressedGenes->begin();
-		while(it!=ExpressedGenes->end())
-		{
-			delete (*it);
-			it++;
-		}
+	//We only delete the list of pointers, they point to the things in the genome G, so we will remove the actual genes below (or they might actually be genes from different genomes in which case we also don't want to delete them).
+	it = ExpressedGenes->erase(ExpressedGenes->begin(), ExpressedGenes->end());
+	delete ExpressedGenes;
+	ExpressedGenes = NULL;
 
-		it=ExpressedGenes->erase(ExpressedGenes->begin(), ExpressedGenes->end());
-		delete ExpressedGenes;
-		ExpressedGenes=NULL;
-	}
-
-	if (G!=NULL)
-	{
-		delete (G);
-		G=NULL;
-	}
-}
-
-void Organelle::UpdateExpression()
-{
-	G->UpdateExpression(ExpressedGenes);	//Starts after regulator transport and ends with only native organelle expression. Updates gene "express" variables using ExpressedGenes.
-	G->EraseExpression(ExpressedGenes);
-	G->SetExpression(ExpressedGenes, true);	//Transfer new expression states to ExpressedGenes (iterators of expressed genes).
+	delete G;
+	G = NULL;
 }
 
 void Organelle::UpdateState()
 {
-	int* readout[5] = {0, 0, 0, 0, 0};	//States of the five cell-cycle regulators.
+	int readout[5] = {0, 0, 0, 0, 0};	//States of the five cell-cycle regulators.
 	i_bead it, it2;
-	Regulator* reg, reg2;
+	Regulator* reg, *reg2;
 
 	int eval_state = Stage;
 	if (Stage == 2   &&   G->fork_position != G->terminus_position)	eval_state--;	//You cannot proceed to G2 without finishing replication.
@@ -56,25 +40,25 @@ void Organelle::UpdateState()
 	it = ExpressedGenes->begin();
 	while (it != ExpressedGenes->end())
 	{
-		if (G->WhatBead(*it)=='R')
+		if (G->WhatBead(*it)==REGULATOR)
 		{
 			reg = dynamic_cast<Regulator*>(*it);
-			if (distance(ExpressedGenes,it) < G->gnr_regulators)	//Native genes from the organelle itself; just look at the type.
+			if (distance(ExpressedGenes->begin(),it) < nr_native_expressed)	//Native genes from the organelle itself; just look at the type.
 			{
-				if (reg->type < 5)
+				if (reg->type < 6)
 				{
 					readout[reg->type-1] += reg->expression;	//In case expression can ever be something beside 0 and 1 (otherwise you could just do ++).
 				}
 			}
-			else	//Leaked/transported genes from other organelles; see if they match one of the 5 key regulator types in the current organelle; if not, not interesting for the state of the cell (i.e. do nothing).
+			else	//Leaked/transported genes from other organelles; see if they match one of the 5 key regulator types in the current organelle; if not, not interesting for the state of the cell (i.e. do nothing). If you don't want to involve foreign expression in organelle state, exclude this entire part.
 			{
 				it2 = G->BeadList->begin();
 				while (it2 != G->BeadList->end())
 				{
-					if (G->WhatBead(*it2)=='R')
+					if (G->WhatBead(*it2)==REGULATOR)
 					{
 						reg2 = dynamic_cast<Regulator*>(*it2);
-						if ( G->BindingAffinity(reg, reg2) == 0   &&   reg->activity == reg2->activity)
+						if ( G->BindingAffinity(reg->sequence, reg2->sequence) == 0   &&   reg->activity == reg2->activity)
 						{
 							readout[reg2->type-1] += reg->expression;	//Add the expression of this type to the native type that it resembles.
 						}
@@ -99,7 +83,7 @@ int Organelle::EvaluateState(int eval_state, int* readout)
 
 	for (i=0;i<5;i++)
 	{
-		if (readout[i] == StageTargets[eval_state][i])
+		if ((readout[i]>0) == StageTargets[eval_state][i])
 			match++;
 	}
 
@@ -112,12 +96,6 @@ void Organelle::Mitosis(Organelle* parent, unsigned long long id_count)
 
 	parent->Stage = 0;
 	privilige = false;
-
-	//Reset expression in parent and daughter by reading gene states.
-	parent->G->EraseExpression(parent->ExpressedGenes);
-	parent->G->SetExpression(parent->ExpressedGenes, false);
-	G->EraseExpression(ExpressedGenes);
-	G->SetExpression(ExpressedGenes, false);
 
 	if (house_duplication_mu > 0.0 || house_deletion_mu > 0.0)	//Only if they can actually be gained or lost.
 	{
@@ -138,7 +116,8 @@ void Organelle::InitialiseOrganelle(string genome, string expression)
 	mutant = true;
 	G->ReadGenome(genome);
 	G->ReadExpression(expression);
-	G->SetExpression(ExpressedGene, false);
+	cout << G->Show(NULL, true, false) << endl;
+	// G->SetExpression(ExpressedGenes, false);
 }
 
 void Organelle::CloneOrganelle(Organelle* ImageO)
@@ -150,5 +129,26 @@ void Organelle::CloneOrganelle(Organelle* ImageO)
 
 	//First copy the genome, then the expression list can be updated (because we want pointers to the new genome!).
 	G->CloneGenome(ImageO->G);
-	G->SetExpression(ExpressedGenes, false);
+	// G->SetExpression(ExpressedGenes, false);
+}
+
+string Organelle::ShowExpression()
+{
+	string ExpressionContent="[";
+	i_bead it;
+	Regulator* reg;
+
+	it = ExpressedGenes->begin();
+	while (it != ExpressedGenes->end())
+	{
+		std::stringstream ss;
+		reg = dynamic_cast<Regulator*>(*it);
+		if (distance(ExpressedGenes->begin(),it) != 0)	ss << ",";
+		ss << reg->type << ":" << reg->expression;
+		ExpressionContent += ss.str();
+		ss.clear();
+		it++;
+	}
+	ExpressionContent += "]";
+	return ExpressionContent;
 }

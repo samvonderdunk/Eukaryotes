@@ -30,6 +30,9 @@ using namespace std;
 // #include "/home/sam/Programmes/nvwa-1.1/nvwa/debug_new.h"
 
 #define toDigit(c) (c-'0')  // Converts char to digit
+#define REGULATOR 0
+#define BSITE 1
+#define HOUSE 2
 
 //Bead variables
 const int sequence_length = 20;
@@ -37,10 +40,11 @@ const int signalp_length = 1;	//As long as I am not using it, make it small.
 
 //Grid size and host size, setting the dimensions of the model.
 const int NR=50;
-const int NC=550;	//Gradient is over columns.
+const int NC=50;	//Gradient is over columns.
 
 //Main settings
 const bool relative_replication = false;	//Remove selection against genome size by scaling replication length with genome length.
+const int rel_repl_full = 65;	//If we're doing relative replication, how many nutrients are considered to be needed for replication of the entire genome.
 const bool gene_replication = false;	//Only genes take time to replicate.
 
 //Genome parameters
@@ -61,7 +65,7 @@ const int TimeTerminalOutput=1;
 const double death_rate_host = 0.001;
 const double death_rate_symbiont = 0.001;
 const double nutrient_abundance = 100.;
-const double max_organelle_density = 100.;	//k, number of organelles at which point nutrients will be completely depleted.
+const double max_organelle_density = 100.;	//Only used with the relative nutrient function; k, number of organelles at which point nutrients will be completely depleted.
 
 /* MUTATION PARAMETERS */
 const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
@@ -85,6 +89,7 @@ const double bsite_shuffle_mu = 0.001;
 
 const double house_duplication_mu = 0.0001;
 const double house_deletion_mu = 0.0001;
+const double house_innovation_mu = 0.0;
 const double house_shuffle_mu = 0.001;
 
 //Transfer mutations.
@@ -105,6 +110,7 @@ extern string expression_initialisation;
 extern string backup_reboot;
 extern string anctrace_reboot;
 extern int SimTime;
+extern bool mutations_on;
 
 extern dsfmt_t dsfmt;
 inline double uniform()

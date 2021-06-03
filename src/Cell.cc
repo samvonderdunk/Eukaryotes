@@ -2,8 +2,11 @@
 
 Cell::Cell()
 {
-	Host=NULL;
-	SymbiontList=NULL;
+	nr_symbionts = 0;
+	Host = NULL;
+	Host = new Organelle();
+	SymbiontList = NULL;
+	SymbiontList = new list<Organelle*>();
 }
 
 Cell::~Cell()
@@ -11,51 +14,61 @@ Cell::~Cell()
 	i_symbiont iS;
 
 	delete Host;
-	Host=NULL;
+	Host = NULL;
 
-	if(SymbiontList!=NULL) {
-		iS=SymbiontList->begin();
-		while(iS!=SymbiontList->end()) {
-			delete (*iS);
-			iS++;
-		}
-
-		iS=SymbiontList->erase(SymbiontList->begin(),SymbiontList->end());
-		delete SymbiontList;
-		SymbiontList=NULL;
+	iS = SymbiontList->begin();
+	while (iS != SymbiontList->end())
+	{
+		delete (*iS);
+		iS++;
 	}
+
+	iS = SymbiontList->erase(SymbiontList->begin(),SymbiontList->end());
+	delete SymbiontList;
+	SymbiontList = NULL;
 }
 
 void Cell::UpdateOrganelles()
 {
-	int i;
+	i_bead it;
 	i_symbiont iS;
 
-	Host->UpdateExpression();
+	//First determine gene expression (by making the ExpressedGenes list), then use this to determine movement of expressed genes, then update the organelle state, and lastly update gene expression on the actual genes. This updated gene expression will change the organelle state the next timestep during UpdateOrganelles.
+
+	//Set up the expression lists.
+	Host->G->NativeExpression(Host->ExpressedGenes);
+	Host->nr_native_expressed = (int)Host->ExpressedGenes->size();
 	iS = SymbiontList->begin();
-	while(iS != SymbiontList->end())
+	while (iS != SymbiontList->end())
 	{
-		(*iS)->UpdateExpression();
+		(*iS)->G->NativeExpression((*iS)->ExpressedGenes);
+		(*iS)->nr_native_expressed = (int)(*iS)->ExpressedGenes->size();
 		iS++;
 	}
 
-	RegulatorTransport();
 
-	Host->UpdateState();
+	RegulatorTransport();	//Move around expression products.
+
+	Host->UpdateState();	//Update organelle state. If foreign products should not interfere with organelle state, put that in the UpdateState() function.
+	Host->G->UpdateGeneExpression(Host->ExpressedGenes);	//Update gene expression states.
+	it = Host->ExpressedGenes->erase(Host->ExpressedGenes->begin(), Host->ExpressedGenes->end());	//Erase ExpressedGenes to avoid conflicts with pointers during cell dynamics.
+	Host->nr_native_expressed = 0;
+
 	iS = SymbiontList->begin();
 	while(iS != SymbiontList->end())
 	{
 		(*iS)->UpdateState();
+		(*iS)->G->UpdateGeneExpression((*iS)->ExpressedGenes);
+		it = (*iS)->ExpressedGenes->erase((*iS)->ExpressedGenes->begin(), (*iS)->ExpressedGenes->end());
+		(*iS)->nr_native_expressed = 0;
 		iS++;
 	}
-
-	//RegulatorTransport();	//You can do it here if leaking proteins should not affect cell-cycle stage (or before UpdateExpression(), which would be identical).
 }
 
 void Cell::RegulatorTransport()
 {
 	i_bead it;
-	int i, nr_native_host_genes;
+	int nr_native_host_genes;
 	i_symbiont iS;
 
 	nr_native_host_genes = (int) Host->ExpressedGenes->size();
@@ -89,7 +102,7 @@ void Cell::RegulatorTransport()
 
 bool Cell::ActiveTransport(i_bead it, list<Bead*>* SourceCompartment, list<Bead*>* TargetCompartment)
 {
-	//For future use: if transporters are expressed, they can here lead to very likely transport of genes.
+	//For future use: based on signal peptides of proteins, more protein movement can occur.
 	//Maybe passing BeadLists is a bit cumbersome as well...
 	return false;	//For now, there will be no active transport.
 }
@@ -97,7 +110,6 @@ bool Cell::ActiveTransport(i_bead it, list<Bead*>* SourceCompartment, list<Bead*
 
 void Cell::DNATransferToHost()
 {
-	int i;
 	i_bead it, insertsite;
 	i_symbiont iS;
 
@@ -109,14 +121,17 @@ void Cell::DNATransferToHost()
 			it = (*iS)->G->BeadList->begin();
 			while (it != (*iS)->G->BeadList->end())
 			{
-				switch (*iS)->G->WhatBead(*it)
+				switch ( (*iS)->G->WhatBead(*it) )
 				{
-					case 'R':
-						if (uniform() < regulator_transfer_mu_StoH)	TransferGene(it, Host);
-					case 'B':
-						if (uniform() < bsite_transfer_mu_StoH) TransferBead(it, Host)
-					case 'H':
+					case REGULATOR:
+						if (uniform() < regulator_transfer_mu_StoH)	TransferGene(it, (*iS), Host);
+						break;
+					case BSITE:
+						if (uniform() < bsite_transfer_mu_StoH) TransferBead(it, Host);
+						break;
+					case HOUSE:
 						if (uniform() < house_transfer_mu_StoH)	TransferBead(it, Host);
+						break;
 				}
 				it++;
 			}
@@ -130,14 +145,17 @@ void Cell::DNATransfertoSymbiont(Organelle* Symbiont)
 	i_bead it = Host->G->BeadList->begin();
 	while( it != Host->G->BeadList->end() )
 	{
-		switch Host->G->WhatBead(*it)
+		switch ( Host->G->WhatBead(*it) )
 		{
-			case 'R':
-				if (uniform() < regulator_transfer_mu_HtoS) TransferGene(it, Symbiont);
-			case 'B':
-				if (uniform() < bsite_transfer_mu_HtoS) TransferGene(it, Symbiont);
-			case 'H':
-				if (uniform() < house_transfer_mu_HtoS) TransferGene(it, Symbiont);
+			case REGULATOR:
+				if (uniform() < regulator_transfer_mu_HtoS) TransferGene(it, Host, Symbiont);
+				break;
+			case BSITE:
+				if (uniform() < bsite_transfer_mu_HtoS) TransferBead(it, Symbiont);
+				break;
+			case HOUSE:
+				if (uniform() < house_transfer_mu_HtoS) TransferBead(it, Symbiont);
+				break;
 		}
 		it++;
 	}
@@ -176,15 +194,19 @@ void Cell::TransferBead(i_bead it, Organelle* Target)
 	i_bead insertsite = Target->G->FindRandomPosition(true);
 	Target->G->BeadList->insert(insertsite, bead);
 	Target->G->g_length++;
-	switch Target->G->WhatBead(bead)
+	switch ( Target->G->WhatBead(bead) )
 	{
-		case 'B':	Target->G->gnr_bsites++;
-		case 'H':	Target->G->gnr_houses++;
+		case BSITE:
+			Target->G->gnr_bsites++;
+			break;
+		case HOUSE:
+			Target->G->gnr_houses++;
+			break;
 	}
 	Target->G->is_mutated = true;
 }
 
-void Cell::InitialiseCell(unsigned long long id_count)
+void Cell::InitialiseCell()
 {
 	int i=0;
 	ifstream in_genome(genome_initialisation.c_str());
@@ -212,7 +234,6 @@ void Cell::InitialiseCell(unsigned long long id_count)
 
 		if (i==0)
 		{
-			Host = new Organelle();
 			Host->InitialiseOrganelle(genome, expression);
 		}
 
@@ -221,9 +242,9 @@ void Cell::InitialiseCell(unsigned long long id_count)
 			Symbiont = new Organelle();
 			Symbiont->InitialiseOrganelle(genome, expression);
 			SymbiontList->push_back(Symbiont);
+			nr_symbionts++;
 		}
 
-		id_count++;
 		i++;
 	}
 
@@ -231,13 +252,13 @@ void Cell::InitialiseCell(unsigned long long id_count)
 }
 
 
-void CellOne::CloneCell(Cell* ImageC, unsigned long long id_count)
+void Cell::CloneCell(Cell* ImageC, unsigned long long id_count)
 {
-	int i;
 	i_symbiont iS;
 	Organelle* Symbiont;
 
-	Host = new Organelle();
+	nr_symbionts = ImageC->nr_symbionts;
+
 	Host->CloneOrganelle(ImageC->Host);
 	id_count++;
 

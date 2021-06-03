@@ -3,7 +3,7 @@
 
 #include "Header.hh"
 #include "Cell.hh"
-#include "FossilRecord.hh"
+#include "Fossils.hh"
 // #include <cstdio>
 // #include <stdlib.h>
 
@@ -11,8 +11,8 @@ class Population
 {
 	public:
 		Cell* Space[NR][NC];
-		// FossilRecord* HostFossils;
-		// FossilRecord* SymbiontFossils;
+		// Fossils* HostFossils;
+		// Fossils* SymbiontFossils;
 
 		unsigned long long id_count;
 
@@ -23,7 +23,7 @@ class Population
 		~Population();
 
 		void UpdatePopulation();
-		void DeathOfSymbiont(int i, int j, i_symbiont iS);
+		i_symbiont DeathOfSymbiont(int i, int j, i_symbiont iS);
 		void DeathOfHost(int i, int j);
 		coords PickNeighbour(int i, int j);
 		double CollectNutrients(int i, int j);

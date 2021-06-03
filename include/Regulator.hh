@@ -18,9 +18,10 @@ class Regulator : public Bead {
 		Regulator();
 		Regulator(int typ, int thr, int act, bool sig[], bool seq[], int exp);
 		explicit Regulator(const Regulator &reg);
-		virtual Bead* Regulator() const;
+		virtual ~Regulator();
+
+		virtual Bead* Clone() const;
 		void RandomRegulator();
-		~Regulator();
 
 };
 
