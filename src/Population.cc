@@ -31,9 +31,9 @@ void Population::UpdatePopulation()
 	//Currently, update order of cells is random, but per cell it is fixed (first host, then all symbionts in order); this should be changed in the future.
 
 	int update_order[NR*NC];
-	int u, i, j;
+	int u, i, j, s;
 	double nutrients;
-	i_symbiont iS, niS;
+	i_symbiont iS;
 	Organelle* SymbiontCopy;
 
 	// if(Time%TimeSaveGrid==0)	PrintFieldToFile();
@@ -52,8 +52,7 @@ void Population::UpdatePopulation()
 
 		if (Space[i][j] != NULL)	//There is life at this site; so there is a host -- we do host dynamics here, symbiont dynamics are done mostly in Cell.cc??
 		{
-
-			//Here mix the symbionts if any, and them put them all in the first few spaces. So that we get fair order of updating but do not waste time on empty spots.
+			random_shuffle(Space[i][j]->Symbionts->begin(), Space[i][j]->Symbionts->end());
 
 			//Basal death events for hosts and symbionts.
 			if (uniform() < death_rate_host)
@@ -62,11 +61,9 @@ void Population::UpdatePopulation()
 				continue;
 			}
 
-			iS = Space[i][j]->SymbiontList->begin();
-			while(iS != Space[i][j]->SymbiontList->end())
+			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
-				if (uniform() < death_rate_symbiont)	iS = DeathOfSymbiont(i, j, iS);
-				else																	iS++;
+				if (uniform() < death_rate_symbiont)	DeathOfSymbiont(i, j, s);
 			}
 			if (Space[i][j]->Host == NULL)
 			{
@@ -81,11 +78,9 @@ void Population::UpdatePopulation()
 				continue;
 			}
 
-			iS = Space[i][j]->SymbiontList->begin();
-			while(iS != Space[i][j]->SymbiontList->end())
+			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
-				if ( (*iS)->Stage == 5)		iS = DeathOfSymbiont(i, j, iS);
-				else											iS++;
+				if ( Space[i][j]->Symbionts->at(s)->Stage == 5)		DeathOfSymbiont(i, j, s);
 			}
 			if (Space[i][j]->Host == NULL)
 			{
@@ -103,32 +98,14 @@ void Population::UpdatePopulation()
 				Space[neigh.first][neigh.second]->Host = new Organelle();
 				Space[neigh.first][neigh.second]->Host->Mitosis(Space[i][j]->Host, id_count);
 
-				iS = Space[i][j]->SymbiontList->begin();
-				while (iS != Space[i][j]->SymbiontList->end())
+				for (s=0; s<Space[i][j]->nr_symbionts; s++)
 				{
 					if (uniform() < 0.5)	//Transfer the symbiont to the new cell (just a matter of using the right pointers).
 					{
-						niS = iS;
-						niS++;
-						Space[neigh.first][neigh.second]->SymbiontList->splice(Space[neigh.first][neigh.second]->SymbiontList->end(), *Space[i][j]->SymbiontList, iS);
+						Space[neigh.first][neigh.second]->Symbionts->push_back(Space[i][j]->Symbionts->at(s));
+						Space[i][j]->Symbionts->erase(Space[i][j]->Symbionts->begin()+s);	//Should be passed an iterator
 						Space[neigh.first][neigh.second]->nr_symbionts++;
 						Space[i][j]->nr_symbionts--;
-						iS = niS;
-
-						// SymbiontCopy = new Organelle();
-						// SymbiontCopy->CloneOrganelle(*iS);	//Does this work?
-						// Space[neigh.first][neigh.second]->SymbiontList->push_back(SymbiontCopy);
-						// Space[neigh.first][neigh.second]->nr_symbionts++;
-						// iS = DeathOfSymbiont(i, j, iS);
-						// if (Space[i][j]->Host == NULL)
-						// {
-						// 	DeathOfHost(i, j);
-						// 	continue;
-						// }
-					}
-					else
-					{
-						iS++;	//See above, check that the erase does what I expected.
 					}
 				}
 				if (Space[i][j]->nr_symbionts == 0)
@@ -144,19 +121,17 @@ void Population::UpdatePopulation()
 				Space[neigh.first][neigh.second]->DNATransferToHost();
 			}
 
-			iS = Space[i][j]->SymbiontList->begin();
-			while (iS != Space[i][j]->SymbiontList->end())
+			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
-				if ((*iS)->Stage == 4)
+				if (Space[i][j]->Symbionts->at(s)->Stage == 4)
 				{
 					id_count++;
 					SymbiontCopy = new Organelle();
-					SymbiontCopy->Mitosis((*iS), id_count);
-					Space[i][j]->SymbiontList->push_back(SymbiontCopy);
+					SymbiontCopy->Mitosis(Space[i][j]->Symbionts->at(s), id_count);
+					Space[i][j]->Symbionts->push_back(SymbiontCopy);
 					Space[i][j]->DNATransfertoSymbiont(SymbiontCopy);
 					Space[i][j]->nr_symbionts++;
 				}
-				iS++;
 			}
 
 			//Expression dynamics within cell.
@@ -168,32 +143,28 @@ void Population::UpdatePopulation()
 			{
 				Space[i][j]->Host->Replicate(nutrients);
 			}
-
-			iS = Space[i][j]->SymbiontList->begin();
-			while (iS != Space[i][j]->SymbiontList->end())
+			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
-				if ( (*iS)->Stage == 2   &&   (*iS)->privilige == true)
+				if ( Space[i][j]->Symbionts->at(s)->Stage == 2   &&   Space[i][j]->Symbionts->at(s)->privilige)
 				{
-					(*iS)->Replicate(nutrients);
+					Space[i][j]->Symbionts->at(s)->Replicate(nutrients);
 				}
-				iS++;
 			}
 
 		}
 	}
 }
 
-Population::i_symbiont Population::DeathOfSymbiont(int i, int j, i_symbiont iS)
+void Population::DeathOfSymbiont(int i, int j, int s)
 {
-	delete (*iS);
-	iS = Space[i][j]->SymbiontList->erase(iS);
+	delete Space[i][j]->Symbionts->at(s);
+	Space[i][j]->Symbionts->erase(Space[i][j]->Symbionts->begin()+s);	//Should be passed iterator.
 	Space[i][j]->nr_symbionts--;
 	if (Space[i][j]->nr_symbionts == 0)
 	{
 		delete Space[i][j]->Host;	//Host dies, will lead to death of entire cell.
 		Space[i][j]->Host = NULL;
 	}
-	return iS;
 }
 
 void Population::DeathOfHost(int i, int j)
@@ -257,6 +228,7 @@ double Population::CollectNutrients(int i, int j)
 	return (nutrient_abundance - (double)organelle_density) / (double)Space[i][j]->nr_symbionts;
 }
 
+
 void Population::InitialisePopulation()
 {
 	Cell* CellZero;
@@ -299,8 +271,8 @@ void Population::ShowGeneralProgress()
 			host_count++;
 			symbiont_count += Space[i][j]->nr_symbionts;
 			stage_counts[Space[i][j]->Host->Stage]++;
-			iS = Space[i][j]->SymbiontList->begin();
-			while (iS != Space[i][j]->SymbiontList->end())
+			iS = Space[i][j]->Symbionts->begin();
+			while (iS != Space[i][j]->Symbionts->end())
 			{
 				stage_counts[(*iS)->Stage]++;
 				iS++;

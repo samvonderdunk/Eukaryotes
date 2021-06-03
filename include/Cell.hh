@@ -7,12 +7,12 @@
 class Cell{
 	public:
 		Organelle* Host;
-		std::list<Organelle*>* SymbiontList;
-		int nr_symbionts;	//Perhaps I don't need to keep track of this, and could just determine SymbiontList on the go always?
+		std::vector<Organelle*>* Symbionts;
+		int nr_symbionts;	//Perhaps I don't need to keep track of this, and could just determine Symbionts on the go always?
 		//Perhaps will also get its own list of molecules present, and perhaps a hash table for sequence matching...
 
 		typedef std::list<Bead*>::iterator i_bead;
-		typedef std::list<Organelle*>::iterator i_symbiont;
+		typedef std::vector<Organelle*>::iterator i_symbiont;
 
 		Cell();
 		~Cell();
