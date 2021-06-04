@@ -12,7 +12,14 @@ class Organelle{
 		int nr_native_expressed;
 		Genome* G;
 		double fitness;
+
+		//Fossil info.
+		bool alive;
 		bool mutant;
+		int time_of_appearance;
+		unsigned long long fossil_id;
+		Organelle* Ancestor;
+
 
 		typedef std::list<Bead*>::iterator i_bead;
 
@@ -26,8 +33,9 @@ class Organelle{
 		void Replicate(double resource);
 
 		void InitialiseOrganelle(string genome, string expression);
-		void CloneOrganelle(Organelle* ImageO);
+		void CloneOrganelle(Organelle* ImageO, unsigned long long id_count);
 		string ShowExpression();
+		string Show();
 
 };
 

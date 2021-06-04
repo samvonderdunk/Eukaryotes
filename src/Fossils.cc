@@ -6,15 +6,62 @@ Fossils::Fossils()
 
 Fossils::~Fossils()
 {
-	i_fos it;
-	it = FossilRecord.begin();
-	while (it != FossilRecord.end())
+	i_fos iF;
+	iF = FossilRecord.begin();
+	while (iF != FossilRecord.end())
 	{
-		if (*it != NULL)
+		if (*iF != NULL)
 		{
-			delete (*it);
-			it = FossilRecord.erase(it);
+			delete (*iF);
+			iF = FossilRecord.erase(iF);
 		}
-		else	it++;
+		else	iF++;
 	}
+}
+
+void Fossils::EraseFossil(unsigned long long fossilID)
+{
+	i_fos iF;
+	iF = FossilRecord.begin();
+	while (iF != FossilRecord.end())
+	{
+		if ((*iF)->fossil_id == fossilID)
+		{
+			iF = FossilRecord.erase(iF);
+			return;
+		}
+		iF++;
+	}
+}
+
+void Fossils::BuryFossil(Organelle* O)
+{
+	FossilRecord.push_back(O);
+}
+
+void Fossils::ExhibitFossils()
+{
+	FILE* f;
+	char OutputFile[800];
+	i_fos iF;
+	sprintf(OutputFile, "%s/ancestors/anctrace%08d.txt", folder.c_str(), Time);
+	f=fopen(OutputFile, "w");
+
+	if (f == NULL)	printf("Failed to open file for writing the ancestor trace.\n");
+	// fprintf(f, "#id\t#anc_id\t#time_oa\t#genome\n");	//Don't print the header to save space, but at least you know now!
+
+	iF = FossilRecord.begin();
+	while(iF != FossilRecord.end())
+	{
+		if ((*iF)->Ancestor == NULL)
+		{
+			fprintf(f, "%llu\t%d\t%d\t%s\n", (*iF)->fossil_id, 0, (*iF)->time_of_appearance, (*iF)->G->Show(NULL, false, true).c_str());
+		}
+		else
+		{
+			fprintf(f, "%llu\t%llu\t%d\t%s\n", (*iF)->fossil_id, ((*iF)->Ancestor)->fossil_id, (*iF)->time_of_appearance, (*iF)->G->Show(NULL, false, true).c_str());
+		}
+		iF++;
+	}
+	fclose(f);
 }

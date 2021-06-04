@@ -152,11 +152,8 @@ void Genome::ReplicateStep(double resource)
 {
 	i_bead it, start, end;
 	Bead* bead;
-	int gene_length = 0;
-	int repl_remaining_steps;
-	double res_int, res_fract;
-	double fract_repl_remaining;
-	int wb;
+	int gene_length = 0, repl_remaining_steps, wb;
+	double res_int, res_fract, fract_repl_remaining;
 
 	if (relative_replication)	//Modify resource to represent relative replication. Still, the fractional part of the resulting (normalised) resource is seen as a probability.
 	{
@@ -237,7 +234,6 @@ void Genome::SplitGenome(Genome* parentG)	//Used to split a genome upon division
 	i_bead i_split = parentG->BeadList->begin();
 	advance(i_split, parentG->terminus_position);	//terminus_position points to the end of the parental genome, which is now the first bead of the child genome.
 
-	// BeadList=new list<Bead*>();
 	BeadList->splice(BeadList->begin(), *parentG->BeadList, i_split, parentG->BeadList->end());
 
 	DevelopChildrenGenomes(parentG);
@@ -249,11 +245,11 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 {
 	i_bead it;
 	vector<bool>* MutationList;
-	int del_length, dup_length, index;
+	int wb, del_length, dup_length, index, g_length_before_mut;
 	int* pdup_length, * pdel_length;
-	int wb;
 
 	g_length = BeadList->size();
+	g_length_before_mut = g_length;
 
 	//Clean up the variables of the parental genome left behind.
 	it = BeadList->begin();
@@ -389,6 +385,11 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 		}
 
 	}	//END of mutations.
+
+	if(mutations_on)	assert(g_length == g_length_before_mut + (*pdup_length) - (*pdel_length));
+
+	terminus_position = g_length;
+
 }
 
 

@@ -5,12 +5,17 @@ Organelle::Organelle()
 	Stage=0;
 	privilige=false;
 	fitness=1.;
-	mutant = false;
 	G = NULL;
 	G = new Genome();
 	ExpressedGenes = NULL;
 	ExpressedGenes = new list<Bead*>();
 	nr_native_expressed = 0;
+
+	alive = false;
+	mutant = false;
+	time_of_appearance = 0;
+	fossil_id = 0;
+	Ancestor = NULL;
 }
 
 Organelle::~Organelle()
@@ -95,12 +100,18 @@ void Organelle::Mitosis(Organelle* parent, unsigned long long id_count)
 	G->SplitGenome(parent->G);
 
 	parent->Stage = 0;
-	privilige = false;
+	parent->privilige = false;
 
-	if (house_duplication_mu > 0.0 || house_deletion_mu > 0.0)	//Only if they can actually be gained or lost.
-	{
-		fitness = 1. - abs(nr_household_genes - G->gnr_houses) / (float)10;
-	}
+	if (house_duplication_mu > 0.0 || house_deletion_mu > 0.0)	fitness = 1. - abs(nr_household_genes - G->gnr_houses) / (float)10;
+
+	time_of_appearance = Time;
+	fossil_id = id_count;
+	alive = true;
+
+	if (G->is_mutated)	mutant = true;
+
+	if (parent->mutant) Ancestor = parent;
+	else								Ancestor = parent->Ancestor;
 }
 
 void Organelle::Replicate(double resource)
@@ -114,26 +125,30 @@ void Organelle::Replicate(double resource)
 void Organelle::InitialiseOrganelle(string genome, string expression)
 {
 	mutant = true;
+	alive = true;
+	time_of_appearance = 0;	//We don't do anything with id_count, because we will clone the initial organelle.
+
 	G->ReadGenome(genome);
 	G->ReadExpression(expression);
-	cout << G->Show(NULL, true, false) << endl;
-	// G->SetExpression(ExpressedGenes, false);
+	cout << G->Show(NULL, true, false) << endl;	//This should just do the Show() function.
 }
 
-void Organelle::CloneOrganelle(Organelle* ImageO)
+void Organelle::CloneOrganelle(Organelle* ImageO, unsigned long long id_count)
 {
+	fossil_id = id_count;
 	Stage = ImageO->Stage;
 	privilige = ImageO->privilige;
 	fitness = ImageO->fitness;
 	mutant = ImageO->mutant;
+	alive = ImageO->alive;
+	time_of_appearance = ImageO->time_of_appearance;
 
-	//First copy the genome, then the expression list can be updated (because we want pointers to the new genome!).
 	G->CloneGenome(ImageO->G);
-	// G->SetExpression(ExpressedGenes, false);
 }
 
 string Organelle::ShowExpression()
 {
+	//Think about how I want to output this.
 	string ExpressionContent="[";
 	i_bead it;
 	Regulator* reg;
@@ -151,4 +166,11 @@ string Organelle::ShowExpression()
 	}
 	ExpressionContent += "]";
 	return ExpressionContent;
+}
+
+string Organelle::Show()
+{
+	string Content="";
+	//include ID and Ancestor ID.
+	return Content;
 }

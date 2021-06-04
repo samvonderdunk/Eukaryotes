@@ -3,42 +3,49 @@
 Population::Population()
 {
 	int i,j;
-	id_count=0;
+	id_count = 0;
 
 	for(i=0;i<NR;i++) for(j=0;j<NC;j++)
 	{
 		Space[i][j]=NULL;
 	}
+	FossilSpace = new Fossils();
 }
 
-Population::~Population()
+Population::~Population()	//Skips deconstructor of Cell, because we need to check whether organelles are also in the FossilSpace.
 {
-	int i,j;
+	int i,j,s;
 
 	for(i=0;i<NR;i++) for(j=0;j<NC;j++)
 	{
-		if((Space[i][j])!=NULL)
+		if((Space[i][j]) != NULL)
 		{
-			delete (Space[i][j]);
-			Space[i][j]=NULL;
+			if (Space[i][j]->Host->mutant)	FossilSpace->EraseFossil(Space[i][j]->Host->fossil_id);
+			delete Space[i][j]->Host;
+			Space[i][j]->Host = NULL;
+			for (s=0; s<Space[i][j]->nr_symbionts; s++)
+			{
+				if (Space[i][j]->Symbionts->at(s)->mutant)	FossilSpace->EraseFossil(Space[i][j]->Symbionts->at(s)->fossil_id);
+				delete Space[i][j]->Symbionts->at(s);
+				Space[i][j]->Symbionts->at(s) = NULL;
+			}
 		}
 	}
+
+	delete FossilSpace;
+	FossilSpace = NULL;
 }
 
 void Population::UpdatePopulation()
 {
-	//Possible speedups by sorting the symbionts in between certain dynamics...
-	//Currently, update order of cells is random, but per cell it is fixed (first host, then all symbionts in order); this should be changed in the future.
-
 	int update_order[NR*NC];
 	int u, i, j, s;
 	double nutrients;
-	i_symbiont iS;
 	Organelle* SymbiontCopy;
 
 	// if(Time%TimeSaveGrid==0)	PrintFieldToFile();
-	// if(Time%TimePruneFossils==0 && Time!=0)	PruneFossilRecord();
-	// if(Time%TimeOutputFossils==0 && Time!=0)	Fossils->ExhibitFossils();
+	if(Time%TimePruneFossils==0 && Time!=0)	PruneFossilRecord();
+	if(Time%TimeOutputFossils==0 && Time!=0)	FossilSpace->ExhibitFossils();
 	// if(Time%TimeSaveBackup==0 && Time!=0)	OutputBackup();
 	if(Time%TimeTerminalOutput==0)	ShowGeneralProgress();
 
@@ -47,55 +54,55 @@ void Population::UpdatePopulation()
 
 	for(u=0; u<NR*NC; u++)
 	{
-		i = update_order[u]/NC;	//Row index.
-		j = update_order[u]%NC;	//Column index.
+		i = update_order[u]/NC;
+		j = update_order[u]%NC;
 
-		if (Space[i][j] != NULL)	//There is life at this site; so there is a host -- we do host dynamics here, symbiont dynamics are done mostly in Cell.cc??
+		if (Space[i][j] != NULL)
 		{
 			random_shuffle(Space[i][j]->Symbionts->begin(), Space[i][j]->Symbionts->end());
 
-			//Basal death events for hosts and symbionts.
+			/* Basal death */
 			if (uniform() < death_rate_host)
 			{
-				DeathOfHost(i, j);
+				DeathOfCell(i, j);
 				continue;
 			}
-
 			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
-				if (uniform() < death_rate_symbiont)	DeathOfSymbiont(i, j, s);
+				if (uniform() < death_rate_symbiont)
+				{
+					DeathOfSymbiont(i, j, s);
+					Space[i][j]->nr_symbionts--;
+				}
 			}
-			if (Space[i][j]->Host == NULL)
-			{
-				DeathOfHost(i, j);
-				continue;	//After potential symbiont death, the host might have died.
-			}
+			if (CheckCellDeath(i, j))	continue;
+			/* ~Basal death */
 
-			//Failed division events for hosts and endosymbionts.
+			/* Failed division */
 			if (Space[i][j]->Host->Stage == 5)
 			{
-				DeathOfHost(i, j);
+				DeathOfCell(i, j);
 				continue;
 			}
-
 			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
-				if ( Space[i][j]->Symbionts->at(s)->Stage == 5)		DeathOfSymbiont(i, j, s);
+				if ( Space[i][j]->Symbionts->at(s)->Stage == 5)
+				{
+					DeathOfSymbiont(i, j, s);
+					Space[i][j]->nr_symbionts--;
+				}
 			}
-			if (Space[i][j]->Host == NULL)
-			{
-				DeathOfHost(i, j);
-				continue;	//After potential symbiont death, the host might have died.
-			}
+			if (CheckCellDeath(i, j))	continue;
+			/* ~Failed division */
 
-			//Successfull division events for hosts and endosymbionts.
+			/* Division of host */
 			if (Space[i][j]->Host->Stage == 4)
 			{
 				coords neigh = PickNeighbour(i, j);
-				if (Space[neigh.first][neigh.second] != NULL)		DeathOfHost(neigh.first, neigh.second);
-				id_count++;
+				if (Space[neigh.first][neigh.second] != NULL)		DeathOfCell(neigh.first, neigh.second);
 				Space[neigh.first][neigh.second] = new Cell();
 				Space[neigh.first][neigh.second]->Host = new Organelle();
+				id_count++;
 				Space[neigh.first][neigh.second]->Host->Mitosis(Space[i][j]->Host, id_count);
 
 				for (s=0; s<Space[i][j]->nr_symbionts; s++)
@@ -103,43 +110,47 @@ void Population::UpdatePopulation()
 					if (uniform() < 0.5)	//Transfer the symbiont to the new cell (just a matter of using the right pointers).
 					{
 						Space[neigh.first][neigh.second]->Symbionts->push_back(Space[i][j]->Symbionts->at(s));
-						Space[i][j]->Symbionts->erase(Space[i][j]->Symbionts->begin()+s);	//Should be passed an iterator
+						Space[i][j]->Symbionts->erase(Space[i][j]->Symbionts->begin()+s);
 						Space[neigh.first][neigh.second]->nr_symbionts++;
 						Space[i][j]->nr_symbionts--;
 					}
 				}
-				if (Space[i][j]->nr_symbionts == 0)
+				if (CheckCellDeath(i, j))	continue;
+				if (!CheckCellDeath(neigh.first, neigh.second))	//Don't continue, since we have killed a cell at a different site.
 				{
-					DeathOfHost(i, j);
-					continue;
+					Space[neigh.first][neigh.second]->DNATransferToHost();	//Instead, use the cell death check to know whether we need to do DNA transfer.
+					if (Space[neigh.first][neigh.second]->Host->mutant)
+					{
+						FossilSpace->BuryFossil(Space[neigh.first][neigh.second]->Host);	//Bury fossil only after potential transfer events (also count as mutations).
+					}
 				}
-				if (Space[neigh.first][neigh.second]->nr_symbionts == 0)
-				{
-					DeathOfHost(neigh.first, neigh.second);
-					continue;
-				}
-				Space[neigh.first][neigh.second]->DNATransferToHost();
 			}
+			/* ~Division of host */
 
+			/* Division of symbionts */
 			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
 				if (Space[i][j]->Symbionts->at(s)->Stage == 4)
 				{
-					id_count++;
 					SymbiontCopy = new Organelle();
+					id_count++;
 					SymbiontCopy->Mitosis(Space[i][j]->Symbionts->at(s), id_count);
 					Space[i][j]->Symbionts->push_back(SymbiontCopy);
 					Space[i][j]->DNATransfertoSymbiont(SymbiontCopy);
 					Space[i][j]->nr_symbionts++;
+					if (Space[i][j]->Symbionts->at(Space[i][j]->nr_symbionts-1)->mutant)
+					{
+						FossilSpace->BuryFossil(Space[i][j]->Symbionts->at(Space[i][j]->nr_symbionts-1));
+					}
 				}
 			}
+			/* ~Division of symbionts */
 
-			//Expression dynamics within cell.
-			Space[i][j]->UpdateOrganelles();
+			Space[i][j]->UpdateOrganelles();	//Expression dynamics within cell.
 
-			//Do replication of host and symbiont genomes.
+			/* Replication */
 			nutrients = CollectNutrients(i, j);
-			if (Space[i][j]->Host->Stage == 2   &&   Space[i][j]->Host->privilige == true)
+			if (Space[i][j]->Host->Stage == 2   &&   Space[i][j]->Host->privilige)
 			{
 				Space[i][j]->Host->Replicate(nutrients);
 			}
@@ -150,26 +161,63 @@ void Population::UpdatePopulation()
 					Space[i][j]->Symbionts->at(s)->Replicate(nutrients);
 				}
 			}
+			/* ~Replication */
 
 		}
 	}
 }
 
-void Population::DeathOfSymbiont(int i, int j, int s)
+bool Population::CheckCellDeath(int i, int j)
 {
-	delete Space[i][j]->Symbionts->at(s);
-	Space[i][j]->Symbionts->erase(Space[i][j]->Symbionts->begin()+s);	//Should be passed iterator.
-	Space[i][j]->nr_symbionts--;
 	if (Space[i][j]->nr_symbionts == 0)
 	{
-		delete Space[i][j]->Host;	//Host dies, will lead to death of entire cell.
-		Space[i][j]->Host = NULL;
+		DeathOfCell(i, j);
+		return true;				//The cell died.
 	}
+	else
+	{
+		return false;				//The cell lives.
+	}
+}
+
+void Population::DeathOfSymbiont(int i, int j, int s)
+{
+	if (!Space[i][j]->Symbionts->at(s)->mutant)
+	{
+		delete Space[i][j]->Symbionts->at(s);
+	}
+	else
+	{
+		Space[i][j]->Symbionts->at(s)->alive = false;
+	}
+
+	Space[i][j]->Symbionts->erase(Space[i][j]->Symbionts->begin()+s);	//We erase the pointer from the Symbionts vector. Similar to setting Space[i][j]->Host to NULL for host death (see below).
 }
 
 void Population::DeathOfHost(int i, int j)
 {
-	delete Space[i][j];	//All internal objects are deleted by deconstructors.
+	if (!Space[i][j]->Host->mutant)
+	{
+		delete Space[i][j]->Host;
+	}
+	else
+	{
+		Space[i][j]->Host->alive = false;
+	}
+
+	Space[i][j]->Host = NULL;
+}
+
+void Population::DeathOfCell(int i, int j)	//Called when host died or when last symbiont died, responsible for cleaning of remaining organelles.
+{
+	int s;
+
+	if (Space[i][j]->Host != NULL)	DeathOfHost(i, j);
+	for (s=0; s<Space[i][j]->nr_symbionts; s++)
+	{
+		DeathOfSymbiont(i, j, s);
+		Space[i][j]->nr_symbionts--;
+	}
 	Space[i][j] = NULL;
 }
 
@@ -233,7 +281,7 @@ void Population::InitialisePopulation()
 {
 	Cell* CellZero;
 	Cell* CellOne;
-	int i, j;
+	int i, j, s;
 
 	//First create one Cell.
 	CellZero = new Cell();
@@ -244,12 +292,14 @@ void Population::InitialisePopulation()
 		// if(row<20 && col<20)	//Initialise square
 		if (uniform() < 0.1)	//Initialise lower density
 		{
-			id_count++;	//Make sure the first individual gets p_id_count_ of 1.
 			CellOne = new Cell();
-			CellOne->CloneCell(CellZero, id_count);
-			// CellOne->Ancestor = NULL;
+			CellOne->CloneCell(CellZero, &id_count);
 			Space[i][j] = CellOne;
-			//Fossils something...
+			FossilSpace->BuryFossil(Space[i][j]->Host);
+			for (s=0; s<Space[i][j]->nr_symbionts; s++)
+			{
+				FossilSpace->BuryFossil(Space[i][j]->Symbionts->at(s));
+			}
 		}
 	}
 
@@ -257,12 +307,80 @@ void Population::InitialisePopulation()
 	CellZero = NULL;
 }
 
+/* ######################################################################## */
+/*				FOSSILS	FOSSILS	FOSSILS	FOSSILS	FOSSILS	FOSSILS	FOSSILS						*/
+/* ######################################################################## */
+
+void Population::PruneFossilRecord()
+{
+	std::list<unsigned long long> AllFossilIDs;
+	int s, fossil_record_size;
+	unsigned long long fossilID;
+	i_fos iF;
+	i_ull findit;
+	Organelle* lastCA;
+
+	//Trace all living individuals back to the beginning, storing all individuals along their lineage.
+	for(int i=0; i<NR; i++)	for(int j=0; j<NC; j++)
+	{
+		if(Space[i][j] != NULL)
+		{
+			lastCA = Space[i][j]->Host->Ancestor;
+			while(lastCA != NULL)
+			{
+				AllFossilIDs.push_back(lastCA->fossil_id);
+				lastCA = lastCA->Ancestor;
+			}
+
+			for (s=0; s<Space[i][j]->nr_symbionts; s++)
+			{
+				lastCA = Space[i][j]->Symbionts->at(s)->Ancestor;
+				while(lastCA != NULL)
+				{
+					AllFossilIDs.push_back(lastCA->fossil_id);
+					lastCA = lastCA->Ancestor;
+				}
+			}
+
+		}
+	}
+	// Delete duplicates (e.g. Agent 9 in example asci will be located 4 times. Agent 11 two times, etc.)
+	AllFossilIDs.sort();
+	AllFossilIDs.unique();
+
+	// Delete all in FossilList that are not in AllFossilIDs (unless they are still living):
+	fossil_record_size = (*FossilSpace).FossilRecord.size();
+	iF = (*FossilSpace).FossilRecord.begin();
+	while(iF != (*FossilSpace).FossilRecord.end())
+	{
+		// Search if stored agent was also found by tracing back:
+		fossilID = (*iF)->fossil_id;
+		findit = std::find(AllFossilIDs.begin(),AllFossilIDs.end(),fossilID);
+		// If not, delete the fossil unless it is still alive or is still saved in the graveyard. If a prokaryote dies, the graveyard-flag remains for one ShowGeneralProgress() cycle at most, so that the fossil can be deleted at the next pruning step. If ShowGeneralProgress() precedes PruneFossilRecord(), this is issue is even avoided, because flags are already removed off dead prokaryotes.
+		if(findit==AllFossilIDs.end() && !(*iF)->alive)
+		{
+			delete *iF;
+			iF = FossilSpace->FossilRecord.erase(iF);
+		}
+		else
+		{
+			++iF;
+		}
+	}
+
+	AllFossilIDs.clear();
+	cout << "ID count (" << id_count << ")\tFossil record (pruned from " << fossil_record_size << " to " << (*FossilSpace).FossilRecord.size() << ")" << endl;
+}
+
+/* ######################################################################## */
+/*				OUTPUT	OUTPUT	OUTPUT	OUTPUT	OUTPUT	OUTPUT	OUTPUT						*/
+/* ######################################################################## */
 
 void Population::ShowGeneralProgress()
 {
 	int i, j, host_count=0, symbiont_count=0;
 	int stage_counts[6] = {0, 0, 0, 0, 0, 0};
-	i_symbiont iS;
+	i_org iS;
 
 	for (i=0; i<NR; i++) for(j=0; j<NC; j++)
 	{

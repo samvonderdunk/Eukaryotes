@@ -169,6 +169,8 @@ void Cell::TransferGene(i_bead it, Organelle* Source, Organelle* Target)
 	Target->G->gnr_regulators++;
 	Target->G->gnr_bsites+=copy_length-1;	//The length of the whole transferred piece except for the gene (i.e. you will always transfer 1 gene with x bsites and nothing else).
 	Target->G->is_mutated = true;
+	Target->mutant = true;
+	Target->G->terminus_position = Target->G->g_length;
 }
 
 
@@ -179,6 +181,7 @@ void Cell::TransferBead(i_bead it, Organelle* Target)
 	i_bead insertsite = Target->G->FindRandomPosition(true);
 	Target->G->BeadList->insert(insertsite, bead);
 	Target->G->g_length++;
+	Target->G->terminus_position = Target->G->g_length;
 	switch ( Target->G->WhatBead(bead) )
 	{
 		case BSITE:
@@ -189,6 +192,7 @@ void Cell::TransferBead(i_bead it, Organelle* Target)
 			break;
 	}
 	Target->G->is_mutated = true;
+	Target->mutant = true;
 }
 
 void Cell::InitialiseCell()
@@ -237,21 +241,21 @@ void Cell::InitialiseCell()
 }
 
 
-void Cell::CloneCell(Cell* ImageC, unsigned long long id_count)
+void Cell::CloneCell(Cell* ImageC, unsigned long long* pid_count)
 {
 	int s;
 	Organelle* Symbiont;
 
 	nr_symbionts = ImageC->nr_symbionts;
 
-	Host->CloneOrganelle(ImageC->Host);
-	id_count++;
+	(*pid_count)++;
+	Host->CloneOrganelle(ImageC->Host, *pid_count);
 
 	for (s=0; s<ImageC->nr_symbionts; s++)
 	{
 		Symbiont = new Organelle();
-		Symbiont->CloneOrganelle(ImageC->Symbionts->at(s));
+		(*pid_count)++;
+		Symbiont->CloneOrganelle(ImageC->Symbionts->at(s), *pid_count);
 		Symbionts->push_back(Symbiont);
-		id_count++;
 	}
 }

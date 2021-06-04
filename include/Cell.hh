@@ -12,7 +12,7 @@ class Cell{
 		//Perhaps will also get its own list of molecules present, and perhaps a hash table for sequence matching...
 
 		typedef std::list<Bead*>::iterator i_bead;
-		typedef std::vector<Organelle*>::iterator i_symbiont;
+		typedef std::vector<Organelle*>::iterator i_org;
 
 		Cell();
 		~Cell();
@@ -27,7 +27,7 @@ class Cell{
 		void TransferBead(i_bead it, Organelle* Target);
 
 		void InitialiseCell();
-		void CloneCell(Cell* ImageC, unsigned long long id_count);
+		void CloneCell(Cell* ImageC, unsigned long long* pid_count);
 
 };
 
