@@ -44,10 +44,10 @@ void Population::UpdatePopulation()
 	Organelle* SymbiontCopy;
 
 	// if(Time%TimeSaveGrid==0)	PrintFieldToFile();
-	if(Time%TimePruneFossils==0 && Time!=0)	PruneFossilRecord();
+	if(Time%TimePruneFossils==0 && Time!=0)		PruneFossilRecord();
 	if(Time%TimeOutputFossils==0 && Time!=0)	FossilSpace->ExhibitFossils();
-	// if(Time%TimeSaveBackup==0 && Time!=0)	OutputBackup();
-	if(Time%TimeTerminalOutput==0)	ShowGeneralProgress();
+	if(Time%TimeSaveBackup==0 && Time!=0)			OutputBackup();
+	if(Time%TimeTerminalOutput==0)						ShowGeneralProgress();
 
 	for(u=0; u<NR*NC; u++) update_order[u]=u;
 	random_shuffle(&update_order[0], &update_order[NR*NC]);	//Is also set by initial_seed through srand(initial_seed), see World.cc
@@ -370,6 +370,41 @@ void Population::PruneFossilRecord()
 
 	AllFossilIDs.clear();
 	cout << "ID count (" << id_count << ")\tFossil record (pruned from " << fossil_record_size << " to " << (*FossilSpace).FossilRecord.size() << ")" << endl;
+}
+
+/* ######################################################################## */
+/*				BACKUP	BACKUP	BACKUP	BACKUP	BACKUP	BACKUP	BACKUP						*/
+/* ######################################################################## */
+
+void Population::OutputBackup()
+{
+	FILE* f;
+	char OutputFile[800];
+	int i, j, s;
+
+	sprintf(OutputFile, "%s/backups/backup%08d.txt", folder.c_str(), Time);
+	f=fopen(OutputFile, "w");
+	if (f == NULL)	printf("Failed to open file for writing the backup.\n");
+
+	//Print NR and NC to file.
+	fprintf(f, "### Header ###\nNR:%d\tNC:%d\nInitial seed:%d\tSeed draws:%llu\n#### Main ####\n", NR, NC, initial_seed, seed_draws);
+
+	for (i=0; i<NR; i++) for(j=0; j<NC; j++) {
+		if(Space[i][j]==NULL){
+		 	fprintf(f, "%d %d NULL\n", i, j);
+		}
+		else	//Print internal state and genome of prokaryote to file.
+		{
+			fprintf(f, "%d %d %d\t%s\n", i, j, -1, Space[i][j]->Host->OutputBackup().c_str());
+			for (s=0; s<Space[i][j]->nr_symbionts; s++)
+			{
+				fprintf(f, "%d %d %d\t%s\n", i, j, s, Space[i][j]->Symbionts->at(s)->OutputBackup().c_str());
+			}
+		}
+	}
+
+	fclose(f);
+	return;
 }
 
 /* ######################################################################## */

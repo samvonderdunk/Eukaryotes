@@ -1020,7 +1020,7 @@ string Genome::Show(list<Bead*>* chromosome, bool terminal, bool only_parent)
 
 
 	if(terminal){
-		expressed_prefix = "\033[43m";
+		// expressed_prefix = "\033[43m";
 		reg_color_prefix = "\033[94m";
 		reg_color_suffix = "\033[0m";
 		bsite_color_prefix = "\033[92m";
@@ -1057,9 +1057,9 @@ string Genome::Show(list<Bead*>* chromosome, bool terminal, bool only_parent)
 		{
 			case REGULATOR:
 				reg=dynamic_cast<Regulator*>(*it);
-				if (reg->expression > 0)	prefix = expressed_prefix;
-				else									prefix = reg_color_prefix;
-				ss << prefix << "G" << reg->type << ":" << reg->threshold << ":" << reg->activity << ":";
+				// if (reg->expression > 0)	prefix = expressed_prefix;
+				// else									prefix = reg_color_prefix;
+				ss << reg_color_prefix << "R" << reg->type << ":" << reg->threshold << ":" << reg->activity << ":";
 				for(i=0; i<signalp_length; i++)	ss << reg->signalp[i];
 				ss << ":";
 				for(i=0; i<sequence_length; i++)	ss << reg->sequence[i];
@@ -1086,4 +1086,36 @@ string Genome::Show(list<Bead*>* chromosome, bool terminal, bool only_parent)
 		it++;
 	}
 	return GenomeContent;
+}
+
+string Genome::ShowExpression(list<Bead*>* chromosome, bool only_parent)
+{
+	i_bead it, end;
+	Regulator* reg;
+	string ExpressionContent="{";
+
+	if(chromosome == NULL) chromosome = this->BeadList;
+	it = chromosome->begin();
+	if (only_parent)
+	{
+		end = chromosome->begin();
+		advance(end, terminus_position);
+	}
+	else	end = chromosome->end();
+
+	while (it != end)
+	{
+		if (WhatBead(*it)==REGULATOR)
+		{
+			std::stringstream ss;
+			reg = dynamic_cast<Regulator*>(*it);
+			ss << reg->expression;
+			ExpressionContent += ss.str();
+			ss.clear();
+		}
+		it++;
+	}
+
+	ExpressionContent += "}";
+	return ExpressionContent;
 }

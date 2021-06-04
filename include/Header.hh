@@ -62,6 +62,7 @@ const int default_SimTime =			1000000;
 const int TimeTerminalOutput =	1;
 const int TimePruneFossils =		5;
 const int TimeOutputFossils =		10;
+const int TimeSaveBackup =			10;
 
 //Population parameters
 const double death_rate_host = 0.001;

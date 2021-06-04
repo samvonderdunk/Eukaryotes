@@ -68,6 +68,7 @@ class Genome {
 	int BindingAffinity(bool* sequenceA, bool* sequenceB) const;
 
 	string Show(list<Bead*>* chromosome, bool terminal, bool only_parent);
+	string ShowExpression(list<Bead*>* chromosome, bool only_parent);
 
 };
 #endif

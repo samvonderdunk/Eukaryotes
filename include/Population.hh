@@ -35,6 +35,7 @@ class Population
 		void InitialisePopulation();
 
 		void PruneFossilRecord();
+		void OutputBackup();
 		void ShowGeneralProgress();
 };
 

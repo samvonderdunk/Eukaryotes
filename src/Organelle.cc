@@ -146,31 +146,31 @@ void Organelle::CloneOrganelle(Organelle* ImageO, unsigned long long id_count)
 	G->CloneGenome(ImageO->G);
 }
 
-string Organelle::ShowExpression()
-{
-	//Think about how I want to output this.
-	string ExpressionContent="[";
-	i_bead it;
-	Regulator* reg;
-
-	it = ExpressedGenes->begin();
-	while (it != ExpressedGenes->end())
-	{
-		std::stringstream ss;
-		reg = dynamic_cast<Regulator*>(*it);
-		if (distance(ExpressedGenes->begin(),it) != 0)	ss << ",";
-		ss << reg->type << ":" << reg->expression;
-		ExpressionContent += ss.str();
-		ss.clear();
-		it++;
-	}
-	ExpressionContent += "]";
-	return ExpressionContent;
-}
-
 string Organelle::Show()
 {
+	string Content="[";
+	unsigned long long AncestorID;
+
+	if (Ancestor==NULL)	AncestorID = 0;
+	else	AncestorID = Ancestor->fossil_id;
+
+	std::stringstream ss;
+	ss << Stage << " " << fitness << " " << G->fork_position << " " << G->terminus_position << " " << fossil_id << " " << AncestorID << " " << mutant << " " << privilige << "]";
+	Content += ss.str();
+	ss.clear();
+
+	return Content;
+}
+
+string Organelle::OutputBackup()
+{
 	string Content="";
-	//include ID and Ancestor ID.
+
+	Content += Show();
+	Content += "\t";
+	Content += G->ShowExpression(NULL, false);
+	Content += "\t";
+	Content += G->Show(NULL, false, false);
+
 	return Content;
 }
