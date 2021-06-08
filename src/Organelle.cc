@@ -23,7 +23,7 @@ Organelle::~Organelle()
 	i_bead it;
 
 	//We only delete the list of pointers, they point to the things in the genome G, so we will remove the actual genes below (or they might actually be genes from different genomes in which case we also don't want to delete them).
-	it = ExpressedGenes->erase(ExpressedGenes->begin(), ExpressedGenes->end());
+	if (ExpressedGenes != NULL)	it = ExpressedGenes->erase(ExpressedGenes->begin(), ExpressedGenes->end());
 	delete ExpressedGenes;
 	ExpressedGenes = NULL;
 

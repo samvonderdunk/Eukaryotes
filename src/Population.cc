@@ -43,14 +43,14 @@ void Population::UpdatePopulation()
 	double nutrients;
 	Organelle* SymbiontCopy;
 
+	if(Time%TimeTerminalOutput==0)						ShowGeneralProgress();
 	// if(Time%TimeSaveGrid==0)	PrintFieldToFile();
 	if(Time%TimePruneFossils==0 && Time!=0)		PruneFossilRecord();
 	if(Time%TimeOutputFossils==0 && Time!=0)	FossilSpace->ExhibitFossils();
 	if(Time%TimeSaveBackup==0 && Time!=0)			OutputBackup();
-	if(Time%TimeTerminalOutput==0)						ShowGeneralProgress();
 
 	for(u=0; u<NR*NC; u++) update_order[u]=u;
-	random_shuffle(&update_order[0], &update_order[NR*NC]);	//Is also set by initial_seed through srand(initial_seed), see World.cc
+	random_shuffle(&update_order[0], &update_order[NR*NC], uniform_shuffle);	//Is also set by initial_seed through srand(initial_seed), see World.cc
 
 	for(u=0; u<NR*NC; u++)
 	{
@@ -59,7 +59,7 @@ void Population::UpdatePopulation()
 
 		if (Space[i][j] != NULL)
 		{
-			random_shuffle(Space[i][j]->Symbionts->begin(), Space[i][j]->Symbionts->end());
+			random_shuffle(Space[i][j]->Symbionts->begin(), Space[i][j]->Symbionts->end(), uniform_shuffle);
 
 			/* Basal death */
 			if (uniform() < death_rate_host)
@@ -67,7 +67,7 @@ void Population::UpdatePopulation()
 				DeathOfCell(i, j);
 				continue;
 			}
-			for (s=0; s<Space[i][j]->nr_symbionts; s++)
+			for (s=Space[i][j]->nr_symbionts-1; s>=0; s--)
 			{
 				if (uniform() < death_rate_symbiont)
 				{
@@ -84,7 +84,7 @@ void Population::UpdatePopulation()
 				DeathOfCell(i, j);
 				continue;
 			}
-			for (s=0; s<Space[i][j]->nr_symbionts; s++)
+			for (s=Space[i][j]->nr_symbionts-1; s>=0; s--)
 			{
 				if ( Space[i][j]->Symbionts->at(s)->Stage == 5)
 				{
@@ -105,7 +105,7 @@ void Population::UpdatePopulation()
 				id_count++;
 				Space[neigh.first][neigh.second]->Host->Mitosis(Space[i][j]->Host, id_count);
 
-				for (s=0; s<Space[i][j]->nr_symbionts; s++)
+				for (s=Space[i][j]->nr_symbionts-1; s>=0; s--)
 				{
 					if (uniform() < 0.5)	//Transfer the symbiont to the new cell (just a matter of using the right pointers).
 					{
@@ -115,8 +115,7 @@ void Population::UpdatePopulation()
 						Space[i][j]->nr_symbionts--;
 					}
 				}
-				if (CheckCellDeath(i, j))	continue;
-				if (!CheckCellDeath(neigh.first, neigh.second))	//Don't continue, since we have killed a cell at a different site.
+				if (!CheckCellDeath(neigh.first, neigh.second))	//Don't continue, since we have killed the child which lies at a different site.
 				{
 					Space[neigh.first][neigh.second]->DNATransferToHost();	//Instead, use the cell death check to know whether we need to do DNA transfer.
 					if (Space[neigh.first][neigh.second]->Host->mutant)
@@ -124,6 +123,7 @@ void Population::UpdatePopulation()
 						FossilSpace->BuryFossil(Space[neigh.first][neigh.second]->Host);	//Bury fossil only after potential transfer events (also count as mutations).
 					}
 				}
+				if (CheckCellDeath(i, j))	continue;
 			}
 			/* ~Division of host */
 
@@ -213,7 +213,7 @@ void Population::DeathOfCell(int i, int j)	//Called when host died or when last 
 	int s;
 
 	if (Space[i][j]->Host != NULL)	DeathOfHost(i, j);
-	for (s=0; s<Space[i][j]->nr_symbionts; s++)
+	for (s=Space[i][j]->nr_symbionts-1; s>=0; s--)
 	{
 		DeathOfSymbiont(i, j, s);
 		Space[i][j]->nr_symbionts--;
@@ -276,6 +276,9 @@ double Population::CollectNutrients(int i, int j)
 	return (nutrient_abundance - (double)organelle_density) / (double)Space[i][j]->nr_symbionts;
 }
 
+/* ######################################################################## */
+/*			INITIALISATION	INITIALISATION	INITIALISATION	INITIALISATION			*/
+/* ######################################################################## */
 
 void Population::InitialisePopulation()
 {
@@ -307,6 +310,338 @@ void Population::InitialisePopulation()
 	CellZero = NULL;
 }
 
+void Population::ContinuePopulationFromBackup()
+{
+	int i, j, s;
+
+	ReadBackupFile();
+	if(anctrace_reboot != "")	ReadAncestorFile();
+	else	//Reset the fossil_ids if we are not using an existing fossil record.
+	{
+		id_count = 0;
+		for (i=0; i<NR; i++)	for(j=0; j<NC; j++)
+		{
+			if (Space[i][j]!=NULL)
+			{
+				id_count ++;
+				Space[i][j]->Host->fossil_id = id_count;	//Other things such as time_of_appearance and Ancestor are set to zero by the EmptyProkaryote function.
+				for (s=0; Space[i][j]->nr_symbionts; s++)
+				{
+					id_count++;
+					Space[i][j]->Symbionts->at(s)->fossil_id = id_count;
+				}
+			}
+		}
+	}
+
+	//Only do these things if we're starting at an irregular timepoint (where we wouldn't already store info inside UpdatePop.).
+	if (TimeZero%TimePruneFossils != 0)		PruneFossilRecord();
+	if (TimeZero%TimeOutputFossils != 0)	FossilSpace->ExhibitFossils();
+	if (TimeZero%TimeSaveBackup != 0)			OutputBackup();
+	if (TimeZero%TimeTerminalOutput != 0)	ShowGeneralProgress();
+}
+
+void Population::ReadBackupFile()
+{
+	ifstream infile(backup_reboot.c_str());
+	string line, data;
+	char* data_element;
+	string::iterator sit;
+	Genome::i_bead it;
+	int i, r, c, s, begin_data, end_data, success, stage, pfork, pterm, temp_is_mutant, temp_priv, nr=NR, nc=NC, init_seed, read_header = 0, count_lines = 0;	//For now, set nr and nc for backup-file to NR and NC parameters (i.e. if backup-file does not contain header; for old backups).
+	unsigned long long org_id, anc_id, sdraws;
+	double fit;
+	size_t pos;
+	Organelle* O, * OF, * SaveO;
+	Cell* C;
+	i_fos iF;
+
+	if (!infile.is_open())
+	{
+		printf("Backup-file could not be opened.\n");
+		exit(1);
+	}
+
+	printf("Reading backup from file: %s\n", backup_reboot.c_str());
+	while(getline(infile,line))
+	{
+
+		//Read "Header" of backup file.
+		if (line=="### Header ###")
+		{
+			read_header = 1;
+			continue;
+		}
+		else if (line=="#### Main ####")
+		{
+			read_header = -1;
+			continue;
+		}
+		else if (read_header==1)
+		{
+			data_element = (char*)line.c_str();
+			success = sscanf(data_element, "NR:%d\tNC:%d", &nr, &nc);
+			if(success != 2)
+			{
+				cerr << "Could not read NR and NC from backup-file.\n" << endl;
+				exit(1);
+			}
+			else	cout << "nr=" << nr << ", nc=" << nc << endl;
+			read_header = 2;
+			continue;
+		}
+		else if (read_header==2)
+		{
+			data_element = (char*)line.c_str();
+			success = sscanf(data_element, "Initial seed:%d\tSeed draws:%llu", &init_seed, &sdraws);
+			if (success != 2)
+			{
+				cerr << "Could not read seed status from backup-file.\n" << endl;
+				exit(1);
+			}
+			else
+			{
+				cout << "Simulating " << sdraws << " random draws, initial seed=" << init_seed << endl;
+				for(i=0; (unsigned long long)i<sdraws; i++){
+					uniform();
+				}
+			}
+			read_header = 3;	//Not doing anything with this yet.
+			continue;
+		}
+
+		//Start reading "Main" data from backup file.
+		if (count_lines%10000 == 0 && count_lines!=0)	printf("%d\n", count_lines);	//Print some progress.
+
+
+		pos = line.find("NULL");
+		if (pos != string::npos)	//Empty site.
+		{
+			data_element = (char*)line.c_str();
+			success = sscanf(data_element, "%d %d NULL\n", &r, &c);
+			if (success != 2)
+			{
+				cerr << "Could not read row and column from empty site. Backup file potentially corrupt.\n" << endl;
+			}
+			Space[r][c] = NULL;
+		}
+		else											//Non-empty site.
+		{
+			//Make the new organelle, we'll decide at the end (?) whether it is a host and requires a cell to be made or whether it is a symbiont.
+			O = new Organelle();
+
+			//Read BeadList. Some variables are here initiated, but will be overwritten by information from the backup file below.
+			begin_data = line.find_first_of("(");
+			end_data = line.find_last_of(")");
+			data = line.substr(begin_data, end_data-begin_data+1);
+			O->G->ReadGenome(data);
+
+			begin_data = line.find_first_of("{");
+			end_data = line.find_first_of("}");
+			data = line.substr(begin_data, end_data-begin_data+1);	//Brackets are stripped off in ReadExpression function.
+			O->G->ReadExpression(data);
+
+			//Read organelle data.
+			begin_data = line.find_last_of("[");
+			end_data = line.find_last_of("]");
+			data = line.substr(begin_data+1, end_data-begin_data-1);
+			data_element = strtok((char*)data.c_str(),"\t");
+			while(data_element != NULL)
+			{
+				success = sscanf(data_element, "%d %lf %d %d %llu %llu %d %d", &stage, &fit, &pfork, &pterm, &org_id, &anc_id, &temp_is_mutant, &temp_priv);
+				if(success != 8)
+				{
+					cerr << "Could not find sufficient information for this prokaryote. Backup file potentially corrupt.\n" << endl;
+					exit(1);
+				}
+
+				data_element = strtok(NULL, "\t");
+				O->Stage = stage;
+				O->fitness = fit;
+				O->G->fork_position = pfork;
+				O->G->terminus_position = pterm;
+				O->fossil_id = org_id;
+				O->mutant = (temp_is_mutant==1);
+				O->privilige = (temp_priv==1);
+				O->alive = true;
+				if (org_id > id_count) id_count = org_id;
+
+				SaveO = O;	//SaveO takes the pointer value of O.
+				O = FindInFossilRecord(SaveO->fossil_id);	//Check the current organelle was already put in the fossil record; O is reassigned as pointer.
+				if (O == NULL)	//It is not yet in the fossil record. Act like nothing happened.
+				{
+					O = SaveO;	//Continue with the SaveO pointer.
+					SaveO = NULL;
+				}
+				else	//It is in the fossil record.
+				{
+					O->CloneOrganelle(SaveO, SaveO->fossil_id);	//Continue with the previously made pointer that was already in the fossil record, but give it all the data we've read in so far.
+					delete SaveO;
+					SaveO = NULL;
+					break;	//Although it is a mutant, we have already buried its fossil, so no need to take the otherwise standard action for mutant (below).
+				}
+
+				if (O->mutant)
+				{
+					//If this live organelle is a mutant, we will store the organelle itself in the fossil record.
+					FossilSpace->BuryFossil(O);
+				}
+				else
+				{
+					//If this live organelle is NOT a mutant, we will check if its direct ancestor is already known (in which case we can simply point to that); otherwise, we construct the ancestor only with its ID, completing its construction in ReadAncestorFile.
+					O->Ancestor = FindInFossilRecord(anc_id);
+					if (O->Ancestor == NULL)	//i.e. Ancestor not currently present in fossil record.
+					{
+						OF = new Organelle();	//Make the ancestor with the right name...
+						OF->fossil_id = anc_id;
+						FossilSpace->BuryFossil(OF);
+						O->Ancestor = OF;	//...and point to it, so that our current organelle (O) now has a defined ancestor.
+					}
+				}
+			}
+
+			data_element = (char*)line.c_str();
+			success = sscanf(data_element, "%d %d %d\t", &r, &c, &s);
+			if (success != 3)
+			{
+				cerr << "Could not read r, c, s from non-empty site. Backup file potentially corrupt.\n" << endl;
+			}
+			if (s == -1)
+			{
+				C = new Cell();
+				C->Host = O;
+				Space[r][c] = C;
+			}
+			else
+			{
+				Space[r][c]->Symbionts->push_back(O);
+				Space[r][c]->nr_symbionts++;
+			}
+
+		}
+		count_lines++;
+	}
+
+	if ((r != nr-1) || (c != nc-1))
+	{
+		cerr << "Backup file incomplete or too large\nRows: " << r << " of " << nr << "\nCols: " << c << " of " << nc << endl;
+		exit(1);
+	}
+}
+
+void Population::ReadAncestorFile()
+{
+	ifstream infile(anctrace_reboot.c_str());
+	string line, data;
+	int begin_data, end_data, TimeOA, count_alive = 0, count_fossils = 0, count_lines = 0;
+	unsigned long long ID, AncID;
+	i_fos iF;
+	Organelle* O;
+
+	if (!infile.is_open())
+	{
+		printf("Ancestor-file could not be opened.\n");
+		exit(1);
+	}
+
+	printf("Reading ancestors from file: %s\n", anctrace_reboot.c_str());
+	while(getline(infile,line))
+	{
+		if (count_lines%10000 == 0 && count_lines!=0)	printf("%d\n", count_lines);
+		end_data = line.find("\t");
+		data = line.substr(0,end_data);
+		stringstream(data) >> ID;
+
+		begin_data = end_data;
+		end_data = line.find("\t",end_data+1);
+		data = line.substr(begin_data, end_data-begin_data);
+		stringstream(data) >> AncID;
+
+		begin_data = end_data;
+		end_data = line.find("\t",end_data+1);
+		data = line.substr(begin_data, end_data-begin_data);
+		stringstream(data) >> TimeOA;
+
+		begin_data = end_data;
+		end_data = line.size();
+		data = line.substr(begin_data+1, end_data-begin_data);
+
+		// 3 OPTIONS:
+		// 1) This line corresponds to an organelle that is still alive, we only need to know the time_of_appearance and where to have the Ancestor point to.
+		// 2) This line corresponds to an organelle that is not alive, but which was created only with a fossil_id because it is the ancestor of an extant (non-mutant) organelle; and because we wanted to store the Ancestor of that extant, non-mutant organelle, we pre-made the ancestor, but we can now give it a genome and few other variables.
+		// 3) This line corresponds to a dead ancestor (mutant) that is not the direct ancestor of any of the living organelles, and so we will create it here (similar to case 2, but now it's not yet created).
+
+
+		O = FindInFossilRecord(ID);
+		if (O != NULL)	//This line was already in the fossil record.
+		{
+			if (O->alive)	count_alive++;	//Live mutants; most info read from backup.
+			else	//Dead mutants, must have been put in the fossil record because it is the direct ancestor of a live and non-mutant individual
+			{
+				count_fossils++;
+				O->mutant = true;
+				O->G->ReadGenome(data);
+				O->G->terminus_position = O->G->g_length;	//Relevant for printing.
+			}
+			O->time_of_appearance = TimeOA;
+
+			if (AncID == 0)	O->Ancestor = NULL;
+			else
+			{
+				O->Ancestor = FindInFossilRecord(AncID);
+				if (O->Ancestor == NULL)
+				{
+					cerr << "Error: requested ancestor not available in fossil record.\n" << endl;
+					exit(1);
+				}
+			}
+		}
+		else	//We did not break out of the loop, so we have apparently not encountered this ID among the current list of fossils.
+		{
+			count_fossils++;
+			O = new Organelle();
+			O->fossil_id = ID;
+			O->mutant = true;
+			O->time_of_appearance = TimeOA;
+			if(AncID == 0)	O->Ancestor = NULL;
+			else
+			{
+				O->Ancestor = FindInFossilRecord(AncID);
+				if (O->Ancestor == NULL)
+				{
+					cerr << "Error: requested ancestor not available in fossil record.\n" << endl;
+					exit(1);
+				}
+			}
+
+			//Set up its ghost genome.	It only has beads.
+			O->G->ReadGenome(data);
+			O->G->terminus_position = O->G->g_length;	//Relevant for printing.
+			FossilSpace->BuryFossil(O);
+		}
+		count_lines++;
+	}
+	assert (count_lines == count_alive+count_fossils);
+	assert (FossilSpace->FossilRecord.size() == (size_t)count_lines);
+}
+
+Organelle* Population::FindInFossilRecord(unsigned long long AncID)
+{
+	i_fos iF;
+
+	iF = FossilSpace->FossilRecord.begin();
+	while(iF != FossilSpace->FossilRecord.end())
+	{
+		if ((*iF)->fossil_id == AncID)
+		{
+			return *iF;
+		}
+		iF++;
+	}
+
+	return NULL;
+}
+
 /* ######################################################################## */
 /*				FOSSILS	FOSSILS	FOSSILS	FOSSILS	FOSSILS	FOSSILS	FOSSILS						*/
 /* ######################################################################## */
@@ -325,7 +660,7 @@ void Population::PruneFossilRecord()
 	{
 		if(Space[i][j] != NULL)
 		{
-			lastCA = Space[i][j]->Host->Ancestor;
+			lastCA = Space[i][j]->Host->Ancestor; //HERE?
 			while(lastCA != NULL)
 			{
 				AllFossilIDs.push_back(lastCA->fossil_id);
@@ -334,7 +669,7 @@ void Population::PruneFossilRecord()
 
 			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
-				lastCA = Space[i][j]->Symbionts->at(s)->Ancestor;
+				lastCA = Space[i][j]->Symbionts->at(s)->Ancestor; //HERE?
 				while(lastCA != NULL)
 				{
 					AllFossilIDs.push_back(lastCA->fossil_id);

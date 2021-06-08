@@ -319,7 +319,7 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 		MutationList = NULL;
 
 		//Look for duplicated genes and tfbs's, which we will actually duplicate here.
-		//g_length is updated inside functions, gnr_regulators etc. are updated here on the outside.
+		//g_length is updated inside functions, gnr_regulators etc. are updated here on the outside; except gnr_bsites inside DuplicateGene.
 		it = BeadList->begin();
 		while (it != BeadList->end())
 		{
@@ -386,7 +386,12 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 
 	}	//END of mutations.
 
-	if(mutations_on)	assert(g_length == g_length_before_mut + (*pdup_length) - (*pdel_length));
+	if(mutations_on)
+	{
+		assert(g_length == g_length_before_mut + (*pdup_length) - (*pdel_length));
+		assert(g_length == gnr_regulators + gnr_bsites + gnr_houses);
+		assert((size_t)g_length == BeadList->size());
+	}
 
 	terminus_position = g_length;
 
@@ -619,6 +624,7 @@ Genome::i_bead Genome::DeleteGene(i_bead it, int* pdel_length)
 	//Decrement the number of beads and the number of genes.
 	del_length = distance(first, last);
 	g_length -= del_length;
+	gnr_bsites -= del_length-1;
 	(*pdel_length) += del_length;
 
 	it2=first;
@@ -651,20 +657,21 @@ Genome::i_bead Genome::DuplicateGene(i_bead it, int* pdup_length)
 	//Copy the gene with its upstream tfbs's to a temporary chromosome.
 	last = it;
 	last++;   //One further than the gene position (the one not to be part of the dupl).
-	first=FindFirstBsiteInFrontOfGene(it);	//First tfbs in front of gene.
-	copy_length=distance(first, last);
+	first = FindFirstBsiteInFrontOfGene(it);	//First tfbs in front of gene.
+	copy_length = distance(first, last);
 	CopyPartOfGenomeToTemplate(first, last, &BeadListTemp); //Makes a 'chromosome' with only this gene (and its tfbs) on it.
 
 	//Splice the temporary chromosome into the full genome.
-	insertsite=FindRandomGenePosition(true,true);			//Find position to insert gene (may be the end of the genome).
-	insertsite=FindFirstBsiteInFrontOfGene(insertsite);	//Find first tfbs in front of this gene.
+	insertsite = FindRandomGenePosition(true,true);			//Find position to insert gene (may be the end of the genome).
+	insertsite = FindFirstBsiteInFrontOfGene(insertsite);	//Find first tfbs in front of this gene.
 	BeadList->splice(insertsite, BeadListTemp);	//Splice temporary list into chromosome.
 
 	//Increment the number of beads and the number of genes.
-	g_length+=copy_length;
-	(*pdup_length)+=copy_length;
+	g_length += copy_length;
+	gnr_bsites += copy_length-1;
+	(*pdup_length) += copy_length;
 
-	it=last;	//Make sure ii points to one position further than just duplicated gene.
+	it = last;	//Make sure ii points to one position further than just duplicated gene.
 	return it;
 }
 
@@ -751,7 +758,6 @@ Genome::i_bead Genome::ShuffleGene(i_bead it)
 {
 	i_bead insertsite, first, last;
 
-	is_mutated = true;
 	last = it;
 	last++;   //One further than the gene position (the one not to be part of the dupl).
 	first=FindFirstBsiteInFrontOfGene(it);	//First tfbs in front of gene.
@@ -759,19 +765,29 @@ Genome::i_bead Genome::ShuffleGene(i_bead it)
 	//Splice the temporary chromosome into the full genome.
 	insertsite=FindRandomGenePosition(true,true);			//Find position to insert gene (may be end of genome).
 	insertsite=FindFirstBsiteInFrontOfGene(insertsite);	//Find first tfbs in front of this gene.
-	BeadList->splice(insertsite, *BeadList, first, last);
 
-	return last;
+	if ( (distance(BeadList->begin(), insertsite) >= distance(BeadList->begin(), first))   &&   (distance(BeadList->begin(), insertsite) < distance(BeadList->begin(), last)) )	//We are attempting to splice to same location, so don't do it, does not count as mutation.
+	{
+		it++;
+		return it;
+	}
+	else
+	{
+		BeadList->splice(insertsite, *BeadList, first, last);
+		is_mutated = true;
+		return last;
+	}
 }
 
 Genome::i_bead Genome::ShuffleBead(i_bead it)
 {
 	i_bead tt, nit;
 
+	is_mutated = true;
 	nit = it;
 	nit++;
 	tt = FindRandomPosition(true);
-	BeadList->splice(tt, *BeadList, it);
+	BeadList->splice(tt, *BeadList, it);	//When we don't splice a whole range, the above problem for ShuffleGene should not be relevant.
 
 	return nit;
 }
@@ -952,33 +968,26 @@ void Genome::ReadBuffer(string buffer, bool* array, char start_sign, char stop_s
 void Genome::ReadExpression(string expression)
 {
 	string data;
-	char* token;
+	// char* token;
 	int i;
 	i_bead it;
 	Regulator* reg;
 
-	data = expression.substr(1,expression.size()-2);
-	token = strtok((char*)data.c_str(),",");
+	data = expression.substr(1,expression.size()-2);	//Strip accolades or square brackets.
 
 	it = BeadList->begin();
 	for(i=0; i<gnr_regulators; i++)
 	{
 		while (it != BeadList->end() && WhatBead(*it) != REGULATOR) it++;
 
-		if (it == BeadList->end())
-		{
-			cerr << "Found too many expression states. Expression file potentially corrupt.\n" << endl;
-			exit(1);
-		}
-		else if (token == NULL)
+		if ((size_t) i > data.length())
 		{
 			cerr << "Could not find sufficient expression states. Expression file potentially corrupt.\n" << endl;
 			exit(1);
 		}
 
 		reg = dynamic_cast<Regulator*>(*it);
-		reg->expression = atoi(token);
-		token = strtok(NULL, ",");
+		reg->expression = (data[i]=='1');
 		it++;
 	}
 }

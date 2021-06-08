@@ -122,6 +122,11 @@ inline double uniform()
   return dsfmt_genrand_close_open(&dsfmt);
 }
 
+inline int uniform_shuffle (int i)
+{
+	return (int)(RAND_MAX*uniform()) % i;
+}
+
 const string genome_file="";
 const string expression_file="";
 const string backup_file="";

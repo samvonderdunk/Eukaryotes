@@ -33,6 +33,10 @@ class Population
 		double CollectNutrients(int i, int j);
 
 		void InitialisePopulation();
+		void ContinuePopulationFromBackup();
+		void ReadBackupFile();
+		void ReadAncestorFile();
+		Organelle* FindInFossilRecord(unsigned long long AncID);
 
 		void PruneFossilRecord();
 		void OutputBackup();

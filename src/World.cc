@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
 		/* ############## Initialisation ############## */
 		printf("\033[93m### Initialisation ###\033[0m\n");
 		P = new Population();
-		if(backup_reboot != "")	delete P;//P->ContinuePopulationFromBackup();
+		if(backup_reboot != "")	P->ContinuePopulationFromBackup();
 		else	P->InitialisePopulation();
 		printf("Initialisation completed...\n\n");
 
@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
 			P->UpdatePopulation();		//Main next-state function, updating the population.
 		}
 		//Make sure that you save all possible things in the last timestep, if you did not already choose your parameters such.
-		Time--;
+		// Time--;
 		printf("Simulation completed...\n\n");
 	}
 
