@@ -293,7 +293,7 @@ void Population::InitialisePopulation()
 	//Now fill the field with this cell.
 	for(i=0; i<NR; i++) for(j=0; j<NC; j++){
 		// if(row<20 && col<20)	//Initialise square
-		if (uniform() < 0.6)	//Initialise lower density
+		if (uniform() < 0.3)	//Initialise lower density
 		{
 			CellOne = new Cell();
 			CellOne->CloneCell(CellZero, &id_count);

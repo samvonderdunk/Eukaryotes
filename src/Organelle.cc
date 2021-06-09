@@ -63,11 +63,14 @@ void Organelle::UpdateState()
 					if (G->WhatBead(*it2)==REGULATOR)
 					{
 						reg2 = dynamic_cast<Regulator*>(*it2);
-						if ( G->BindingAffinity(reg->sequence, reg2->sequence) == 0   &&   reg->activity == reg2->activity)
+						if ( G->BindingAffinity(reg->sequence, reg2->sequence) == 0   &&   reg->activity == reg2->activity )
 						{
-							readout[reg2->type-1] += reg->expression;	//Add the expression of this type to the native type that it resembles.
+							if (reg2->type < 6)
+							{
+								readout[reg2->type-1] += reg->expression;	//Add the expression of this type to the native type that it resembles.
+							}
+							break;	//We have found a matching gene, and possibly also read its expression (if type 1-5), so we don't have to search any further in the genome.
 						}
-						break;	//WARNING: check where this puts you, should be at the next ExpressedGene.
 					}
 					it2++;
 				}
@@ -88,8 +91,7 @@ int Organelle::EvaluateState(int eval_state, int* readout)
 
 	for (i=0;i<5;i++)
 	{
-		if ((readout[i]>0) == StageTargets[eval_state][i])
-			match++;
+		if ((readout[i]>0) == StageTargets[eval_state][i])	match++;
 	}
 
 	return match;
