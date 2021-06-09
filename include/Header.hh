@@ -35,8 +35,8 @@ using namespace std;
 #define HOUSE 2
 
 //Bead variables
-const int sequence_length = 20;
-const int signalp_length = 1;	//As long as I am not using it, make it small.
+const int sequence_length =	20;
+const int signalp_length =	1;	//As long as I am not using it, make it small.
 
 //Grid size and host size, setting the dimensions of the model.
 const int NR = 50;
@@ -48,27 +48,28 @@ const int rel_repl_full = 65;	//If we're doing relative replication, how many nu
 const bool gene_replication = false;	//Only genes take time to replicate.
 
 //Genome parameters
-const int nr_household_genes = 50;
-const double leakage_to_host = 0.01;
-const double leakage_to_symbiont = 0.01;
+const int nr_household_genes =			50;
+const double leakage_to_host =			0.01;
+const double leakage_to_symbiont =	0.01;
 
 //Regulatory parameters
-const double k_zero = 0.0000001;
-const double epsilon = 1.00;
+const double k_zero =		0.0000001;
+const double epsilon =	1.00;
 
 //Runtime and output parameters
-const int TimeZero =						0;
+const int TimeZero =						30;
 const int default_SimTime =			1000000;
 const int TimeTerminalOutput =	1;
+const int TimeSaveGrid =				10;
 const int TimePruneFossils =		5;
 const int TimeOutputFossils =		10;
 const int TimeSaveBackup =			10;
 
 //Population parameters
-const double death_rate_host = 0.001;
-const double death_rate_symbiont = 0.001;
-const double nutrient_abundance = 100.;
-const double max_organelle_density = 100.;	//Only used with the relative nutrient function; k, number of organelles at which point nutrients will be completely depleted.
+const double death_rate_host = 				0.001;
+const double death_rate_symbiont = 		0.001;
+const double nutrient_abundance = 		100.;
+const double max_organelle_density = 	100.;	//Only used with the relative nutrient function; k, number of organelles at which point nutrients will be completely depleted.
 
 /* MUTATION PARAMETERS */
 const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.

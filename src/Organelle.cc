@@ -146,31 +146,47 @@ void Organelle::CloneOrganelle(Organelle* ImageO, unsigned long long id_count)
 	G->CloneGenome(ImageO->G);
 }
 
-string Organelle::Show()
+string Organelle::Show(bool backup)
 {
-	string Content="[";
+	string Content="";
 	unsigned long long AncestorID;
-
-	if (Ancestor==NULL)	AncestorID = 0;
-	else	AncestorID = Ancestor->fossil_id;
-
+	string is_mutant, has_privilige;
 	std::stringstream ss;
-	ss << Stage << " " << fitness << " " << G->fork_position << " " << G->terminus_position << " " << fossil_id << " " << AncestorID << " " << mutant << " " << privilige << "]";
+
+	if (backup)
+	{
+		if (Ancestor==NULL)	AncestorID = 0;
+		else	AncestorID = Ancestor->fossil_id;
+
+		is_mutant = (mutant)?"Y":"N";
+		has_privilige = (privilige)?"Y":"N";
+
+		ss << "[" << fossil_id << " " << AncestorID << " " << is_mutant << " " << fitness << " " << Stage << " " << has_privilige << " " << G->fork_position << " " << G->terminus_position << "]";
+	}
+	else
+	{
+		ss << Stage << "\t" << G->g_length << "\t" << G->terminus_position << "\t" << G->gnr_regulators << "\t" << G->gnr_bsites << "\t" << G->gnr_houses;
+	}
+
 	Content += ss.str();
 	ss.clear();
 
 	return Content;
 }
 
-string Organelle::OutputBackup()
+string Organelle::Output(bool backup)
 {
 	string Content="";
 
-	Content += Show();
-	Content += "\t";
-	Content += G->ShowExpression(NULL, false);
-	Content += "\t";
-	Content += G->Show(NULL, false, false);
+	Content += Show(backup);
+
+	if (backup)
+	{
+		Content += "\t";
+		Content += G->ShowExpression(NULL, false);
+		Content += "\t";
+		Content += G->Show(NULL, false, false);
+	}
 
 	return Content;
 }

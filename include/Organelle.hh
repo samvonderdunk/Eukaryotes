@@ -34,8 +34,8 @@ class Organelle{
 
 		void InitialiseOrganelle(string genome, string expression);
 		void CloneOrganelle(Organelle* ImageO, unsigned long long id_count);
-		string Show();
-		string OutputBackup();
+		string Show(bool backup);
+		string Output(bool backup);
 
 };
 

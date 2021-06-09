@@ -44,10 +44,10 @@ void Population::UpdatePopulation()
 	Organelle* SymbiontCopy;
 
 	if(Time%TimeTerminalOutput==0)						ShowGeneralProgress();
-	// if(Time%TimeSaveGrid==0)	PrintFieldToFile();
+	if(Time%TimeSaveGrid==0)									OutputGrid(false);
 	if(Time%TimePruneFossils==0 && Time!=0)		PruneFossilRecord();
 	if(Time%TimeOutputFossils==0 && Time!=0)	FossilSpace->ExhibitFossils();
-	if(Time%TimeSaveBackup==0 && Time!=0)			OutputBackup();
+	if(Time%TimeSaveBackup==0 && Time!=0)			OutputGrid(true);
 
 	for(u=0; u<NR*NC; u++) update_order[u]=u;
 	random_shuffle(&update_order[0], &update_order[NR*NC], uniform_shuffle);	//Is also set by initial_seed through srand(initial_seed), see World.cc
@@ -335,10 +335,11 @@ void Population::ContinuePopulationFromBackup()
 	}
 
 	//Only do these things if we're starting at an irregular timepoint (where we wouldn't already store info inside UpdatePop.).
+	if (TimeZero%TimeTerminalOutput != 0)	ShowGeneralProgress();
+	if(Time%TimeSaveGrid != 0)						OutputGrid(false);
 	if (TimeZero%TimePruneFossils != 0)		PruneFossilRecord();
 	if (TimeZero%TimeOutputFossils != 0)	FossilSpace->ExhibitFossils();
-	if (TimeZero%TimeSaveBackup != 0)			OutputBackup();
-	if (TimeZero%TimeTerminalOutput != 0)	ShowGeneralProgress();
+	if (TimeZero%TimeSaveBackup != 0)			OutputGrid(true);
 }
 
 void Population::ReadBackupFile()
@@ -348,8 +349,9 @@ void Population::ReadBackupFile()
 	char* data_element;
 	string::iterator sit;
 	Genome::i_bead it;
-	int i, r, c, s, begin_data, end_data, success, stage, pfork, pterm, temp_is_mutant, temp_priv, nr=NR, nc=NC, init_seed, read_header = 0, count_lines = 0;	//For now, set nr and nc for backup-file to NR and NC parameters (i.e. if backup-file does not contain header; for old backups).
+	int i, r, c, s, begin_data, end_data, success, stage, pfork, pterm, nr=NR, nc=NC, init_seed, read_header = 0, count_lines = 0;	//For now, set nr and nc for backup-file to NR and NC parameters (i.e. if backup-file does not contain header; for old backups).
 	unsigned long long org_id, anc_id, sdraws;
+	char temp_is_mutant[20], temp_priv[20];
 	double fit;
 	size_t pos;
 	Organelle* O, * OF, * SaveO;
@@ -448,7 +450,7 @@ void Population::ReadBackupFile()
 			data_element = strtok((char*)data.c_str(),"\t");
 			while(data_element != NULL)
 			{
-				success = sscanf(data_element, "%d %lf %d %d %llu %llu %d %d", &stage, &fit, &pfork, &pterm, &org_id, &anc_id, &temp_is_mutant, &temp_priv);
+				success = sscanf(data_element, "%llu %llu %s %lf %d %s %d %d", &org_id, &anc_id, temp_is_mutant, &fit, &stage, temp_priv, &pfork, &pterm);
 				if(success != 8)
 				{
 					cerr << "Could not find sufficient information for this prokaryote. Backup file potentially corrupt.\n" << endl;
@@ -461,8 +463,8 @@ void Population::ReadBackupFile()
 				O->G->fork_position = pfork;
 				O->G->terminus_position = pterm;
 				O->fossil_id = org_id;
-				O->mutant = (temp_is_mutant==1);
-				O->privilige = (temp_priv==1);
+				O->mutant = (strcmp( temp_is_mutant, "Y") == 0);
+				O->privilige = (strcmp( temp_priv, "Y") == 0);
 				O->alive = true;
 				if (org_id > id_count) id_count = org_id;
 
@@ -711,29 +713,39 @@ void Population::PruneFossilRecord()
 /*				BACKUP	BACKUP	BACKUP	BACKUP	BACKUP	BACKUP	BACKUP						*/
 /* ######################################################################## */
 
-void Population::OutputBackup()
+void Population::OutputGrid(bool backup)
 {
 	FILE* f;
 	char OutputFile[800];
 	int i, j, s;
 
-	sprintf(OutputFile, "%s/backups/backup%08d.txt", folder.c_str(), Time);
-	f=fopen(OutputFile, "w");
-	if (f == NULL)	printf("Failed to open file for writing the backup.\n");
+	if (backup)
+	{
+		sprintf(OutputFile, "%s/backups/backup%08d.txt", folder.c_str(), Time);
+		f=fopen(OutputFile, "w");
+		if (f == NULL)	printf("Failed to open file for writing the backup.\n");
 
-	//Print NR and NC to file.
-	fprintf(f, "### Header ###\nNR:%d\tNC:%d\nInitial seed:%d\tSeed draws:%llu\n#### Main ####\n", NR, NC, initial_seed, seed_draws);
+		//Print NR and NC to file.
+		fprintf(f, "### Header ###\nNR:%d\tNC:%d\nInitial seed:%d\tSeed draws:%llu\n#### Main ####\n", NR, NC, initial_seed, seed_draws);
+	}
+	else
+	{
+		sprintf(OutputFile, "%s/snapsamples/field%08d.txt", folder.c_str(), Time);
+		f=fopen(OutputFile, "w");
+		if (f == NULL)	printf("Failed to open file for writing the snapshot.\n");
+	}
 
 	for (i=0; i<NR; i++) for(j=0; j<NC; j++) {
-		if(Space[i][j]==NULL){
+		if(Space[i][j] == NULL)
+		{
 		 	fprintf(f, "%d %d NULL\n", i, j);
 		}
 		else	//Print internal state and genome of prokaryote to file.
 		{
-			fprintf(f, "%d %d %d\t%s\n", i, j, -1, Space[i][j]->Host->OutputBackup().c_str());
+			fprintf(f, "%d %d %d\t%s\n", i, j, -1, Space[i][j]->Host->Output(backup).c_str());
 			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
-				fprintf(f, "%d %d %d\t%s\n", i, j, s, Space[i][j]->Symbionts->at(s)->OutputBackup().c_str());
+				fprintf(f, "%d %d %d\t%s\n", i, j, s, Space[i][j]->Symbionts->at(s)->Output(backup).c_str());
 			}
 		}
 	}

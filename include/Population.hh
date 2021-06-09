@@ -39,7 +39,7 @@ class Population
 		Organelle* FindInFossilRecord(unsigned long long AncID);
 
 		void PruneFossilRecord();
-		void OutputBackup();
+		void OutputGrid(bool backup);
 		void ShowGeneralProgress();
 };
 
