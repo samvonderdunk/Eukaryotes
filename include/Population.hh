@@ -4,8 +4,6 @@
 #include "Header.hh"
 #include "Cell.hh"
 #include "Fossils.hh"
-// #include <cstdio>
-// #include <stdlib.h>
 
 class Population
 {

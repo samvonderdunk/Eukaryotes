@@ -6,7 +6,6 @@
 #include "Regulator.hh"
 #include "Bsite.hh"
 #include "House.hh"
-#include <typeinfo>
 
 class Genome {
  public:
@@ -71,4 +70,33 @@ class Genome {
 	string ShowExpression(list<Bead*>* chromosome, bool only_parent);
 
 };
+
+
+inline int Genome::WhatBead(Bead* bead) const
+//Ordered by expected number of beads (more houses than genes), to increase speed.
+//Numbering should however be consecutive in the way I would like to code most of my functions.
+{
+	if ( typeid(*bead) == typeid(House) )						return HOUSE;	//House
+	else if( typeid(*bead) == typeid(Bsite) )				return BSITE;	//Bsite
+	else if( typeid(*bead) == typeid(Regulator) )		return REGULATOR;	//Regulator
+	else
+	{
+		cerr << "Bead type not recognised.\n" << endl;
+		exit(1);
+	}
+}
+
+inline int Genome::BindingAffinity(bool* sequenceA, bool* sequenceB) const
+{
+//Testing; same as above. In addition, look at faster ways to do bitstring comparisons (or storage of bitstrings).
+//If this flexible b1/b2 calling does not work, perhaps try with passing the sequence directly? If it is inline, maybe this does not cost anything extra.
+//In addition, perhaps it could be useful to only store sequences as integers, but unpack them as their true binary strings only in this function...
+	int affinity = 0;
+	for (int i=0;i<sequence_length;i++)
+	{
+		if (sequenceA[i] != sequenceB[i])	affinity++;
+	}
+	return affinity;
+}
+
 #endif

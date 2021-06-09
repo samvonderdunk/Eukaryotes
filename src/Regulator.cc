@@ -1,5 +1,4 @@
 #include "Regulator.hh"
-#include "Header.hh"
 
 Regulator::Regulator() : Bead()
 {

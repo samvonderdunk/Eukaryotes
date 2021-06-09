@@ -1,8 +1,6 @@
 #ifndef BeadHeader
 #define BeadHeader
 
-#include "Header.hh"
-
 class Bead {
 	public:
 		bool duplicate;

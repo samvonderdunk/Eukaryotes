@@ -2,7 +2,7 @@
 #define FossilHeader
 
 #include "Header.hh"
-#include "Cell.hh"
+#include "Organelle.hh"
 
 class Fossils
 {

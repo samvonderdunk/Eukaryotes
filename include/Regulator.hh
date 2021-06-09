@@ -2,6 +2,7 @@
 #define RegulatorHeader
 
 #include "Bead.hh"
+#include "Header.hh"
 
 // Regulatory genes, i.e. transcription factors.
 

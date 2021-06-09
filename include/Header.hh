@@ -57,13 +57,13 @@ const double k_zero =		0.0000001;
 const double epsilon =	1.00;
 
 //Runtime and output parameters
-const int TimeZero =						30;
+const int TimeZero =						0;
 const int default_SimTime =			1000000;
 const int TimeTerminalOutput =	1;
-const int TimeSaveGrid =				10;
-const int TimePruneFossils =		5;
-const int TimeOutputFossils =		10;
-const int TimeSaveBackup =			10;
+const int TimeSaveGrid =				100;
+const int TimePruneFossils =		100;
+const int TimeOutputFossils =		100;
+const int TimeSaveBackup =			100;
 
 //Population parameters
 const double death_rate_host = 				0.001;

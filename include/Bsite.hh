@@ -2,6 +2,7 @@
 #define BsiteHeader
 
 #include "Bead.hh"
+#include "Header.hh"
 
 // Binding sites for transcription factors, i.e. regulatory elements.
 
