@@ -59,7 +59,7 @@ void Cell::UpdateOrganelles()
 void Cell::RegulatorTransport()
 {
 	i_bead it;
-	int s;
+	int s, it_cntr;
 
 	for (s=0; s<nr_symbionts; s++)
 	{
@@ -76,13 +76,15 @@ void Cell::RegulatorTransport()
 
 		//Movement of expressed regulators from host to symbionts.
 		it = Host->ExpressedGenes->begin();
-		while (distance(Host->ExpressedGenes->begin(), it) < Host->nr_native_expressed)
+		it_cntr = 0;
+		while (it_cntr < Host->nr_native_expressed)
 		{
 			if (ActiveTransport(it, Host->ExpressedGenes, Symbionts->at(s)->ExpressedGenes) || uniform() < leakage_to_symbiont)
 			{
 				Symbionts->at(s)->ExpressedGenes->push_back(*it);
 			}
 			it++;
+			it_cntr++;
 		}
 	}
 }

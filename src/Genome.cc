@@ -34,13 +34,14 @@ Genome::~Genome()
 void Genome::UpdateGeneExpression(list<Bead*>* ExpressedGenes)
 {
 	i_bead it, i_gene;
-	int wb;
+	int wb, it_cntr;
 	double cum_effects = 0.;
 	Regulator* reg;
 	Bsite* bs;
 
 	//Determine regulatory dynamics and put result into the express variable of each gene (Regulator or otherwise...).
 	it = BeadList->begin();
+	it_cntr = 0;
 	while (it != BeadList->end())
 	{
 		wb = WhatBead(*it);
@@ -63,7 +64,8 @@ void Genome::UpdateGeneExpression(list<Bead*>* ExpressedGenes)
 			}
 		}
 		it++;
-		if (distance(BeadList->begin(), it) == terminus_position)	cum_effects = 0.;	//WARNING: check later how I define terminus_position; should be the first double bead (i.e. the one replicated first, lying directly after the original genome).
+		it_cntr++;
+		if (it_cntr == terminus_position)	cum_effects = 0.;
 	}
 
 	//Realise the just calculated regulatory dynamics.
@@ -766,7 +768,7 @@ Genome::i_bead Genome::ShuffleGene(i_bead it)
 	insertsite=FindRandomGenePosition(true,true);			//Find position to insert gene (may be end of genome).
 	insertsite=FindFirstBsiteInFrontOfGene(insertsite);	//Find first tfbs in front of this gene.
 
-	if ( (distance(BeadList->begin(), insertsite) >= distance(BeadList->begin(), first))   &&   (distance(BeadList->begin(), insertsite) < distance(BeadList->begin(), last)) )	//We are attempting to splice to same location, so don't do it, does not count as mutation.
+	if ( (distance(BeadList->begin(), insertsite) >= distance(BeadList->begin(), first))   &&   (distance(BeadList->begin(), insertsite) < distance(BeadList->begin(), last)) )	//We are attempting to splice to same location, so don't do it, does not count as mutation. Although distance is a time-costly operation in UpdateGeneExpression, we probably do not bother with mutations.
 	{
 		it++;
 		return it;

@@ -37,18 +37,19 @@ void Organelle::UpdateState()
 	i_bead it, it2;
 	Regulator* reg, *reg2;
 
-	int eval_state = Stage;
+	int eval_state = Stage, it_cntr;
 	if (Stage == 2   &&   G->fork_position != G->terminus_position)	eval_state--;	//You cannot proceed to G2 without finishing replication.
 	privilige = true;
 
 	//Fill in the readout.
 	it = ExpressedGenes->begin();
+	it_cntr = 0;
 	while (it != ExpressedGenes->end())
 	{
 		if (G->WhatBead(*it)==REGULATOR)
 		{
 			reg = dynamic_cast<Regulator*>(*it);
-			if (distance(ExpressedGenes->begin(),it) < nr_native_expressed)	//Native genes from the organelle itself; just look at the type.
+			if (it_cntr < nr_native_expressed)	//Native genes from the organelle itself; just look at the type.
 			{
 				if (reg->type < 6)
 				{
@@ -77,6 +78,7 @@ void Organelle::UpdateState()
 			}
 		}
 		it++;
+		it_cntr++;
 	}
 
 	//Compare readout (expression states) with cell-cycle states.
