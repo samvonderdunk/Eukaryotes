@@ -49,8 +49,8 @@ const bool gene_replication = false;	//Only genes take time to replicate.
 
 //Genome parameters
 const int nr_household_genes =			50;
-const double leakage_to_host =			0.01;
-const double leakage_to_symbiont =	0.01;
+const double leakage_to_host =			0.001;
+const double leakage_to_symbiont =	0.001;
 
 //Regulatory parameters
 const double k_zero =		0.0000001;
@@ -59,11 +59,11 @@ const double epsilon =	1.00;
 //Runtime and output parameters
 const int TimeZero =						0;
 const int default_SimTime =			1000000;
-const int TimeTerminalOutput =	1;
+const int TimeTerminalOutput =	100;
 const int TimeSaveGrid =				100;
-const int TimePruneFossils =		100;
-const int TimeOutputFossils =		100;
-const int TimeSaveBackup =			100;
+const int TimePruneFossils =		1000;
+const int TimeOutputFossils =		10000;
+const int TimeSaveBackup =			10000;
 
 //Population parameters
 const double death_rate_host = 				0.001;

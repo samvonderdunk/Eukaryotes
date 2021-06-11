@@ -96,7 +96,7 @@ void Population::UpdatePopulation()
 			/* ~Failed division */
 
 			/* Division of host */
-			if (Space[i][j]->Host->Stage == 4)
+			if (Space[i][j]->Host->Stage == 4   &&   (uniform() < Space[i][j]->Host->fitness))
 			{
 				coords neigh = PickNeighbour(i, j);
 				if (Space[neigh.first][neigh.second] != NULL)		DeathOfCell(neigh.first, neigh.second);
@@ -130,7 +130,7 @@ void Population::UpdatePopulation()
 			/* Division of symbionts */
 			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
-				if (Space[i][j]->Symbionts->at(s)->Stage == 4)
+				if (Space[i][j]->Symbionts->at(s)->Stage == 4   &&   (uniform() < Space[i][j]->Symbionts->at(s)->fitness))
 				{
 					SymbiontCopy = new Organelle();
 					id_count++;
