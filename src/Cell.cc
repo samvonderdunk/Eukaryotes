@@ -260,3 +260,80 @@ void Cell::CloneCell(Cell* ImageC, unsigned long long* pid_count)
 		Symbionts->push_back(Symbiont);
 	}
 }
+
+bool Cell::CheckCellDeath(bool output)
+{
+	if (nr_symbionts == 0)
+	{
+		if (output)	SingleCellOutput(true);	//Used for FollowSingleCell.
+		DeathOfCell();
+		return true;				//The cell died.
+	}
+	else
+	{
+		return false;				//The cell lives.
+	}
+}
+
+void Cell::DeathOfSymbiont(int s)
+{
+	if (!Symbionts->at(s)->mutant)
+	{
+		delete Symbionts->at(s);
+	}
+	else
+	{
+		Symbionts->at(s)->alive = false;
+	}
+
+	Symbionts->erase(Symbionts->begin()+s);	//We erase the pointer from the Symbionts vector. Similar to setting C->Host to NULL for host death (see below).
+}
+
+void Cell::DeathOfHost()
+{
+	if (!Host->mutant)
+	{
+		delete Host;
+	}
+	else
+	{
+		Host->alive = false;
+	}
+
+	Host = NULL;
+}
+
+void Cell::DeathOfCell()	//Called when host died or when last symbiont died, responsible for cleaning of remaining organelles.
+{
+	int s;
+
+	if (Host != NULL)	DeathOfHost();
+	for (s=nr_symbionts-1; s>=0; s--)
+	{
+		DeathOfSymbiont(s);
+		nr_symbionts--;
+	}
+}
+
+void Cell::SingleCellOutput(bool death_event)
+{
+	int s;
+	unsigned long long anc_id;
+
+
+	cout << "T " << Time << endl;
+
+	//Host
+	if (Host->Ancestor == NULL)	anc_id = 0;
+	else												anc_id = Host->Ancestor->fossil_id;
+	cout << "O -1\tI " << Host->fossil_id << "\tA " << anc_id << "\tS " << Host->Stage << "\tP " << Host->privilige << "\tF " << Host->G->fork_position << "\tE " << Host->G->ShowExpression(NULL, false) << endl;
+
+	//Symbionts
+	for (s=0; s<nr_symbionts; s++)
+	{
+		if (Symbionts->at(s)->Ancestor == NULL)		anc_id = 0;
+		else																			anc_id = Symbionts->at(s)->Ancestor->fossil_id;
+		cout << "O " << s << "\tI " << Symbionts->at(s)->fossil_id << "\tA " << anc_id << "\tS " << Symbionts->at(s)->Stage << "\tP " << Symbionts->at(s)->privilige << "\tF " << Symbionts->at(s)->G->fork_position << "\tE " << Symbionts->at(s)->G->ShowExpression(NULL, false) << endl;
+	}
+
+}

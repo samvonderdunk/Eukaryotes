@@ -29,6 +29,12 @@ class Cell{
 		void InitialiseCell();
 		void CloneCell(Cell* ImageC, unsigned long long* pid_count);
 
+		bool CheckCellDeath(bool output);
+		void DeathOfSymbiont(int s);
+		void DeathOfHost();
+		void DeathOfCell();
+		void SingleCellOutput(bool death_event);
+
 };
 
 #endif

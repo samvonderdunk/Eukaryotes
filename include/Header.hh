@@ -49,8 +49,8 @@ const bool gene_replication = false;	//Only genes take time to replicate.
 
 //Genome parameters
 const int nr_household_genes =			50;
-const double leakage_to_host =			0.001;
-const double leakage_to_symbiont =	0.001;
+const double leakage_to_host =			0.00;
+const double leakage_to_symbiont =	0.00;
 
 //Regulatory parameters
 const double k_zero =		0.0000001;
@@ -97,18 +97,20 @@ const double house_innovation_mu = 				0.0;
 const double house_shuffle_mu = 					0.001;
 
 //Transfer mutations.
-const double regulator_transfer_mu_HtoS = 0.0001;
-const double regulator_transfer_mu_StoH = 0.0001;
-const double bsite_transfer_mu_HtoS = 		0.0001;
-const double bsite_transfer_mu_StoH = 		0.0001;
-const double house_transfer_mu_HtoS = 		0.0001;
-const double house_transfer_mu_StoH = 		0.0001;
+const double regulator_transfer_mu_HtoS = 0.000;
+const double regulator_transfer_mu_StoH = 0.000;
+const double bsite_transfer_mu_HtoS = 		0.000;
+const double bsite_transfer_mu_StoH = 		0.000;
+const double house_transfer_mu_HtoS = 		0.000;
+const double house_transfer_mu_StoH = 		0.000;
 
 //Variables defined in World.cc
 extern int Time;
 extern int initial_seed;
 extern unsigned long long seed_draws;
 extern string folder;
+extern bool follow_single_individual;
+extern bool follow_with_fixed_symbionts;
 extern string genome_initialisation;
 extern string expression_initialisation;
 extern string backup_reboot;

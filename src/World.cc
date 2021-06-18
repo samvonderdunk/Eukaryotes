@@ -21,6 +21,7 @@ string anctrace_reboot = anctrace_file;
 int SimTime = default_SimTime;
 bool mutations_on = true;
 bool follow_single_individual = false;
+bool follow_with_fixed_symbionts = false;
 
 void Setup(int argc, char** argv);
 
@@ -39,8 +40,8 @@ int main(int argc, char** argv) {
 	if (follow_single_individual)
 	{
 		printf("\033[93m### Start ###\033[0m\n");
-		// P = new Population();
-		// P->FollowSingleIndividual();
+		P = new Population();
+		P->FollowSingleCell();
 	}
 	else
 	{
@@ -71,7 +72,7 @@ int main(int argc, char** argv) {
 
 void PrintUsage(bool full)
 {
-	printf("\n\033[93m### Eukaryotes --- usage ###\033[0m\nArguments:\n   -s [seed]\t\t\tSet seed for random number generator (e.g. 211)\n   -p [project title]\t\tDefines folder for local storage\n   -g [genomes file]\t\tSee World.cc for format (e.g. CellX.g)\n   -e [expressions file]\tSee World.cc for format (e.g. CellX_G1.g)\n   -b [backup file]\t\tStart from backup (e.g. /path/backup00090000.txt)\n   -a [ancestor file]\t\tContinue ancestor trace (e.g. /path/anctrace00090000.txt)\n   -t [max. time]\t\tSet simulation time (e.g. 100)\n\nFlags:\n   --nomut\t\t\tNo mutations\n   --help\t\t\tPrint full usage info\n\nProgrammes:\n   -S\t\t\t\tFollow single immortal cell/lineage through time (simulating until Time==SimTime)\n");
+	printf("\n\033[93m### Eukaryotes --- usage ###\033[0m\nArguments:\n   -s [seed]\t\t\tSet seed for random number generator (e.g. 211)\n   -p [project title]\t\tDefines folder for local storage\n   -g [genomes file]\t\tSee World.cc for format (e.g. CellX.g)\n   -e [expressions file]\tSee World.cc for format (e.g. CellX_G1.g)\n   -b [backup file]\t\tStart from backup (e.g. /path/backup00090000.txt)\n   -a [ancestor file]\t\tContinue ancestor trace (e.g. /path/anctrace00090000.txt)\n   -t [max. time]\t\tSet simulation time (e.g. 100)\n\nFlags:\n   --nomut\t\t\tNo mutations\n   --help\t\t\tPrint full usage info\n\nProgrammes:\n   -S1\t\t\t\tFollow single cell with growing symbionts\n   -S2\t\t\t\tFollow single with fixed symbiont numbers\n");
 	if (full)
 	{
 		printf("\n\033[93m### Eukaryotes --- formats ###\033[0m\n\n<genomes file>\t\tHost genome on first line, each next line a symbiont.\n   (G2:0:-3:1:10010100010101010001).(H).(0:01010101000110010100).(...\n   (G4:1:-1:2:01010101100101000001).(H).(2:10100011001010001010).(...\n   (G4:1:-1:2:01010101100101000001).(H).(2:10100011001010001010).(...\n\n<expressions file>\tHost expression on first line, each next line a symbiont (matching with genomes file)\n   {10101110}\n   {...\n   {...\n");
@@ -169,10 +170,19 @@ void Setup(int argc, char** argv) {
 		/* PROGRAMMES */
 		/* ########## */
 
-		else if(ReadOut=="-S")	//Follow a single immortal individual for many time steps.
+		else if(ReadOut=="-S1")
 		{
 			follow_single_individual = true;
-			printf("Following a single, immortal individual through time.\n");
+			mutations_on = false;
+			follow_with_fixed_symbionts = false;
+			printf("Following a single cell with growing symbionts.\n");
+		}
+		else if(ReadOut=="-S2")
+		{
+			follow_single_individual = true;
+			mutations_on = false;
+			follow_with_fixed_symbionts = true;
+			printf("Following a single cell with fixed symbiont numbers.\n");
 		}
 
 		else

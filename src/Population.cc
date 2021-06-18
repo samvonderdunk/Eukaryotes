@@ -36,6 +36,149 @@ Population::~Population()	//Skips deconstructor of Cell, because we need to chec
 	FossilSpace = NULL;
 }
 
+void Population::FollowSingleCell()
+{
+	Cell* C_init, * C, * C_copy;
+	Organelle* S_copy;
+	int s, nutrients;
+
+	C_init = new Cell();
+	C_init->InitialiseCell();
+	C = new Cell();
+	C->CloneCell(C_init, &id_count);
+
+	for (Time=TimeZero; Time<SimTime+1; Time++)
+	{
+		C->SingleCellOutput(false);	//Print all relevant data.
+
+		//Failed division.
+		if (C->Host->Stage == 5)
+		{
+			if (follow_with_fixed_symbionts)
+			{
+				//Just reset the host.
+				delete C->Host;
+				C->Host = NULL;
+				C->Host = new Organelle();
+				C->Host->CloneOrganelle(C_init->Host, id_count);
+			}
+			else
+			{
+				//Actually kill the host, and therewith the entire cell.
+				C->SingleCellOutput(true);
+				ResetSingleCell(&C, &C_init);
+				continue;
+			}
+		}
+		for (s=C->nr_symbionts-1; s>=0; s--)
+		{
+			if ( C->Symbionts->at(s)->Stage == 5)
+			{
+				if (follow_with_fixed_symbionts)
+				{
+					//Just reset the symbiont.
+					delete C->Symbionts->at(s);
+					C->Symbionts->at(s) = NULL;
+					C->Symbionts->at(s) = new Organelle();
+					C->Symbionts->at(s)->CloneOrganelle(C_init->Symbionts->at(s), id_count);
+				}
+				else
+				{
+					//Actually kill the symbiont.
+					C->DeathOfSymbiont(s);
+					C->nr_symbionts--;
+				}
+			}
+		}
+		if (C->CheckCellDeath(true))
+		{
+			ResetSingleCell(&C, &C_init);
+			continue;
+		}
+
+		//Division of host.
+		if (C->Host->Stage == 4   &&   (uniform() < C->Host->fitness))
+		{
+			C_copy = new Cell();
+			C_copy->Host = new Organelle();
+			id_count++;
+			C_copy->Host->Mitosis(C->Host, id_count);
+
+			if (!follow_with_fixed_symbionts)
+			{
+				for (s=C->nr_symbionts-1; s>=0; s--)
+				{
+					if (uniform() < 0.5)	//Transfer the symbiont to the new cell (just a matter of using the right pointers).
+					{
+						C_copy->Symbionts->push_back(C->Symbionts->at(s));
+						C->Symbionts->erase(C->Symbionts->begin()+s);
+						C_copy->nr_symbionts++;
+						C->nr_symbionts--;
+					}
+				}
+			}
+			delete C_copy;	//We only track one of the offspring every time.
+			C_copy = NULL;
+
+			if (C->CheckCellDeath(true))
+			{
+				ResetSingleCell(&C, &C_init);
+				continue;
+			}
+		}
+
+		//Division of symbionts.
+		for (s=0; s<C->nr_symbionts; s++)
+		{
+			if (C->Symbionts->at(s)->Stage == 4   &&   (uniform() < C->Symbionts->at(s)->fitness))
+			{
+				S_copy = new Organelle();
+				id_count++;
+				S_copy->Mitosis(C->Symbionts->at(s), id_count);
+				if (follow_with_fixed_symbionts)
+				{
+					delete S_copy;
+					S_copy = NULL;
+				}
+				else
+				{
+					S_copy->Ancestor = C->Symbionts->at(s);
+					C->Symbionts->push_back(S_copy);
+					C->nr_symbionts++;
+				}
+			}
+		}
+
+		C->UpdateOrganelles();	//Expression dynamics within cell.
+
+		//Replication.
+		nutrients = (nutrient_abundance - (double)(C->nr_symbionts+1))/(double)(C->nr_symbionts+1);
+		if (C->Host->Stage == 2   &&   C->Host->privilige)
+		{
+			C->Host->Replicate(nutrients);
+		}
+		for (s=0; s<C->nr_symbionts; s++)
+		{
+			if ( C->Symbionts->at(s)->Stage == 2   &&   C->Symbionts->at(s)->privilige)
+			{
+				C->Symbionts->at(s)->Replicate(nutrients);
+			}
+		}
+
+	}
+}
+
+void Population::ResetSingleCell(Cell** CP, Cell** CP_reset)
+{
+	delete *CP;
+	*CP = NULL;
+
+	*CP = new Cell();
+	(*CP)->CloneCell(*CP_reset, &id_count);
+}
+
+
+
 void Population::UpdatePopulation()
 {
 	int update_order[NR*NC];
@@ -64,42 +207,56 @@ void Population::UpdatePopulation()
 			/* Basal death */
 			if (uniform() < death_rate_host)
 			{
-				DeathOfCell(i, j);
+				Space[i][j]->DeathOfCell();
+				Space[i][j] = NULL;
 				continue;
 			}
 			for (s=Space[i][j]->nr_symbionts-1; s>=0; s--)
 			{
 				if (uniform() < death_rate_symbiont)
 				{
-					DeathOfSymbiont(i, j, s);
+					Space[i][j]->DeathOfSymbiont(s);
 					Space[i][j]->nr_symbionts--;
 				}
 			}
-			if (CheckCellDeath(i, j))	continue;
+			if (Space[i][j]->CheckCellDeath(false))
+			{
+				Space[i][j] = NULL;
+				continue;
+			}
 			/* ~Basal death */
 
 			/* Failed division */
 			if (Space[i][j]->Host->Stage == 5)
 			{
-				DeathOfCell(i, j);
+				Space[i][j]->DeathOfCell();
+				Space[i][j] = NULL;
 				continue;
 			}
 			for (s=Space[i][j]->nr_symbionts-1; s>=0; s--)
 			{
 				if ( Space[i][j]->Symbionts->at(s)->Stage == 5)
 				{
-					DeathOfSymbiont(i, j, s);
+					Space[i][j]->DeathOfSymbiont(s);
 					Space[i][j]->nr_symbionts--;
 				}
 			}
-			if (CheckCellDeath(i, j))	continue;
+			if (Space[i][j]->CheckCellDeath(false))
+			{
+				Space[i][j] = NULL;
+				continue;
+			}
 			/* ~Failed division */
 
 			/* Division of host */
 			if (Space[i][j]->Host->Stage == 4   &&   (uniform() < Space[i][j]->Host->fitness))
 			{
 				coords neigh = PickNeighbour(i, j);
-				if (Space[neigh.first][neigh.second] != NULL)		DeathOfCell(neigh.first, neigh.second);
+				if (Space[neigh.first][neigh.second] != NULL)
+				{
+					Space[neigh.first][neigh.second]->DeathOfCell();
+					Space[neigh.first][neigh.second] = NULL;
+				}
 				Space[neigh.first][neigh.second] = new Cell();
 				Space[neigh.first][neigh.second]->Host = new Organelle();
 				id_count++;
@@ -115,7 +272,7 @@ void Population::UpdatePopulation()
 						Space[i][j]->nr_symbionts--;
 					}
 				}
-				if (!CheckCellDeath(neigh.first, neigh.second))	//Don't continue, since we have killed the child which lies at a different site.
+				if (!Space[neigh.first][neigh.second]->CheckCellDeath(false))	//Don't continue, since we have killed the child which lies at a different site.
 				{
 					Space[neigh.first][neigh.second]->DNATransferToHost();	//Instead, use the cell death check to know whether we need to do DNA transfer.
 					if (Space[neigh.first][neigh.second]->Host->mutant)
@@ -123,7 +280,12 @@ void Population::UpdatePopulation()
 						FossilSpace->BuryFossil(Space[neigh.first][neigh.second]->Host);	//Bury fossil only after potential transfer events (also count as mutations).
 					}
 				}
-				if (CheckCellDeath(i, j))	continue;
+				else	Space[neigh.first][neigh.second] = NULL;
+				if (Space[i][j]->CheckCellDeath(false))
+				{
+					Space[i][j] = NULL;
+					continue;
+				}
 			}
 			/* ~Division of host */
 
@@ -165,60 +327,6 @@ void Population::UpdatePopulation()
 
 		}
 	}
-}
-
-bool Population::CheckCellDeath(int i, int j)
-{
-	if (Space[i][j]->nr_symbionts == 0)
-	{
-		DeathOfCell(i, j);
-		return true;				//The cell died.
-	}
-	else
-	{
-		return false;				//The cell lives.
-	}
-}
-
-void Population::DeathOfSymbiont(int i, int j, int s)
-{
-	if (!Space[i][j]->Symbionts->at(s)->mutant)
-	{
-		delete Space[i][j]->Symbionts->at(s);
-	}
-	else
-	{
-		Space[i][j]->Symbionts->at(s)->alive = false;
-	}
-
-	Space[i][j]->Symbionts->erase(Space[i][j]->Symbionts->begin()+s);	//We erase the pointer from the Symbionts vector. Similar to setting Space[i][j]->Host to NULL for host death (see below).
-}
-
-void Population::DeathOfHost(int i, int j)
-{
-	if (!Space[i][j]->Host->mutant)
-	{
-		delete Space[i][j]->Host;
-	}
-	else
-	{
-		Space[i][j]->Host->alive = false;
-	}
-
-	Space[i][j]->Host = NULL;
-}
-
-void Population::DeathOfCell(int i, int j)	//Called when host died or when last symbiont died, responsible for cleaning of remaining organelles.
-{
-	int s;
-
-	if (Space[i][j]->Host != NULL)	DeathOfHost(i, j);
-	for (s=Space[i][j]->nr_symbionts-1; s>=0; s--)
-	{
-		DeathOfSymbiont(i, j, s);
-		Space[i][j]->nr_symbionts--;
-	}
-	Space[i][j] = NULL;
 }
 
 Population::coords Population::PickNeighbour(int i, int j)
@@ -323,7 +431,7 @@ void Population::ContinuePopulationFromBackup()
 		{
 			if (Space[i][j]!=NULL)
 			{
-				id_count ++;
+				id_count++;
 				Space[i][j]->Host->fossil_id = id_count;	//Other things such as time_of_appearance and Ancestor are set to zero by the EmptyProkaryote function.
 				for (s=0; Space[i][j]->nr_symbionts; s++)
 				{
