@@ -167,7 +167,7 @@ void Genome::ReplicateStep(double resource)
 	repl_remaining_steps = (int) res_int;
 	if (uniform() < res_fract)	repl_remaining_steps++;	//Regard fractional replication step as probability.
 
-	if (repl_remaining_steps==0)	return;	//Nothing to do if no beads are allowed to replicate.
+	if (repl_remaining_steps <= 0)	return;	//Nothing to do if no beads are allowed to replicate.
 
 	start = BeadList->begin();
 	advance(start, fork_position);	//Now it points to the the first bead to be replicated in this replication step.
