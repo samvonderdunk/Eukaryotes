@@ -220,15 +220,13 @@ void Cell::InitialiseCell()
 
 	while ( !in_genome.eof() & !in_expression.eof() )
 	{
-		in_genome >> genome;
-		in_expression >> expression;
-
-		if (i==0)
+		//We start reading below, because when we reach the end of the file, there will still be one round through the while-loop.
+		if (i==1)
 		{
 			Host->InitialiseOrganelle(genome, expression);
 		}
 
-		else
+		else if (i>1)
 		{
 			Symbiont = new Organelle();
 			Symbiont->InitialiseOrganelle(genome, expression);
@@ -236,10 +234,11 @@ void Cell::InitialiseCell()
 			nr_symbionts++;
 		}
 
+		in_genome >> genome;
+		in_expression >> expression;
+
 		i++;
 	}
-
-	//Print first individuals...
 }
 
 
