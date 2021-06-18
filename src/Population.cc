@@ -786,4 +786,10 @@ void Population::ShowGeneralProgress()
 	for (i=0; i<6; i++)	cout << "\tS(" << i << ") " << stage_counts[i];
 	cout << endl;
 
+	if (host_count==0)
+	{
+		cout << "And since there is no more life, we will stop the experiment here.\n" << endl;
+		exit(1);
+	}
+
 }
