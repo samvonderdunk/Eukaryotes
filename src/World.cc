@@ -57,8 +57,6 @@ int main(int argc, char** argv) {
 		for(Time=TimeZero; Time<SimTime+1; Time++){	//We do one extra step, because output is generated at the beginning of a step, such that time=0 is the field as it is initialised.
 			P->UpdatePopulation();		//Main next-state function, updating the population.
 		}
-		//Make sure that you save all possible things in the last timestep, if you did not already choose your parameters such.
-		// Time--;
 		printf("Simulation completed...\n\n");
 	}
 
@@ -71,7 +69,15 @@ int main(int argc, char** argv) {
 
 }
 
-
+void PrintUsage(bool full)
+{
+	printf("\n\033[93m### Eukaryotes --- usage ###\033[0m\nArguments:\n   -s [seed]\t\t\tSet seed for random number generator (e.g. 211)\n   -p [project title]\t\tDefines folder for local storage\n   -g [genomes file]\t\tSee World.cc for format (e.g. CellX.g)\n   -e [expressions file]\tSee World.cc for format (e.g. CellX_G1.g)\n   -b [backup file]\t\tStart from backup (e.g. /path/backup00090000.txt)\n   -a [ancestor file]\t\tContinue ancestor trace (e.g. /path/anctrace00090000.txt)\n   -t [max. time]\t\tSet simulation time (e.g. 100)\n\nFlags:\n   --nomut\t\t\tNo mutations\n   --help\t\t\tPrint full usage info\n\nProgrammes:\n   -S\t\t\t\tFollow single immortal cell/lineage through time (simulating until Time==SimTime)\n");
+	if (full)
+	{
+		printf("\n\033[93m### Eukaryotes --- formats ###\033[0m\n\n<genomes file>\t\tHost genome on first line, each next line a symbiont.\n   (G2:0:-3:1:10010100010101010001).(H).(0:01010101000110010100).(...\n   (G4:1:-1:2:01010101100101000001).(H).(2:10100011001010001010).(...\n   (G4:1:-1:2:01010101100101000001).(H).(2:10100011001010001010).(...\n\n<expressions file>\tHost expression on first line, each next line a symbiont (matching with genomes file)\n   {10101110}\n   {...\n   {...\n");
+	}
+	exit(1);
+}
 
 void Setup(int argc, char** argv) {
 
@@ -83,9 +89,9 @@ void Setup(int argc, char** argv) {
 	{
 		ReadOut = (char*) argv[i];	//There does not seem to be a quicker way to compare the input arguments with a string.
 
-		/* ############## */
-		/* INPUT SETTINGS */
-		/* ############## */
+		/* ######### */
+		/* ARGUMENTS */
+		/* ######### */
 
 		if(ReadOut=="-s" && (i+1)!=argc)
 		{
@@ -104,13 +110,6 @@ void Setup(int argc, char** argv) {
 			continue;
 		}
 
-		/* Format of genome input file:
-			HOST::(G2:3:-2:11101010101... etc...)
-			SYMB::(G4:1:1:0001010100101... etc..)
-			SYMB::(G1:0:-1:000100101010... etc..)
-			etc..
-		*/
-
 		else if(ReadOut=="-g" && (i+1)!=argc)
 		{
 			genome_initialisation = argv[i+1];
@@ -118,13 +117,6 @@ void Setup(int argc, char** argv) {
 			i++;
 			continue;
 		}
-
-		/* Format of expression input file:
-			HOST::[1,0,1,0,0,0,1,1,0]
-			SYMB::[...]
-			SYMB::[...]
-			etc..
-		*/
 
 		else if(ReadOut=="-e" && (i+1)!=argc)
 		{
@@ -158,27 +150,34 @@ void Setup(int argc, char** argv) {
 			continue;
 		}
 
-		/* ########### */
-		/* RUN OPTIONS */
-		/* ########### */
+		/* ##### */
+		/* FLAGS */
+		/* ##### */
 
-		else if(ReadOut=="-nomut")
+		else if(ReadOut=="--nomut")
 		{
 			mutations_on = false;
 			printf("Simulating without mutations.\n");
 		}
 
-		//Follow a single immortal individual for many time steps.
-		else if(ReadOut=="-S")
+		else if(ReadOut=="--help")
+		{
+			PrintUsage(true);
+		}
+
+		/* ########## */
+		/* PROGRAMMES */
+		/* ########## */
+
+		else if(ReadOut=="-S")	//Follow a single immortal individual for many time steps.
 		{
 			follow_single_individual = true;
 			printf("Following a single, immortal individual through time.\n");
 		}
 
-		else	//Print usage/help.
+		else
 		{
-			printf("\nWARNING: OLD HELP MESSAGE\033[93m### Prokaryotes --- usage ###\033[0m\nArgument options:\n   -p [project title]\t\tDefines folder for local storage\n   -s [seed]\t\t\tSet seed for random number generator (e.g. 211)\n   -i [genome initialisation file]\t\te.g. CellX.g\n   -g [expression initialisation file]\te.g. CellX_Expr.g\n   -e [env]\t\t\tInitial environment (e.g. -3)\n   -b [backup file]\t\tStart from backup (e.g. /path/backup00090000.txt)\n   -a [ancestor file]\t\tContinue ancestor trace (e.g. /path/anctrace00090000.txt)\n   -nomut\t\t\tNo mutations\n   -t [max. time]\t\tSet simulation time (e.g. 100)\n Programmes:\n   -M [nr_mutants]\tGenerate mutants\n   -MS\t\t\tScan neutral mutational path\n   -A [nr_states]\tSimulate state-space transitions [nr. of initial states = max(nr_states, total nr. unique states)]\n   -S\t\t\tFollow single immortal individual/lineage through time [simulating until Time==SimTime]\n");
-			exit(1);
+			PrintUsage(false);
 		}
 	}
 
