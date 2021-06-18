@@ -272,8 +272,8 @@ double Population::CollectNutrients(int i, int j)
 		}
 	}
 
-	// return (nutrient_abundance / (double)Space[i][j]->nr_symbionts)  *  (1. - (double)organelle_density / max_organelle_density);
-	return (nutrient_abundance - (double)organelle_density) / (double)Space[i][j]->nr_symbionts;
+	// return (nutrient_abundance / (double)(Space[i][j]->nr_symbionts+1))  *  (1. - (double)organelle_density / max_organelle_density);
+	return (nutrient_abundance - (double)organelle_density) / (double)(Space[i][j]->nr_symbionts+1);
 }
 
 /* ######################################################################## */
