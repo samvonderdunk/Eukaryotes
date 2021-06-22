@@ -458,7 +458,7 @@ void Population::ReadBackupFile()
 	string::iterator sit;
 	Genome::i_bead it;
 	int i, r, c, s, begin_data, end_data, success, stage, pfork, pterm, nr=NR, nc=NC, init_seed, read_header = 0, count_lines = 0;	//For now, set nr and nc for backup-file to NR and NC parameters (i.e. if backup-file does not contain header; for old backups).
-	unsigned long long org_id, anc_id, sdraws;
+	unsigned long long org_id, anc_id, sdraws, iull;
 	char temp_is_mutant[20], temp_priv[20];
 	double fit;
 	size_t pos;
@@ -512,7 +512,7 @@ void Population::ReadBackupFile()
 			else
 			{
 				cout << "Simulating " << sdraws << " random draws, initial seed=" << init_seed << endl;
-				for(i=0; (unsigned long long)i<sdraws; i++){
+				for(iull=0; iull<sdraws; iull++){
 					uniform();
 				}
 			}
