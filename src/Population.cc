@@ -152,7 +152,7 @@ void Population::FollowSingleCell()
 		C->UpdateOrganelles();	//Expression dynamics within cell.
 
 		//Replication.
-		nutrients = (nutrient_abundance - (double)(C->nr_symbionts+1))/(double)(C->nr_symbionts+1);
+		nutrients = nutrient_abundance/(double)(C->nr_symbionts+1);
 		if (C->Host->Stage == 2   &&   C->Host->privilige)
 		{
 			C->Host->Replicate(nutrients);
@@ -457,7 +457,7 @@ void Population::ReadBackupFile()
 	char* data_element;
 	string::iterator sit;
 	Genome::i_bead it;
-	int i, r, c, s, begin_data, end_data, success, stage, pfork, pterm, nr=NR, nc=NC, init_seed, read_header = 0, count_lines = 0;	//For now, set nr and nc for backup-file to NR and NC parameters (i.e. if backup-file does not contain header; for old backups).
+	int r, c, s, begin_data, end_data, success, stage, pfork, pterm, nr=NR, nc=NC, init_seed, read_header = 0, count_lines = 0;	//For now, set nr and nc for backup-file to NR and NC parameters (i.e. if backup-file does not contain header; for old backups).
 	unsigned long long org_id, anc_id, sdraws, iull;
 	char temp_is_mutant[20], temp_priv[20];
 	double fit;
