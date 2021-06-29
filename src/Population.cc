@@ -380,8 +380,10 @@ double Population::CollectNutrients(int i, int j)
 		}
 	}
 
-	// return (nutrient_abundance / (double)(Space[i][j]->nr_symbionts+1))  *  (1. - (double)organelle_density / max_organelle_density);
-	return (nutrient_abundance - (double)organelle_density) / (double)(Space[i][j]->nr_symbionts+1);
+	// return (nutrient_abundance / (double)(Space[i][j]->nr_symbionts+1))  *  (1. - (double)organelle_density / max_organelle_density);	//Relative (sim. to Prokaryotes) nutrient function.
+	// return (nutrient_abundance - (double)organelle_density) / (double)(Space[i][j]->nr_symbionts+1);	//More explicit (classical Eukaryotes) nutrient function.
+	// return nutrient_abundance / (double)(Space[i][j]->nr_symbionts+1);	//Nutrient function with only host-symbiont competition and no neighbour competition.
+	return nutrient_abundance - (double)organelle_density;	//Nutrient function with only neighbour competition and no host-symbiont competition.
 }
 
 /* ######################################################################## */
