@@ -9,6 +9,7 @@ class Population
 {
 	public:
 		Cell* Space[NR][NC];
+		double NutrientSpace[NR][NC];	//Nutrient space.
 		Fossils* FossilSpace;
 
 		unsigned long long id_count;
@@ -27,7 +28,7 @@ class Population
 		void UpdatePopulation();
 
 		coords PickNeighbour(int i, int j);
-		double CollectNutrients(int i, int j);
+		void CollectNutrientsFromSite(int i, int j);
 
 		void InitialisePopulation();
 		void ContinuePopulationFromBackup();

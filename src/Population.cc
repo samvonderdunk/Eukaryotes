@@ -8,6 +8,7 @@ Population::Population()
 	for(i=0;i<NR;i++) for(j=0;j<NC;j++)
 	{
 		Space[i][j]=NULL;
+		NutrientSpace[i][j]=0.;
 	}
 	FossilSpace = new Fossils();
 }
@@ -192,6 +193,10 @@ void Population::UpdatePopulation()
 	if(Time%TimeOutputFossils==0 && Time!=0)	FossilSpace->ExhibitFossils();
 	if(Time%TimeSaveBackup==0 && Time!=0)			OutputGrid(true);
 
+
+	for(i=0; i<NR; i++)	for(j=0; j<NC; j++)	NutrientSpace[i][j] = 0.;
+	for(i=0; i<NR; i++)	for(j=0; j<NC; j++)	CollectNutrientsFromSite(i,j);
+
 	for(u=0; u<NR*NC; u++) update_order[u]=u;
 	random_shuffle(&update_order[0], &update_order[NR*NC], uniform_shuffle);	//Is also set by initial_seed through srand(initial_seed), see World.cc
 
@@ -311,16 +316,16 @@ void Population::UpdatePopulation()
 			Space[i][j]->UpdateOrganelles();	//Expression dynamics within cell.
 
 			/* Replication */
-			nutrients = CollectNutrients(i, j);
+			// nutrients = CollectNutrients(i, j);
 			if (Space[i][j]->Host->Stage == 2   &&   Space[i][j]->Host->privilige)
 			{
-				Space[i][j]->Host->Replicate(nutrients);
+				Space[i][j]->Host->Replicate(NutrientSpace[i][j]);
 			}
 			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
 				if ( Space[i][j]->Symbionts->at(s)->Stage == 2   &&   Space[i][j]->Symbionts->at(s)->privilige)
 				{
-					Space[i][j]->Symbionts->at(s)->Replicate(nutrients);
+					Space[i][j]->Symbionts->at(s)->Replicate(NutrientSpace[i][j]);
 				}
 			}
 			/* ~Replication */
@@ -351,28 +356,22 @@ Population::coords Population::PickNeighbour(int i, int j)
 	return std::make_pair(nrow, ncol);
 }
 
-double Population::CollectNutrients(int i, int j)
+void Population::CollectNutrientsFromSite(int i, int j)
 {
-	//Collects nutrients per organelle at site (i,j).
-	//
-	//	n_ij = n_ext / x_i (1 - sum(x)/k)
-	//
-	//	I don't know whether I should cast things to double only during calculations or just always have them as doubles.
-	//
-	int ii, jj, nrow, ncol;
-	int organelle_density = 0;
+	int ii, jj, nrow, ncol, organelle_density = 0;
+	double nutrient_share;
 
 	//First obtain organelle density in 3x3 neighbourhood.
 	for (ii=i-1; ii<=i+1; ii++) for (jj=j-1; jj<=j+1; jj++)
 	{
-		if (ii == i && jj == j)	continue;
+		// if (ii == i && jj == j)	continue;
 
-		if (ii < 0)	nrow = ii + NR;	//-1 becomes -1+100=99, i.e. the last index of a row with 100 sites (0-99).
+		if (ii < 0)					nrow = ii + NR;
 		else if (ii >= NR)	nrow = ii - NR;
-		else	nrow = ii;
-		if (jj < 0)	ncol = jj + NC;
+		else								nrow = ii;
+		if (jj < 0)					ncol = jj + NC;
 		else if (jj >= NC)	ncol = jj - NC;
-		else	ncol = jj;
+		else								ncol = jj;
 
 		if (Space[nrow][ncol] != NULL)
 		{
@@ -383,7 +382,22 @@ double Population::CollectNutrients(int i, int j)
 	// return (nutrient_abundance / (double)(Space[i][j]->nr_symbionts+1))  *  (1. - (double)organelle_density / max_organelle_density);	//Relative (sim. to Prokaryotes) nutrient function.
 	// return (nutrient_abundance - (double)organelle_density) / (double)(Space[i][j]->nr_symbionts+1);	//More explicit (classical Eukaryotes) nutrient function.
 	// return nutrient_abundance / (double)(Space[i][j]->nr_symbionts+1);	//Nutrient function with only host-symbiont competition and no neighbour competition.
-	return nutrient_abundance - (double)organelle_density;	//Nutrient function with only neighbour competition and no host-symbiont competition.
+	// return nutrient_abundance - (double)organelle_density;	//Nutrient function with only neighbour competition and no host-symbiont competition.
+
+	if (organelle_density == 0)		nutrient_share = nutrient_abundance;
+	else													nutrient_share = nutrient_abundance / (double)organelle_density;
+
+	for (ii=i-1; ii<=i+1; ii++) for (jj=j-1; jj<=j+1; jj++)
+	{
+		if (ii < 0)					nrow = ii + NR;
+		else if (ii >= NR)	nrow = ii - NR;
+		else								nrow = ii;
+		if (jj < 0)					ncol = jj + NC;
+		else if (jj >= NC)	ncol = jj - NC;
+		else								ncol = jj;
+
+		NutrientSpace[nrow][ncol] += nutrient_share;
+	}
 }
 
 /* ######################################################################## */
@@ -848,14 +862,14 @@ void Population::OutputGrid(bool backup)
 	for (i=0; i<NR; i++) for(j=0; j<NC; j++) {
 		if(Space[i][j] == NULL)
 		{
-		 	fprintf(f, "%d %d NULL\n", i, j);
+		 	fprintf(f, "%d %d NULL %f\n", i, j, NutrientSpace[i][j]);
 		}
 		else	//Print internal state and genome of prokaryote to file.
 		{
-			fprintf(f, "%d %d %d\t%s\n", i, j, -1, Space[i][j]->Host->Output(backup).c_str());
+			fprintf(f, "%d %d %d %f\t%s\n", i, j, -1, NutrientSpace[i][j], Space[i][j]->Host->Output(backup).c_str());
 			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
-				fprintf(f, "%d %d %d\t%s\n", i, j, s, Space[i][j]->Symbionts->at(s)->Output(backup).c_str());
+				fprintf(f, "%d %d %d %f\t%s\n", i, j, s, NutrientSpace[i][j], Space[i][j]->Symbionts->at(s)->Output(backup).c_str());
 			}
 		}
 	}
