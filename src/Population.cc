@@ -187,6 +187,9 @@ void Population::UpdatePopulation()
 	double nutrients;
 	Organelle* SymbiontCopy;
 
+	for(i=0; i<NR; i++)	for(j=0; j<NC; j++)	NutrientSpace[i][j] = 0.;
+	for(i=0; i<NR; i++)	for(j=0; j<NC; j++)	CollectNutrientsFromSite(i,j);
+	
 	if(Time%TimeTerminalOutput==0)						ShowGeneralProgress();
 	if(Time%TimeSaveGrid==0)									OutputGrid(false);
 	if(Time%TimePruneFossils==0 && Time!=0)		PruneFossilRecord();
@@ -194,8 +197,6 @@ void Population::UpdatePopulation()
 	if(Time%TimeSaveBackup==0 && Time!=0)			OutputGrid(true);
 
 
-	for(i=0; i<NR; i++)	for(j=0; j<NC; j++)	NutrientSpace[i][j] = 0.;
-	for(i=0; i<NR; i++)	for(j=0; j<NC; j++)	CollectNutrientsFromSite(i,j);
 
 	for(u=0; u<NR*NC; u++) update_order[u]=u;
 	random_shuffle(&update_order[0], &update_order[NR*NC], uniform_shuffle);	//Is also set by initial_seed through srand(initial_seed), see World.cc
