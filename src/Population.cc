@@ -189,7 +189,7 @@ void Population::UpdatePopulation()
 
 	for(i=0; i<NR; i++)	for(j=0; j<NC; j++)	NutrientSpace[i][j] = 0.;
 	for(i=0; i<NR; i++)	for(j=0; j<NC; j++)	CollectNutrientsFromSite(i,j);
-	
+
 	if(Time%TimeTerminalOutput==0)						ShowGeneralProgress();
 	if(Time%TimeSaveGrid==0)									OutputGrid(false);
 	if(Time%TimePruneFossils==0 && Time!=0)		PruneFossilRecord();
@@ -359,13 +359,13 @@ Population::coords Population::PickNeighbour(int i, int j)
 
 void Population::CollectNutrientsFromSite(int i, int j)
 {
-	int ii, jj, nrow, ncol, organelle_density = 0;
+	int ii, jj, nrow, ncol, cell_density=0, organelle_density=0;
 	double nutrient_share;
 
 	//First obtain organelle density in 3x3 neighbourhood.
 	for (ii=i-1; ii<=i+1; ii++) for (jj=j-1; jj<=j+1; jj++)
 	{
-		// if (ii == i && jj == j)	continue;
+		if (nutrient_competition == 1 && (ii == i && jj == j))	continue;		//Only skipped in classic nutrient function.
 
 		if (ii < 0)					nrow = ii + NR;
 		else if (ii >= NR)	nrow = ii - NR;
@@ -376,28 +376,39 @@ void Population::CollectNutrientsFromSite(int i, int j)
 
 		if (Space[nrow][ncol] != NULL)
 		{
+			cell_density++;
 			organelle_density += Space[nrow][ncol]->nr_symbionts + 1;		//Host always counts for one.
 		}
 	}
 
-	// return (nutrient_abundance / (double)(Space[i][j]->nr_symbionts+1))  *  (1. - (double)organelle_density / max_organelle_density);	//Relative (sim. to Prokaryotes) nutrient function.
-	// return (nutrient_abundance - (double)organelle_density) / (double)(Space[i][j]->nr_symbionts+1);	//More explicit (classical Eukaryotes) nutrient function.
-	// return nutrient_abundance / (double)(Space[i][j]->nr_symbionts+1);	//Nutrient function with only host-symbiont competition and no neighbour competition.
-	// return nutrient_abundance - (double)organelle_density;	//Nutrient function with only neighbour competition and no host-symbiont competition.
-
-	if (organelle_density == 0)		nutrient_share = nutrient_abundance;
-	else													nutrient_share = nutrient_abundance / (double)organelle_density;
-
-	for (ii=i-1; ii<=i+1; ii++) for (jj=j-1; jj<=j+1; jj++)
+	if (nutrient_competition == 1)	//Finish classic nutrient function here.
 	{
-		if (ii < 0)					nrow = ii + NR;
-		else if (ii >= NR)	nrow = ii - NR;
-		else								nrow = ii;
-		if (jj < 0)					ncol = jj + NC;
-		else if (jj >= NC)	ncol = jj - NC;
-		else								ncol = jj;
+		if (Space[i][j] == NULL)	NutrientSpace[i][j] += nutrient_abundance - (double)organelle_density;
+		else											NutrientSpace[i][j] += (nutrient_abundance - (double)organelle_density) / (double)(Space[i][j]->nr_symbionts+1);
+	}
 
-		NutrientSpace[nrow][ncol] += nutrient_share;
+	else
+	{
+		if (organelle_density == 0)					nutrient_share = nutrient_abundance;
+		else if (nutrient_competition == 2)	nutrient_share = nutrient_abundance / (double)organelle_density;	//Used in first smooth nutrient function.
+		else																nutrient_share = nutrient_abundance / (double)cell_density;	//Used in second smooth nutrient function.
+
+		for (ii=i-1; ii<=i+1; ii++) for (jj=j-1; jj<=j+1; jj++)
+		{
+			if (ii < 0)					nrow = ii + NR;
+			else if (ii >= NR)	nrow = ii - NR;
+			else								nrow = ii;
+			if (jj < 0)					ncol = jj + NC;
+			else if (jj >= NC)	ncol = jj - NC;
+			else								ncol = jj;
+
+			if (nutrient_competition == 2)		NutrientSpace[nrow][ncol] += nutrient_share;	//Used in first nutrient function.
+			else	//Used in second nutrient function.
+			{
+				if (Space[nrow][ncol] == NULL)	NutrientSpace[nrow][ncol] += nutrient_share;
+				else														NutrientSpace[nrow][ncol] += nutrient_share / (double)(Space[nrow][ncol]->nr_symbionts+1);
+			}
+		}
 	}
 }
 

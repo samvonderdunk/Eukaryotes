@@ -57,8 +57,8 @@ const double k_zero =		0.0000001;
 const double epsilon =	1.00;
 
 //Runtime and output parameters
-const int TimeZero =						0;
-const int default_SimTime =			1000000;
+const int TimeZero =						000000;
+const int default_SimTime =			10000000;
 const int TimeTerminalOutput =	100;
 const int TimeSaveGrid =				100;
 const int TimePruneFossils =		1000;
@@ -66,10 +66,19 @@ const int TimeOutputFossils =		10000;
 const int TimeSaveBackup =			10000;
 
 //Population parameters
-const double death_rate_host = 				0.001;
-const double death_rate_symbiont = 		0.001;
-const double nutrient_abundance = 		100.;
-const double max_organelle_density = 	100.;	//Only used with the relative nutrient function; k, number of organelles at which point nutrients will be completely depleted.
+const double death_rate_host =				0.001;
+const double death_rate_symbiont =		0.001;
+const double nutrient_abundance =			100.;
+const int nutrient_competition =			1;
+//Options for nutrient_competition:
+// 1, classic nutrient function (e.g. Paramecium tetraurelia):		n_ij = ( n_tot - (x_nei-x_i) ) / x_i
+// 2, first smooth nutrient function (e.g. Paramecium caudatum):	n_ij = n_tot / x_nei
+// 3, distribute by cell, by organelle (e.g. Volvox carteri IV):	n_ij = (n_tot / c_nei) / x_i
+// where n_ij is nutrients at site i for organelle j,
+//       n_tot is total nutrient_abundance (see par above), i.e. influx per site,
+//       x_nei is total number of organelles in the neighbourhood,
+//       x_i is total number of organelles at site i,
+//       c_nei is number of cells (or hosts) in the neighbourhood.
 
 /* MUTATION PARAMETERS */
 const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
@@ -97,12 +106,12 @@ const double house_innovation_mu = 				0.0;
 const double house_shuffle_mu = 					0.001;
 
 //Transfer mutations.
-const double regulator_transfer_mu_HtoS = 0.000;
-const double regulator_transfer_mu_StoH = 0.000;
-const double bsite_transfer_mu_HtoS = 		0.000;
-const double bsite_transfer_mu_StoH = 		0.000;
-const double house_transfer_mu_HtoS = 		0.000;
-const double house_transfer_mu_StoH = 		0.000;
+const double regulator_transfer_mu_HtoS = 0.0000;
+const double regulator_transfer_mu_StoH = 0.0000;
+const double bsite_transfer_mu_HtoS = 		0.0000;
+const double bsite_transfer_mu_StoH = 		0.0000;
+const double house_transfer_mu_HtoS = 		0.0000;
+const double house_transfer_mu_StoH = 		0.0000;
 
 //Variables defined in World.cc
 extern int Time;
