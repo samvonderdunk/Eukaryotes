@@ -120,10 +120,13 @@ extern unsigned long long seed_draws;
 extern string folder;
 extern bool follow_single_individual;
 extern bool follow_with_fixed_symbionts;
+extern bool trace_lineage;
+extern bool log_lineage;
 extern string genome_initialisation;
 extern string expression_initialisation;
 extern string backup_reboot;
 extern string anctrace_reboot;
+extern string lineage_record;
 extern int SimTime;
 extern bool mutations_on;
 
@@ -143,6 +146,7 @@ const string genome_file="";
 const string expression_file="";
 const string backup_file="";
 const string anctrace_file="";
+const string lineage_file="";
 
 //The current definition of the stages.
 const bool StageTargets[4][5] = {

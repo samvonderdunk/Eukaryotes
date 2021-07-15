@@ -277,13 +277,13 @@ bool Cell::CheckCellDeath(bool output)
 
 void Cell::DeathOfSymbiont(int s)
 {
-	if (!Symbionts->at(s)->mutant)
+	if (Symbionts->at(s)->mutant || trace_lineage)
 	{
-		delete Symbionts->at(s);
+		Symbionts->at(s)->alive = false;
 	}
 	else
 	{
-		Symbionts->at(s)->alive = false;
+		delete Symbionts->at(s);
 	}
 
 	Symbionts->erase(Symbionts->begin()+s);	//We erase the pointer from the Symbionts vector. Similar to setting C->Host to NULL for host death (see below).
@@ -291,13 +291,13 @@ void Cell::DeathOfSymbiont(int s)
 
 void Cell::DeathOfHost()
 {
-	if (!Host->mutant)
+	if (Host->mutant || trace_lineage)
 	{
-		delete Host;
+		Host->alive = false;
 	}
 	else
 	{
-		Host->alive = false;
+		delete Host;
 	}
 
 	Host = NULL;

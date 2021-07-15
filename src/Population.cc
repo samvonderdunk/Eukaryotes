@@ -21,12 +21,12 @@ Population::~Population()	//Skips deconstructor of Cell, because we need to chec
 	{
 		if((Space[i][j]) != NULL)
 		{
-			if (Space[i][j]->Host->mutant)	FossilSpace->EraseFossil(Space[i][j]->Host->fossil_id);
+			if (Space[i][j]->Host->mutant || trace_lineage)	FossilSpace->EraseFossil(Space[i][j]->Host->fossil_id);
 			delete Space[i][j]->Host;
 			Space[i][j]->Host = NULL;
 			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
-				if (Space[i][j]->Symbionts->at(s)->mutant)	FossilSpace->EraseFossil(Space[i][j]->Symbionts->at(s)->fossil_id);
+				if (Space[i][j]->Symbionts->at(s)->mutant || trace_lineage)	FossilSpace->EraseFossil(Space[i][j]->Symbionts->at(s)->fossil_id);
 				delete Space[i][j]->Symbionts->at(s);
 				Space[i][j]->Symbionts->at(s) = NULL;
 			}
@@ -184,19 +184,16 @@ void Population::UpdatePopulation()
 {
 	int update_order[NR*NC];
 	int u, i, j, s;
-	double nutrients;
 	Organelle* SymbiontCopy;
 
 	for(i=0; i<NR; i++)	for(j=0; j<NC; j++)	NutrientSpace[i][j] = 0.;
 	for(i=0; i<NR; i++)	for(j=0; j<NC; j++)	CollectNutrientsFromSite(i,j);
 
-	if(Time%TimeTerminalOutput==0)						ShowGeneralProgress();
-	if(Time%TimeSaveGrid==0)									OutputGrid(false);
-	if(Time%TimePruneFossils==0 && Time!=0)		PruneFossilRecord();
-	if(Time%TimeOutputFossils==0 && Time!=0)	FossilSpace->ExhibitFossils();
-	if(Time%TimeSaveBackup==0 && Time!=0)			OutputGrid(true);
-
-
+	if(Time%TimeTerminalOutput==0)															ShowGeneralProgress();
+	if(Time%TimeSaveGrid==0)																		OutputGrid(false);
+	if(Time%TimePruneFossils==0 && Time!=0 && !trace_lineage)		PruneFossilRecord(0, 0);
+	if(Time%TimeOutputFossils==0 && Time!=0 && !trace_lineage)	FossilSpace->ExhibitFossils();
+	if(Time%TimeSaveBackup==0 && Time!=0)												OutputGrid(true);
 
 	for(u=0; u<NR*NC; u++) update_order[u]=u;
 	random_shuffle(&update_order[0], &update_order[NR*NC], uniform_shuffle);	//Is also set by initial_seed through srand(initial_seed), see World.cc
@@ -209,6 +206,8 @@ void Population::UpdatePopulation()
 		if (Space[i][j] != NULL)
 		{
 			random_shuffle(Space[i][j]->Symbionts->begin(), Space[i][j]->Symbionts->end(), uniform_shuffle);
+
+			if (log_lineage)	LogLineage(i,j);
 
 			/* Basal death */
 			if (uniform() < death_rate_host)
@@ -281,10 +280,18 @@ void Population::UpdatePopulation()
 				if (!Space[neigh.first][neigh.second]->CheckCellDeath(false))	//Don't continue, since we have killed the child which lies at a different site.
 				{
 					Space[neigh.first][neigh.second]->DNATransferToHost();	//Instead, use the cell death check to know whether we need to do DNA transfer.
-					if (Space[neigh.first][neigh.second]->Host->mutant)
+					if (Space[neigh.first][neigh.second]->Host->mutant || trace_lineage)
 					{
 						FossilSpace->BuryFossil(Space[neigh.first][neigh.second]->Host);	//Bury fossil only after potential transfer events (also count as mutations).
+						if (trace_lineage && CheckLineage(neigh.first, neigh.second))
+						{
+							//If we found the next mutant during our lineage trace, prune all clones that we have collected from the fossil record (unless they are in our lineage), and erase this mutant from the lineage record.
+							PruneFossilRecord(neigh.first, neigh.second);
+							Lineage.erase(Lineage.begin());
+							FossilSpace->ExhibitFossils();
+						}
 					}
+
 				}
 				else	Space[neigh.first][neigh.second] = NULL;
 				if (Space[i][j]->CheckCellDeath(false))
@@ -317,7 +324,6 @@ void Population::UpdatePopulation()
 			Space[i][j]->UpdateOrganelles();	//Expression dynamics within cell.
 
 			/* Replication */
-			// nutrients = CollectNutrients(i, j);
 			if (Space[i][j]->Host->Stage == 2   &&   Space[i][j]->Host->privilige)
 			{
 				Space[i][j]->Host->Replicate(NutrientSpace[i][j]);
@@ -331,6 +337,25 @@ void Population::UpdatePopulation()
 			}
 			/* ~Replication */
 
+		}
+	}
+}
+
+bool Population::CheckLineage(int i, int j)
+{
+	i_lin check_id;
+	check_id = lower_bound(Lineage.begin(), Lineage.end(), Space[i][j]->Host->fossil_id);
+	if (*check_id == Space[i][j]->Host->fossil_id)	return true;
+	else																						return false;
+}
+
+void Population::LogLineage(int i, int j)
+{
+	if (Lineage.size() > (size_t)0)
+	{
+		if (CheckLineage(i,j))
+		{
+			OutputLineage(i,j);
 		}
 	}
 }
@@ -473,7 +498,7 @@ void Population::ContinuePopulationFromBackup()
 	//Only do these things if we're starting at an irregular timepoint (where we wouldn't already store info inside UpdatePop.).
 	if (TimeZero%TimeTerminalOutput != 0)	ShowGeneralProgress();
 	if(Time%TimeSaveGrid != 0)						OutputGrid(false);
-	if (TimeZero%TimePruneFossils != 0)		PruneFossilRecord();
+	if (TimeZero%TimePruneFossils != 0)		PruneFossilRecord(0, 0);
 	if (TimeZero%TimeOutputFossils != 0)	FossilSpace->ExhibitFossils();
 	if (TimeZero%TimeSaveBackup != 0)			OutputGrid(true);
 }
@@ -780,11 +805,39 @@ Organelle* Population::FindInFossilRecord(unsigned long long AncID)
 	return NULL;
 }
 
+void Population::ReadLineageFile()
+{
+	ifstream infile(lineage_record.c_str());
+	string line, data;
+	int end_data, count_lines = 0;
+	unsigned long long ID;
+
+	if (!infile.is_open())
+	{
+		printf("Lineage-file could not be opened.\n");
+		exit(1);
+	}
+
+	printf("Reading lineage from file: %s\n", lineage_record.c_str());
+	while(getline(infile,line))
+	{
+		if (count_lines%10000 == 0 && count_lines!=0)	printf("%d\n", count_lines);
+		end_data = line.find("\t");
+		data = line.substr(0,end_data);
+
+		stringstream(data) >> ID;
+		Lineage.push_back(ID);
+		count_lines++;
+	}
+	assert (Lineage.size() == (size_t)count_lines);
+	sort(Lineage.begin(), Lineage.end());
+}
+
 /* ######################################################################## */
 /*				FOSSILS	FOSSILS	FOSSILS	FOSSILS	FOSSILS	FOSSILS	FOSSILS						*/
 /* ######################################################################## */
 
-void Population::PruneFossilRecord()
+void Population::PruneFossilRecord(int m, int n)
 {
 	std::list<unsigned long long> AllFossilIDs;
 	int s, fossil_record_size;
@@ -793,31 +846,47 @@ void Population::PruneFossilRecord()
 	i_ull findit;
 	Organelle* lastCA;
 
-	//Trace all living individuals back to the beginning, storing all individuals along their lineage.
-	for(int i=0; i<NR; i++)	for(int j=0; j<NC; j++)
+	if (trace_lineage)
 	{
-		if(Space[i][j] != NULL)
-		{
-			lastCA = Space[i][j]->Host->Ancestor; //HERE?
-			while(lastCA != NULL)
-			{
-				AllFossilIDs.push_back(lastCA->fossil_id);
-				lastCA = lastCA->Ancestor;
-			}
+		//Only trace from the host that is in the lineage record (and which have encountered, resulting in this pruning), and all symbionts inside it.
+		AllFossilIDs.push_back(Space[m][n]->Host->fossil_id);	//Include the newly found mutant.
 
-			for (s=0; s<Space[i][j]->nr_symbionts; s++)
+		lastCA = Space[m][n]->Host->Ancestor;
+		while(lastCA != NULL)
+		{
+			AllFossilIDs.push_back(lastCA->fossil_id);
+			lastCA = lastCA->Ancestor;
+		}
+	}
+
+	else
+	{
+		//Trace all living individuals back to the beginning, storing all individuals along their lineage.
+		for(int i=0; i<NR; i++)	for(int j=0; j<NC; j++)
+		{
+			if(Space[i][j] != NULL)
 			{
-				lastCA = Space[i][j]->Symbionts->at(s)->Ancestor; //HERE?
+				lastCA = Space[i][j]->Host->Ancestor;
 				while(lastCA != NULL)
 				{
 					AllFossilIDs.push_back(lastCA->fossil_id);
 					lastCA = lastCA->Ancestor;
 				}
-			}
 
+				for (s=0; s<Space[i][j]->nr_symbionts; s++)
+				{
+					lastCA = Space[i][j]->Symbionts->at(s)->Ancestor;
+					while(lastCA != NULL)
+					{
+						AllFossilIDs.push_back(lastCA->fossil_id);
+						lastCA = lastCA->Ancestor;
+					}
+				}
+
+			}
 		}
 	}
-	// Delete duplicates (e.g. Agent 9 in example asci will be located 4 times. Agent 11 two times, etc.)
+	// Delete duplicates.
 	AllFossilIDs.sort();
 	AllFossilIDs.unique();
 
@@ -830,9 +899,9 @@ void Population::PruneFossilRecord()
 		fossilID = (*iF)->fossil_id;
 		findit = std::find(AllFossilIDs.begin(),AllFossilIDs.end(),fossilID);
 		// If not, delete the fossil unless it is still alive or is still saved in the graveyard. If a prokaryote dies, the graveyard-flag remains for one ShowGeneralProgress() cycle at most, so that the fossil can be deleted at the next pruning step. If ShowGeneralProgress() precedes PruneFossilRecord(), this is issue is even avoided, because flags are already removed off dead prokaryotes.
-		if(findit==AllFossilIDs.end() && !(*iF)->alive)
+		if(findit==AllFossilIDs.end() && ( !(*iF)->alive || trace_lineage ) )	//Fossil not needed/found in relevant branches AND either the organelle is already dead OR we're tracing a lineage (in which case we want to clean our tree more quickly, live individuals will not suddenly produce offspring that are in the lineage record).
 		{
-			delete *iF;
+			if (!(*iF)->alive)	delete *iF;	//Only delete things that are not alive anymore.
 			iF = FossilSpace->FossilRecord.erase(iF);
 		}
 		else
@@ -878,7 +947,7 @@ void Population::OutputGrid(bool backup)
 		}
 		else	//Print internal state and genome of prokaryote to file.
 		{
-			fprintf(f, "%d %d %d %f\t%s\n", i, j, -1, NutrientSpace[i][j], Space[i][j]->Host->Output(backup).c_str());
+			fprintf(f, "%d %d -1 %f\t%s\n", i, j, NutrientSpace[i][j], Space[i][j]->Host->Output(backup).c_str());
 			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
 				fprintf(f, "%d %d %d %f\t%s\n", i, j, s, NutrientSpace[i][j], Space[i][j]->Symbionts->at(s)->Output(backup).c_str());
@@ -887,7 +956,25 @@ void Population::OutputGrid(bool backup)
 	}
 
 	fclose(f);
-	return;
+}
+
+void Population::OutputLineage(int i, int j)
+{
+	FILE* f;
+	char OutputFile[800];
+	int s;
+
+	sprintf(OutputFile, "%s/lineage.out", folder.c_str());
+	f=fopen(OutputFile, "a");
+	if (f == NULL)	printf("Failed to open file for writing the backup.\n");
+
+	fprintf(f, "%d %d %d -1 %f\t%s\n", Time, i, j, NutrientSpace[i][j], Space[i][j]->Host->Output(true).c_str());
+	for (s=0; s<Space[i][j]->nr_symbionts; s++)
+	{
+		fprintf(f, "%d %d %d %d %f\t%s\n", Time, i, j, s, NutrientSpace[i][j], Space[i][j]->Symbionts->at(s)->Output(true).c_str());
+	}
+
+	fclose(f);
 }
 
 /* ######################################################################## */
