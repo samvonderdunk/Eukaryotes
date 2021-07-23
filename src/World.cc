@@ -47,11 +47,8 @@ int main(int argc, char** argv) {
 	Population* P;
 	for(int q=0; q<argc; q++)	printf("%s ", argv[q]);
 	Setup(argc, argv);
-	if (backup_file == "")
-	{
-		dsfmt_init_gen_rand(&dsfmt, initial_seed);	//Used to seed uniform().
-		srand(initial_seed);	//Used to seed random_shuffle(...).
-	}
+	dsfmt_init_gen_rand(&dsfmt, initial_seed);	//Used to seed uniform().
+	srand(initial_seed);	//Used to seed random_shuffle(...).
 	printf("\b\nSetup completed...\n\n");
 
 	if (follow_single_individual)

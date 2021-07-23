@@ -500,11 +500,11 @@ void Population::ReadBackupFile()
 {
 	ifstream infile(backup_file.c_str());
 	string line, data;
-	char* data_element;
+	char* data_element, *number;
 	string::iterator sit;
 	Genome::i_bead it;
-	int r, c, s, begin_data, end_data, success, stage, pfork, pterm, nr=NR, nc=NC, init_seed, read_header = 0, count_lines = 0;	//For now, set nr and nc for backup-file to NR and NC parameters (i.e. if backup-file does not contain header; for old backups).
-	unsigned long long org_id, anc_id, sdraws, iull;
+	int r, c, s, begin_data, end_data, success, stage, pfork, pterm, nr, nc, count_lines = 0, nn = 0, idx_primary, idx_secondary;
+	unsigned long long org_id, anc_id;
 	char temp_is_mutant[20], temp_priv[20];
 	double fit;
 	size_t pos;
@@ -522,18 +522,9 @@ void Population::ReadBackupFile()
 	while(getline(infile,line))
 	{
 
-		//Read "Header" of backup file.
-		if (line=="### Header ###")
-		{
-			read_header = 1;
-			continue;
-		}
-		else if (line=="#### Main ####")
-		{
-			read_header = -1;
-			continue;
-		}
-		else if (read_header==1)
+		if (line.substr(0,1)=="#")	continue;
+
+		else if (line=="NR:50\tNC:50")
 		{
 			data_element = (char*)line.c_str();
 			success = sscanf(data_element, "NR:%d\tNC:%d", &nr, &nc);
@@ -542,138 +533,156 @@ void Population::ReadBackupFile()
 				cerr << "Could not read NR and NC from backup-file.\n" << endl;
 				exit(1);
 			}
-			else	cout << "nr=" << nr << ", nc=" << nc << endl;
-			read_header = 2;
-			continue;
-		}
-		else if (read_header==2)
-		{
-			data_element = (char*)line.c_str();
-			success = sscanf(data_element, "Initial seed:%d\tSeed draws:%llu", &init_seed, &sdraws);
-			if (success != 2)
+			else if(nr != NR || nc != NC)
 			{
-				cerr << "Could not read seed status from backup-file.\n" << endl;
+				cerr << "NR and NC of backup did not match parameter settings.\n" << endl;
 				exit(1);
 			}
-			else
-			{
-				dsfmt_init_gen_rand(&dsfmt, init_seed);	//Used to seed uniform().
-				srand(init_seed);	//Used to seed random_shuffle(...).
-				cout << "Simulating " << sdraws << " random draws, initial seed=" << init_seed << endl;
-				for(iull=0; iull<sdraws; iull++){
-					uniform();
-				}
-			}
-			read_header = 3;	//Not doing anything with this yet.
-			continue;
 		}
 
-		//Start reading "Main" data from backup file.
-		if (count_lines%10000 == 0 && count_lines!=0)	printf("%d\n", count_lines);	//Print some progress.
-
-
-		pos = line.find("NULL");
-		if (pos != string::npos)	//Empty site.
+		else if(line.substr(0,9)=="dsfmt.idx")
 		{
 			data_element = (char*)line.c_str();
-			success = sscanf(data_element, "%d %d NULL\n", &r, &c);
-			if (success != 2)
+
+			success = sscanf(data_element, "dsfmt.idx:%d", &dsfmt.idx);
+			if (success != 1)
 			{
-				cerr << "Could not read row and column from empty site. Backup file potentially corrupt.\n" << endl;
+				cerr << "Could not read dsfmt.idx from backup-file.\n" << endl;
+				exit(1);
 			}
-			Space[r][c] = NULL;
 		}
-		else											//Non-empty site.
+
+		else if(line.substr(0,12)=="dsfmt.status")
 		{
-			//Make the new organelle, we'll decide at the end (?) whether it is a host and requires a cell to be made or whether it is a symbiont.
-			O = new Organelle();
+			line = line.substr(13);
 
-			//Read BeadList. Some variables are here initiated, but will be overwritten by information from the backup file below.
-			begin_data = line.find_first_of("(");
-			end_data = line.find_last_of(")");
-			data = line.substr(begin_data, end_data-begin_data+1);
-			O->G->ReadGenome(data);
-
-			begin_data = line.find_first_of("{");
-			end_data = line.find_first_of("}");
-			data = line.substr(begin_data, end_data-begin_data+1);	//Brackets are stripped off in ReadExpression function.
-			O->G->ReadExpression(data);
-
-			//Read organelle data.
-			begin_data = line.find_last_of("[");
-			end_data = line.find_last_of("]");
-			data = line.substr(begin_data+1, end_data-begin_data-1);
-			data_element = strtok((char*)data.c_str(),"\t");
-			while(data_element != NULL)
+			number = strtok((char*)line.c_str(),",");
+			while (number != NULL)
 			{
-				success = sscanf(data_element, "%llu %llu %s %lf %d %s %d %d", &org_id, &anc_id, temp_is_mutant, &fit, &stage, temp_priv, &pfork, &pterm);
-				if(success != 8)
+				idx_primary = nn/2;
+				idx_secondary = nn%2;
+
+				success = sscanf(number, "%" PRIu64 , &dsfmt.status[idx_primary].u[idx_secondary]);//&dsfmt_element);
+				if (success != 1)
 				{
-					cerr << "Could not find sufficient information for this prokaryote. Backup file potentially corrupt.\n" << endl;
+					cerr << "Could not read dsfmt element dsfmt.status[" << idx_primary << "].u[" << idx_secondary << "] from backup-file.\n" << endl;
 					exit(1);
 				}
 
-				data_element = strtok(NULL, "\t");
-				O->Stage = stage;
-				O->fitness = fit;
-				O->G->fork_position = pfork;
-				O->G->terminus_position = pterm;
-				O->fossil_id = org_id;
-				O->mutant = (strcmp( temp_is_mutant, "Y") == 0);
-				O->privilige = (strcmp( temp_priv, "Y") == 0);
-				O->alive = true;
-				if (org_id > id_count) id_count = org_id;
+				number = strtok(NULL, ",");
+				nn ++;
+			}
+		}
 
-				SaveO = O;	//SaveO takes the pointer value of O.
-				O = FindInFossilRecord(SaveO->fossil_id);	//Check the current organelle was already put in the fossil record; O is reassigned as pointer.
-				if (O == NULL)	//It is not yet in the fossil record. Act like nothing happened.
+		else
+		{
+			//Start reading "Main" data from backup file.
+			if (count_lines%10000 == 0 && count_lines!=0)	printf("%d\n", count_lines);	//Print some progress.
+
+
+			pos = line.find("NULL");
+			if (pos != string::npos)	//Empty site.
+			{
+				data_element = (char*)line.c_str();
+				success = sscanf(data_element, "%d %d NULL\n", &r, &c);
+				if (success != 2)
 				{
-					O = SaveO;	//Continue with the SaveO pointer.
-					SaveO = NULL;
+					cerr << "Could not read row and column from empty site. Backup file potentially corrupt.\n" << endl;
 				}
-				else	//It is in the fossil record.
+				Space[r][c] = NULL;
+			}
+			else											//Non-empty site.
+			{
+				//Make the new organelle, we'll decide at the end (?) whether it is a host and requires a cell to be made or whether it is a symbiont.
+				O = new Organelle();
+
+				//Read BeadList. Some variables are here initiated, but will be overwritten by information from the backup file below.
+				begin_data = line.find_first_of("(");
+				end_data = line.find_last_of(")");
+				data = line.substr(begin_data, end_data-begin_data+1);
+				O->G->ReadGenome(data);
+
+				begin_data = line.find_first_of("{");
+				end_data = line.find_first_of("}");
+				data = line.substr(begin_data, end_data-begin_data+1);	//Brackets are stripped off in ReadExpression function.
+				O->G->ReadExpression(data);
+
+				//Read organelle data.
+				begin_data = line.find_last_of("[");
+				end_data = line.find_last_of("]");
+				data = line.substr(begin_data+1, end_data-begin_data-1);
+				data_element = strtok((char*)data.c_str(),"\t");
+				while(data_element != NULL)
 				{
-					O->CloneOrganelle(SaveO, SaveO->fossil_id);	//Continue with the previously made pointer that was already in the fossil record, but give it all the data we've read in so far.
-					delete SaveO;
-					SaveO = NULL;
-					break;	//Although it is a mutant, we have already buried its fossil, so no need to take the otherwise standard action for mutant (below).
+					success = sscanf(data_element, "%llu %llu %s %lf %d %s %d %d", &org_id, &anc_id, temp_is_mutant, &fit, &stage, temp_priv, &pfork, &pterm);
+					if(success != 8)
+					{
+						cerr << "Could not find sufficient information for this prokaryote. Backup file potentially corrupt.\n" << endl;
+						exit(1);
+					}
+
+					data_element = strtok(NULL, "\t");
+					O->Stage = stage;
+					O->fitness = fit;
+					O->G->fork_position = pfork;
+					O->G->terminus_position = pterm;
+					O->fossil_id = org_id;
+					O->mutant = (strcmp( temp_is_mutant, "Y") == 0);
+					O->privilige = (strcmp( temp_priv, "Y") == 0);
+					O->alive = true;
+					if (org_id > id_count) id_count = org_id;
+
+					SaveO = O;	//SaveO takes the pointer value of O.
+					O = FindInFossilRecord(SaveO->fossil_id);	//Check the current organelle was already put in the fossil record; O is reassigned as pointer.
+					if (O == NULL)	//It is not yet in the fossil record. Act like nothing happened.
+					{
+						O = SaveO;	//Continue with the SaveO pointer.
+						SaveO = NULL;
+					}
+					else	//It is in the fossil record.
+					{
+						O->CloneOrganelle(SaveO, SaveO->fossil_id);	//Continue with the previously made pointer that was already in the fossil record, but give it all the data we've read in so far.
+						delete SaveO;
+						SaveO = NULL;
+						break;	//Although it is a mutant, we have already buried its fossil, so no need to take the otherwise standard action for mutant (below).
+					}
+
+					if (O->mutant)
+					{
+						//If this live organelle is a mutant, we will store the organelle itself in the fossil record.
+						FossilSpace->BuryFossil(O);
+					}
+					else
+					{
+						//If this live organelle is NOT a mutant, we will check if its direct ancestor is already known (in which case we can simply point to that); otherwise, we construct the ancestor only with its ID, completing its construction in ReadAncestorFile.
+						O->Ancestor = FindInFossilRecord(anc_id);
+						if (O->Ancestor == NULL)	//i.e. Ancestor not currently present in fossil record.
+						{
+							OF = new Organelle();	//Make the ancestor with the right name...
+							OF->fossil_id = anc_id;
+							FossilSpace->BuryFossil(OF);
+							O->Ancestor = OF;	//...and point to it, so that our current organelle (O) now has a defined ancestor.
+						}
+					}
 				}
 
-				if (O->mutant)
+				data_element = (char*)line.c_str();
+				success = sscanf(data_element, "%d %d %d\t", &r, &c, &s);
+				if (success != 3)
 				{
-					//If this live organelle is a mutant, we will store the organelle itself in the fossil record.
-					FossilSpace->BuryFossil(O);
+					cerr << "Could not read r, c, s from non-empty site. Backup file potentially corrupt.\n" << endl;
+				}
+				if (s == -1)
+				{
+					C = new Cell();
+					C->Host = O;
+					Space[r][c] = C;
 				}
 				else
 				{
-					//If this live organelle is NOT a mutant, we will check if its direct ancestor is already known (in which case we can simply point to that); otherwise, we construct the ancestor only with its ID, completing its construction in ReadAncestorFile.
-					O->Ancestor = FindInFossilRecord(anc_id);
-					if (O->Ancestor == NULL)	//i.e. Ancestor not currently present in fossil record.
-					{
-						OF = new Organelle();	//Make the ancestor with the right name...
-						OF->fossil_id = anc_id;
-						FossilSpace->BuryFossil(OF);
-						O->Ancestor = OF;	//...and point to it, so that our current organelle (O) now has a defined ancestor.
-					}
+					Space[r][c]->Symbionts->push_back(O);
+					Space[r][c]->nr_symbionts++;
 				}
-			}
-
-			data_element = (char*)line.c_str();
-			success = sscanf(data_element, "%d %d %d\t", &r, &c, &s);
-			if (success != 3)
-			{
-				cerr << "Could not read r, c, s from non-empty site. Backup file potentially corrupt.\n" << endl;
-			}
-			if (s == -1)
-			{
-				C = new Cell();
-				C->Host = O;
-				Space[r][c] = C;
-			}
-			else
-			{
-				Space[r][c]->Symbionts->push_back(O);
-				Space[r][c]->nr_symbionts++;
 			}
 
 		}
@@ -946,8 +955,13 @@ void Population::OutputGrid(bool backup)
 		f=fopen(OutputFile, "w");
 		if (f == NULL)	printf("Failed to open file for writing the backup.\n");
 
-		//Print NR and NC to file.
-		fprintf(f, "### Header ###\nNR:%d\tNC:%d\nInitial seed:%d\tSeed draws:%llu\n#### Main ####\n", NR, NC, initial_seed, seed_draws);
+		fprintf(f, "### Header ###\nNR:%d\tNC:%d\n", NR, NC);
+		fprintf(f, "dsfmt.idx:%d\ndsfmt.status:", dsfmt.idx);
+		for (i=0; i<DSFMT_N; i++)
+		{
+			fprintf(f, "%" PRIu64 ",%" PRIu64 ",", dsfmt.status[i].u[0], dsfmt.status[i].u[1]);
+		}
+		fprintf(f, "%" PRIu64 ",%" PRIu64 "\n### Main ###\n", dsfmt.status[DSFMT_N].u[0], dsfmt.status[DSFMT_N].u[1]);
 	}
 	else
 	{
