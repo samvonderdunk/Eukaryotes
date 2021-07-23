@@ -36,8 +36,11 @@ int main(int argc, char** argv) {
 	Setup(argc, argv);
 	printf("Function call: ");
 	for(int q=0; q<argc; q++)	printf("%s ", argv[q]);
-	dsfmt_init_gen_rand(&dsfmt, initial_seed);	//Used to seed uniform().
-	srand(initial_seed);	//Used to seed random_shuffle(...).
+	if (backup_reboot == "")
+	{
+		dsfmt_init_gen_rand(&dsfmt, initial_seed);	//Used to seed uniform().
+		srand(initial_seed);	//Used to seed random_shuffle(...).
+	}
 	printf("\b\nSetup completed...\n\n");
 
 	if (follow_single_individual)

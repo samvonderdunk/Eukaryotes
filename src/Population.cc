@@ -557,6 +557,8 @@ void Population::ReadBackupFile()
 			}
 			else
 			{
+				dsfmt_init_gen_rand(&dsfmt, init_seed);	//Used to seed uniform().
+				srand(init_seed);	//Used to seed random_shuffle(...).
 				cout << "Simulating " << sdraws << " random draws, initial seed=" << init_seed << endl;
 				for(iull=0; iull<sdraws; iull++){
 					uniform();
