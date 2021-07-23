@@ -469,7 +469,7 @@ void Population::ContinuePopulationFromBackup()
 	int i, j, s;
 
 	ReadBackupFile();
-	if(anctrace_reboot != "")	ReadAncestorFile();
+	if(anctrace_file != "")	ReadAncestorFile();
 	else	//Reset the fossil_ids if we are not using an existing fossil record.
 	{
 		id_count = 0;
@@ -498,7 +498,7 @@ void Population::ContinuePopulationFromBackup()
 
 void Population::ReadBackupFile()
 {
-	ifstream infile(backup_reboot.c_str());
+	ifstream infile(backup_file.c_str());
 	string line, data;
 	char* data_element;
 	string::iterator sit;
@@ -518,7 +518,7 @@ void Population::ReadBackupFile()
 		exit(1);
 	}
 
-	printf("Reading backup from file: %s\n", backup_reboot.c_str());
+	printf("Reading backup from file: %s\n", backup_file.c_str());
 	while(getline(infile,line))
 	{
 
@@ -689,7 +689,7 @@ void Population::ReadBackupFile()
 
 void Population::ReadAncestorFile()
 {
-	ifstream infile(anctrace_reboot.c_str());
+	ifstream infile(anctrace_file.c_str());
 	string line, data;
 	int begin_data, end_data, TimeOA, count_alive = 0, count_fossils = 0, count_lines = 0;
 	unsigned long long ID, AncID;
@@ -702,7 +702,7 @@ void Population::ReadAncestorFile()
 		exit(1);
 	}
 
-	printf("Reading ancestors from file: %s\n", anctrace_reboot.c_str());
+	printf("Reading ancestors from file: %s\n", anctrace_file.c_str());
 	while(getline(infile,line))
 	{
 		if (count_lines%10000 == 0 && count_lines!=0)	printf("%d\n", count_lines);
@@ -802,7 +802,7 @@ Organelle* Population::FindInFossilRecord(unsigned long long AncID)
 
 void Population::ReadLineageFile()
 {
-	ifstream infile(lineage_record.c_str());
+	ifstream infile(lineage_file.c_str());
 	string line, data;
 	int end_data, count_lines = 0;
 	unsigned long long ID;
@@ -813,7 +813,7 @@ void Population::ReadLineageFile()
 		exit(1);
 	}
 
-	printf("Reading lineage from file: %s\n", lineage_record.c_str());
+	printf("Reading lineage from file: %s\n", lineage_file.c_str());
 	while(getline(infile,line))
 	{
 		if (count_lines%10000 == 0 && count_lines!=0)	printf("%d\n", count_lines);

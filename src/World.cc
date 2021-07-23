@@ -15,11 +15,11 @@ int initial_seed = time(0);
 unsigned long long seed_draws = 0;
 
 string folder = "/linuxhome/tmp/sam/Eukaryotes/";
-string genome_initialisation = genome_file;
-string expression_initialisation = expression_file;
-string backup_reboot = backup_file;
-string anctrace_reboot = anctrace_file;
-string lineage_record = lineage_file;
+string genome_file = init_genome_file;
+string expression_file = init_expression_file;
+string backup_file = init_backup_file;
+string anctrace_file = init_anctrace_file;
+string lineage_file = init_lineage_file;
 
 int TimeZero = default_TimeZero;
 int SimTime = default_SimTime;
@@ -45,10 +45,9 @@ int main(int argc, char** argv) {
 	/* ############## Setup ############## */
 	printf("\n\033[93m### Setup ###\033[0m\n");
 	Population* P;
-	Setup(argc, argv);
-	printf("Function call: ");
 	for(int q=0; q<argc; q++)	printf("%s ", argv[q]);
-	if (backup_reboot == "")
+	Setup(argc, argv);
+	if (backup_file == "")
 	{
 		dsfmt_init_gen_rand(&dsfmt, initial_seed);	//Used to seed uniform().
 		srand(initial_seed);	//Used to seed random_shuffle(...).
@@ -66,9 +65,9 @@ int main(int argc, char** argv) {
 		/* ############## Initialisation ############## */
 		printf("\033[93m### Initialisation ###\033[0m\n");
 		P = new Population();
-		if(backup_reboot != "")	P->ContinuePopulationFromBackup();
+		if(backup_file != "")	P->ContinuePopulationFromBackup();
 		else	P->InitialisePopulation();
-		if(lineage_record != "")	P->ReadLineageFile();
+		if(lineage_file != "")	P->ReadLineageFile();
 		printf("Initialisation completed...\n\n");
 
 		/* ############## Simulation ############## */
@@ -91,7 +90,7 @@ int main(int argc, char** argv) {
 
 void PrintUsage(bool full)
 {
-	printf("\n\033[93m### Eukaryotes --- usage ###\033[0m\nArguments:\n   -s [seed]\t\t\tSet seed for random number generator (e.g. 211)\n   -p [project title]\t\tDefines folder for local storage\n   -g [genomes file]\t\tSee World.cc for format (e.g. CellX.g)\n   -e [expressions file]\tSee World.cc for format (e.g. CellX_G1.g)\n   -b [backup file]\t\tStart from backup (e.g. /path/backup00090000.txt)\n   -a [ancestor file]\t\tContinue ancestor trace (e.g. /path/anctrace00090000.txt)\n   -l [lineage file]\t\tLineage record (e.g. Host_MRCA_t1960k.out, see Programmes -L1 and -L2)\n   -t0 [start time]\t\tSet starting time (default: 0)\n   -tN [end time]\t\tSet simulation time (default: 10M)\n   -tT [term time]\t\tSet interval for terminal output (default: 100)\n   -tS [snap time]\t\tSet interval for saving snapshot (default: 100)\n   -tP [prune time]\t\tSet time interval for fossil pruning (default: 1000)\n   -tF [fossil time]\t\tSet time interval for saving fossil record (default: 10k)\n   -tB [backup time]\t\tSet interval for saving backup (default: 10k)\n   -nA [nutrient abundance]\t\tSet nutrient influx per site\n   -nC [nutrient competition]\t\tChoose type of nutrient competition (1: subtract/divide, 2: divide all, 3: divide/divide)\n\nFlags:\n   --nomut\t\t\tNo mutations\n   --help\t\t\tPrint full usage info\n\nProgrammes:\n   -S1\t\t\t\tFollow single cell with growing symbionts\n   -S2\t\t\t\tFollow single with fixed symbiont numbers\n   -L1\t\t\t\tTrace complete lineage (every organelle is considered a mutant)\n   -L2\t\t\t\tLog complete lineage (obtained using -L1)\n");
+	printf("\n\033[93m### Eukaryotes --- usage ###\033[0m\nArguments:\n   -s [seed]\t\t\tSet seed for random number generator (e.g. 211)\n   -p [project title]\t\tDefines folder for local storage\n   -g [genomes file]\t\tSee World.cc for format (e.g. CellX.g)\n   -e [expressions file]\tSee World.cc for format (e.g. CellX_G1.g)\n   -b [backup file]\t\tStart from backup (e.g. /path/backup00090000.txt)\n   -a [ancestor file]\t\tContinue ancestor trace (e.g. /path/anctrace00090000.txt)\n   -l [lineage file]\t\tLineage record (e.g. Host_MRCA_t1960k.out, see Programmes -L1 and -L2)\n   -t0 [start time]\t\tSet starting time (default: 0)\n   -tN [end time]\t\tSet simulation time (default: 10M)\n   -tT [term time]\t\tSet interval for terminal output (default: 100)\n   -tS [snap time]\t\tSet interval for saving snapshot (default: 100)\n   -tP [prune time]\t\tSet time interval for fossil pruning (default: 1000)\n   -tF [fossil time]\t\tSet time interval for saving fossil record (default: 10k)\n   -tB [backup time]\t\tSet interval for saving backup (default: 10k)\n   -nA [nutrient abundance]\tSet nutrient influx per site\n   -nC [nutrient competition]\tChoose type of nutrient competition (1: subtract/divide, 2: divide all, 3: divide/divide)\n\nFlags:\n   --nomut\t\t\tNo mutations\n   --help\t\t\tPrint full usage info\n\nProgrammes:\n   -S1\t\t\t\tFollow single cell with growing symbionts\n   -S2\t\t\t\tFollow single with fixed symbiont numbers\n   -L1\t\t\t\tTrace complete lineage (every organelle is considered a mutant)\n   -L2\t\t\t\tLog complete lineage (obtained using -L1)\n");
 	if (full)
 	{
 		printf("\n\033[93m### Eukaryotes --- formats ###\033[0m\n\n<genomes file>\t\tHost genome on first line, each next line a symbiont.\n   (G2:0:-3:1:10010100010101010001).(H).(0:01010101000110010100).(...\n   (G4:1:-1:2:01010101100101000001).(H).(2:10100011001010001010).(...\n   (G4:1:-1:2:01010101100101000001).(H).(2:10100011001010001010).(...\n\n<expressions file>\tHost expression on first line, each next line a symbiont (matching with genomes file)\n   {10101110}\n   {...\n   {...\n");
@@ -103,7 +102,6 @@ void Setup(int argc, char** argv) {
 
 	string ReadOut, command;
 	bool project_name_found = false;
-	bool initial_seed_set = false;
 
 	for(int i=1;i<argc;i++)	//Loop through input arguments.
 	{
@@ -116,8 +114,6 @@ void Setup(int argc, char** argv) {
 		if(ReadOut=="-s" && (i+1)!=argc)
 		{
 			initial_seed = atoi(argv[i+1]);
-			initial_seed_set = true;
-			printf("Seed = %i\n", initial_seed);
 			i++;
 			continue;
 		}
@@ -132,40 +128,35 @@ void Setup(int argc, char** argv) {
 
 		else if(ReadOut=="-g" && (i+1)!=argc)
 		{
-			genome_initialisation = argv[i+1];
-			printf("Genome input: %s\n", genome_initialisation.c_str());
+			genome_file = argv[i+1];
 			i++;
 			continue;
 		}
 
 		else if(ReadOut=="-e" && (i+1)!=argc)
 		{
-			expression_initialisation = argv[i+1];
-			printf("Expression input: %s\n", expression_initialisation.c_str());
+			expression_file = argv[i+1];
 			i++;
 			continue;
 		}
 
 		else if(ReadOut=="-b" && (i+1)!=argc)
 		{
-			backup_reboot = argv[i+1];
-			printf("Backup-file input: %s\n", backup_reboot.c_str());
+			backup_file = argv[i+1];
 			i++;
 			continue;
 		}
 
 		else if(ReadOut=="-a" && (i+1)!=argc)
 		{
-			anctrace_reboot = argv[i+1];
-			printf("Anctrace input: %s\n", anctrace_reboot.c_str());
+			anctrace_file = argv[i+1];
 			i++;
 			continue;
 		}
 
 		else if(ReadOut=="-l" && (i+1)!=argc)
 		{
-			lineage_record = argv[i+1];
-			printf("Lineage input: %s\n", lineage_record.c_str());
+			lineage_file = argv[i+1];
 			i++;
 			continue;
 		}
@@ -173,7 +164,6 @@ void Setup(int argc, char** argv) {
 		else if(ReadOut=="-t0" && (i+1)!=argc)
 		{
 			TimeZero = atoi(argv[i+1]);
-			printf("Starting time: %d\n", TimeZero);
 			i++;
 			continue;
 		}
@@ -181,7 +171,6 @@ void Setup(int argc, char** argv) {
 		else if(ReadOut=="-tN" && (i+1)!=argc)
 		{
 			SimTime = atoi(argv[i+1]);
-			printf("Simulation time: %d\n", SimTime);
 			i++;
 			continue;
 		}
@@ -189,7 +178,6 @@ void Setup(int argc, char** argv) {
 		else if(ReadOut=="-tT" && (i+1)!=argc)
 		{
 			TimeTerminalOutput = atoi(argv[i+1]);
-			printf("Time interval for terminal output: %d\n", TimeTerminalOutput);
 			i++;
 			continue;
 		}
@@ -197,7 +185,6 @@ void Setup(int argc, char** argv) {
 		else if(ReadOut=="-tS" && (i+1)!=argc)
 		{
 			TimeSaveGrid = atoi(argv[i+1]);
-			printf("Time interval for saving snapshot: %d\n", TimeSaveGrid);
 			i++;
 			continue;
 		}
@@ -205,7 +192,6 @@ void Setup(int argc, char** argv) {
 		else if(ReadOut=="-tP" && (i+1)!=argc)
 		{
 			TimePruneFossils = atoi(argv[i+1]);
-			printf("Time interval for fossil pruning: %d\n", TimePruneFossils);
 			i++;
 			continue;
 		}
@@ -213,7 +199,6 @@ void Setup(int argc, char** argv) {
 		else if(ReadOut=="-tF" && (i+1)!=argc)
 		{
 			TimeOutputFossils = atoi(argv[i+1]);
-			printf("Time interval for saving fossils: %d\n", TimeOutputFossils);
 			i++;
 			continue;
 		}
@@ -221,7 +206,6 @@ void Setup(int argc, char** argv) {
 		else if(ReadOut=="-tB" && (i+1)!=argc)
 		{
 			TimeSaveBackup = atoi(argv[i+1]);
-			printf("Time interval for saving backup: %d\n", TimeSaveBackup);
 			i++;
 			continue;
 		}
@@ -229,15 +213,13 @@ void Setup(int argc, char** argv) {
 		else if(ReadOut=="-nA" && (i+1)!=argc)
 		{
 			nutrient_abundance = atof(argv[i+1]);
-			printf("Nutrient abundance per site: %f\n", nutrient_abundance);
 			i++;
 			continue;
 		}
 
-		else if(ReadOut=="-tB" && (i+1)!=argc)
+		else if(ReadOut=="-nC" && (i+1)!=argc)
 		{
 			nutrient_competition = atoi(argv[i+1]);
-			printf("Nutrient competition: %d\n", nutrient_competition);
 			i++;
 			continue;
 		}
@@ -249,7 +231,6 @@ void Setup(int argc, char** argv) {
 		else if(ReadOut=="--nomut")
 		{
 			mutations_on = false;
-			printf("Simulating without mutations.\n");
 		}
 
 		else if(ReadOut=="--help")
@@ -266,24 +247,20 @@ void Setup(int argc, char** argv) {
 			follow_single_individual = true;
 			mutations_on = false;
 			follow_with_fixed_symbionts = false;
-			printf("Following a single cell with growing symbionts.\n");
 		}
 		else if(ReadOut=="-S2")
 		{
 			follow_single_individual = true;
 			mutations_on = false;
 			follow_with_fixed_symbionts = true;
-			printf("Following a single cell with fixed symbiont numbers.\n");
 		}
 		else if(ReadOut=="-L1")
 		{
 			trace_lineage = true;
-			printf("Recording complete lineage; everything is seen as mutant.\n");
 		}
 		else if(ReadOut=="-L2")
 		{
 			log_lineage = true;
-			printf("Logging complete lineage to lineage.out.\n");
 		}
 
 		else
@@ -292,13 +269,14 @@ void Setup(int argc, char** argv) {
 		}
 	}
 
-	if (!initial_seed_set)	printf("Seed = %li\n", time(0));
 	if (!project_name_found)	folder += "Project_Name";	//I did not manage to give the date as an extension to the folder.
+
+	printf("\n\nFolder:\t\t\t%s\nGenomes:\t\t%s\nExpression:\t\t%s\nBackup:\t\t\t%s\nAnctrace:\t\t%s\nLineage:\t\t%s\nStart time:\t\t%d\nEnd time:\t\t%d\nt-Terminal:\t\t%d\nt-Snap:\t\t\t%d\nt-Prune:\t\t%d\nt-Ancestry:\t\t%d\nt-Backup:\t\t%d\nNutrient abundance:\t%f\nNutrient comp.:\t\t%d\n\nMutations:\t\t%s\nFollow var. host:\t%s\nFollow fixed host:\t%s\nTrace lineage:\t\t%s\nLog lineage:\t\t%s\n", folder.c_str(), genome_file.c_str(), expression_file.c_str(), backup_file.c_str(), anctrace_file.c_str(), lineage_file.c_str(), TimeZero, SimTime, TimeTerminalOutput, TimeSaveGrid, TimePruneFossils, TimeOutputFossils, TimeSaveBackup, nutrient_abundance, nutrient_competition, mutations_on?"Yes":"No", follow_single_individual?"Yes":"No", follow_with_fixed_symbionts?"Yes":"No", trace_lineage?"Yes":"No", log_lineage?"Yes":"No");
+
 
 	//Set up all directories for data.
 	command = "mkdir -p " + folder;
 	system(command.c_str());
-	printf("Folder = %s\n", folder.c_str());
 	command = "mkdir -p " + folder + "/snapsamples";
 	system(command.c_str());
 	command = "mkdir -p " + folder + "/backups";

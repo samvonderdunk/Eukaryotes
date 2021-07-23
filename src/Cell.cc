@@ -200,21 +200,21 @@ void Cell::TransferBead(i_bead it, Organelle* Target)
 void Cell::InitialiseCell()
 {
 	int i=0;
-	ifstream in_genome(genome_initialisation.c_str());
-	ifstream in_expression(expression_initialisation.c_str());
+	ifstream in_genome(genome_file.c_str());
+	ifstream in_expression(expression_file.c_str());
 	string genome;
 	string expression;
 	Organelle* Symbiont;
 
 	if ( !in_genome.is_open() )
 	{
-		printf("Genome file %s could not be opened.\n", genome_initialisation.c_str());
+		printf("Genome file %s could not be opened.\n", genome_file.c_str());
 		exit(1);
 	}
 
 	if ( !in_expression.is_open() )
 	{
-		printf("Expression file %s could not be opened.\n", expression_initialisation.c_str());
+		printf("Expression file %s could not be opened.\n", expression_file.c_str());
 		exit(1);
 	}
 

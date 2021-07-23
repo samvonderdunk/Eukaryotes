@@ -34,6 +34,13 @@ using namespace std;
 #define BSITE 1
 #define HOUSE 2
 
+//Input files.
+const string init_genome_file="";
+const string init_expression_file="";
+const string init_backup_file="";
+const string init_anctrace_file="";
+const string init_lineage_file="";
+
 //Bead variables
 const int sequence_length =	20;
 const int signalp_length =	1;	//As long as I am not using it, make it small.
@@ -69,7 +76,7 @@ const int default_TimeSaveBackup =			10000;
 const double death_rate_host =								0.001;
 const double death_rate_symbiont =						0.001;
 const double default_nutrient_abundance =			30.;
-const int defaultnutrient_competition =				2;
+const int default_nutrient_competition =				2;
 //Options for nutrient_competition:
 // 1, classic nutrient function (e.g. Paramecium tetraurelia):		n_ij = ( n_tot - (x_nei-x_i) ) / x_i
 // 2, first smooth nutrient function (e.g. Paramecium caudatum):	n_ij = n_tot / x_nei
@@ -119,11 +126,11 @@ extern int initial_seed;
 extern unsigned long long seed_draws;
 extern string folder;
 
-extern string genome_initialisation;
-extern string expression_initialisation;
-extern string backup_reboot;
-extern string anctrace_reboot;
-extern string lineage_record;
+extern string genome_file;
+extern string expression_file;
+extern string backup_file;
+extern string anctrace_file;
+extern string lineage_file;
 
 extern int TimeZero;
 extern int SimTime;
@@ -154,11 +161,7 @@ inline int uniform_shuffle (int i)
 	return (int)(RAND_MAX*uniform()) % i;
 }
 
-const string genome_file="";
-const string expression_file="";
-const string backup_file="";
-const string anctrace_file="";
-const string lineage_file="";
+
 
 //The current definition of the stages.
 const bool StageTargets[4][5] = {
