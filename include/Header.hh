@@ -66,10 +66,10 @@ const int default_TimeOutputFossils =		10000;
 const int default_TimeSaveBackup =			10000;
 
 //Population parameters
-const double death_rate_host =				0.001;
-const double death_rate_symbiont =		0.001;
-const double nutrient_abundance =			30.;
-const int nutrient_competition =			2;
+const double death_rate_host =								0.001;
+const double death_rate_symbiont =						0.001;
+const double default_nutrient_abundance =			30.;
+const int defaultnutrient_competition =				2;
 //Options for nutrient_competition:
 // 1, classic nutrient function (e.g. Paramecium tetraurelia):		n_ij = ( n_tot - (x_nei-x_i) ) / x_i
 // 2, first smooth nutrient function (e.g. Paramecium caudatum):	n_ij = n_tot / x_nei
@@ -138,6 +138,9 @@ extern bool follow_with_fixed_symbionts;
 extern bool trace_lineage;
 extern bool log_lineage;
 extern bool mutations_on;
+
+extern double nutrient_abundance;
+extern int nutrient_competition;
 
 extern dsfmt_t dsfmt;
 inline double uniform()
