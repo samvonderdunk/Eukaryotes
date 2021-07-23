@@ -277,7 +277,7 @@ bool Cell::CheckCellDeath(bool output)
 
 void Cell::DeathOfSymbiont(int s)
 {
-	if (Symbionts->at(s)->mutant || trace_lineage)
+	if (Symbionts->at(s)->mutant || trace_lineage || log_lineage)
 	{
 		Symbionts->at(s)->alive = false;
 	}
@@ -291,7 +291,7 @@ void Cell::DeathOfSymbiont(int s)
 
 void Cell::DeathOfHost()
 {
-	if (Host->mutant || trace_lineage)
+	if (Host->mutant || trace_lineage || log_lineage)
 	{
 		Host->alive = false;
 	}

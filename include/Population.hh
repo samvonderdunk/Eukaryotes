@@ -41,7 +41,7 @@ class Population
 		Organelle* FindInFossilRecord(unsigned long long AncID);
 		void ReadLineageFile();
 
-		void PruneFossilRecord(int m, int n);
+		void PruneFossilRecord();
 		void OutputGrid(bool backup);
 		void OutputLineage(int i, int j);
 		void ShowGeneralProgress();

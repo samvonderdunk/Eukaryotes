@@ -21,12 +21,12 @@ Population::~Population()	//Skips deconstructor of Cell, because we need to chec
 	{
 		if((Space[i][j]) != NULL)
 		{
-			if (Space[i][j]->Host->mutant || trace_lineage)	FossilSpace->EraseFossil(Space[i][j]->Host->fossil_id);
+			if (Space[i][j]->Host->mutant || trace_lineage || log_lineage)	FossilSpace->EraseFossil(Space[i][j]->Host->fossil_id);
 			delete Space[i][j]->Host;
 			Space[i][j]->Host = NULL;
 			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
-				if (Space[i][j]->Symbionts->at(s)->mutant || trace_lineage)	FossilSpace->EraseFossil(Space[i][j]->Symbionts->at(s)->fossil_id);
+				if (Space[i][j]->Symbionts->at(s)->mutant || trace_lineage || log_lineage)	FossilSpace->EraseFossil(Space[i][j]->Symbionts->at(s)->fossil_id);
 				delete Space[i][j]->Symbionts->at(s);
 				Space[i][j]->Symbionts->at(s) = NULL;
 			}
@@ -191,8 +191,8 @@ void Population::UpdatePopulation()
 
 	if(Time%TimeTerminalOutput==0)															ShowGeneralProgress();
 	if(Time%TimeSaveGrid==0)																		OutputGrid(false);
-	if(Time%TimePruneFossils==0 && Time!=0 && !trace_lineage)		PruneFossilRecord(0, 0);
-	if(Time%TimeOutputFossils==0 && Time!=0 && !trace_lineage)	FossilSpace->ExhibitFossils();
+	if(Time%TimePruneFossils==0 && Time!=0)											PruneFossilRecord();
+	if(Time%TimeOutputFossils==0 && Time!=0)										FossilSpace->ExhibitFossils();
 	if(Time%TimeSaveBackup==0 && Time!=0)												OutputGrid(true);
 
 	for(u=0; u<NR*NC; u++) update_order[u]=u;
@@ -280,16 +280,9 @@ void Population::UpdatePopulation()
 				if (!Space[neigh.first][neigh.second]->CheckCellDeath(false))	//Don't continue, since we have killed the child which lies at a different site.
 				{
 					Space[neigh.first][neigh.second]->DNATransferToHost();	//Instead, use the cell death check to know whether we need to do DNA transfer.
-					if (Space[neigh.first][neigh.second]->Host->mutant || trace_lineage)
+					if (Space[neigh.first][neigh.second]->Host->mutant || trace_lineage || log_lineage)
 					{
 						FossilSpace->BuryFossil(Space[neigh.first][neigh.second]->Host);	//Bury fossil only after potential transfer events (also count as mutations).
-						if (trace_lineage && CheckLineage(neigh.first, neigh.second))
-						{
-							//If we found the next mutant during our lineage trace, prune all clones that we have collected from the fossil record (unless they are in our lineage), and erase this mutant from the lineage record.
-							PruneFossilRecord(neigh.first, neigh.second);
-							Lineage.erase(Lineage.begin());
-							FossilSpace->ExhibitFossils();
-						}
 					}
 
 				}
@@ -496,11 +489,11 @@ void Population::ContinuePopulationFromBackup()
 	}
 
 	//Only do these things if we're starting at an irregular timepoint (where we wouldn't already store info inside UpdatePop.).
-	if (TimeZero%TimeTerminalOutput != 0)	ShowGeneralProgress();
-	if(Time%TimeSaveGrid != 0)						OutputGrid(false);
-	if (TimeZero%TimePruneFossils != 0)		PruneFossilRecord(0, 0);
-	if (TimeZero%TimeOutputFossils != 0)	FossilSpace->ExhibitFossils();
-	if (TimeZero%TimeSaveBackup != 0)			OutputGrid(true);
+	if (TimeZero%TimeTerminalOutput != 0)										ShowGeneralProgress();
+	if (TimeZero%TimeSaveGrid != 0)													OutputGrid(false);
+	if (TimeZero%TimePruneFossils != 0 && !trace_lineage)		PruneFossilRecord();
+	if (TimeZero%TimeOutputFossils != 0 && !trace_lineage)	FossilSpace->ExhibitFossils();
+	if (TimeZero%TimeSaveBackup != 0)												OutputGrid(true);
 }
 
 void Population::ReadBackupFile()
@@ -837,32 +830,53 @@ void Population::ReadLineageFile()
 /*				FOSSILS	FOSSILS	FOSSILS	FOSSILS	FOSSILS	FOSSILS	FOSSILS						*/
 /* ######################################################################## */
 
-void Population::PruneFossilRecord(int m, int n)
+void Population::PruneFossilRecord()
 {
 	std::list<unsigned long long> AllFossilIDs;
-	int s, fossil_record_size;
+	int i, j, s, fossil_record_size;
 	unsigned long long fossilID;
 	i_fos iF;
 	i_ull findit;
 	Organelle* lastCA;
+	i_lin iL;
 
-	if (trace_lineage)
+	if (trace_lineage && Time == SimTime)
 	{
-		//Only trace from the host that is in the lineage record (and which have encountered, resulting in this pruning), and all symbionts inside it.
-		AllFossilIDs.push_back(Space[m][n]->Host->fossil_id);	//Include the newly found mutant.
+		//Only trace hosts that are in the lineage record.
 
-		lastCA = Space[m][n]->Host->Ancestor;
-		while(lastCA != NULL)
+		iL = Lineage.begin();
+		while (iL != Lineage.end() && *iL <= id_count)
 		{
-			AllFossilIDs.push_back(lastCA->fossil_id);
-			lastCA = lastCA->Ancestor;
+			AllFossilIDs.push_back(*iL);
+
+			//Find location of this individual in the field.
+			lastCA = NULL;
+			for(i=0; i<NR; i++)	for(j=0; j<NC; j++)
+			{
+				if (Space[i][j] != NULL)
+				{
+					if (Space[i][j]->Host->fossil_id == *iL)
+					{
+						lastCA = Space[i][j]->Host->Ancestor;
+						break;
+					}
+				}
+			}
+
+			//Store entire lineage of this individual.
+			while(lastCA != NULL)
+			{
+				AllFossilIDs.push_back(lastCA->fossil_id);
+				lastCA = lastCA->Ancestor;
+			}
+			iL++;
 		}
 	}
 
 	else
 	{
 		//Trace all living individuals back to the beginning, storing all individuals along their lineage.
-		for(int i=0; i<NR; i++)	for(int j=0; j<NC; j++)
+		for(i=0; i<NR; i++)	for(j=0; j<NC; j++)
 		{
 			if(Space[i][j] != NULL)
 			{
@@ -899,7 +913,7 @@ void Population::PruneFossilRecord(int m, int n)
 		fossilID = (*iF)->fossil_id;
 		findit = std::find(AllFossilIDs.begin(),AllFossilIDs.end(),fossilID);
 		// If not, delete the fossil unless it is still alive or is still saved in the graveyard. If a prokaryote dies, the graveyard-flag remains for one ShowGeneralProgress() cycle at most, so that the fossil can be deleted at the next pruning step. If ShowGeneralProgress() precedes PruneFossilRecord(), this is issue is even avoided, because flags are already removed off dead prokaryotes.
-		if(findit==AllFossilIDs.end() && ( !(*iF)->alive || trace_lineage ) )	//Fossil not needed/found in relevant branches AND either the organelle is already dead OR we're tracing a lineage (in which case we want to clean our tree more quickly, live individuals will not suddenly produce offspring that are in the lineage record).
+		if(findit==AllFossilIDs.end() && (!(*iF)->alive || (trace_lineage && Time == SimTime)) )	//Fossil not needed/found in relevant branches AND either the organelle is already dead OR we're tracing a lineage (in which case we want to clean our tree more quickly, live individuals will not suddenly produce offspring that are in the lineage record).
 		{
 			if (!(*iF)->alive)	delete *iF;	//Only delete things that are not alive anymore.
 			iF = FossilSpace->FossilRecord.erase(iF);

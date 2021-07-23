@@ -114,8 +114,8 @@ void Organelle::Mitosis(Organelle* parent, unsigned long long id_count)
 
 	if (G->is_mutated)	mutant = true;
 
-	if (parent->mutant || trace_lineage)	Ancestor = parent;
-	else																	Ancestor = parent->Ancestor;
+	if (parent->mutant || trace_lineage || log_lineage)		Ancestor = parent;
+	else																									Ancestor = parent->Ancestor;
 }
 
 void Organelle::Replicate(double resource)
