@@ -57,19 +57,19 @@ const double k_zero =		0.0000001;
 const double epsilon =	1.00;
 
 //Runtime and output parameters
-const int TimeZero =						000000;
-const int default_SimTime =			10000000;
-const int TimeTerminalOutput =	100;
-const int TimeSaveGrid =				100;
-const int TimePruneFossils =		1000;
-const int TimeOutputFossils =		10000;
-const int TimeSaveBackup =			10000;
+const int default_TimeZero =						00000000;
+const int default_SimTime =							10000000;
+const int default_TimeTerminalOutput =	100;
+const int default_TimeSaveGrid =				100;
+const int default_TimePruneFossils =		1000;
+const int default_TimeOutputFossils =		10000;
+const int default_TimeSaveBackup =			10000;
 
 //Population parameters
 const double death_rate_host =				0.001;
 const double death_rate_symbiont =		0.001;
-const double nutrient_abundance =			100.;
-const int nutrient_competition =			1;
+const double nutrient_abundance =			30.;
+const int nutrient_competition =			2;
 //Options for nutrient_competition:
 // 1, classic nutrient function (e.g. Paramecium tetraurelia):		n_ij = ( n_tot - (x_nei-x_i) ) / x_i
 // 2, first smooth nutrient function (e.g. Paramecium caudatum):	n_ij = n_tot / x_nei
@@ -118,16 +118,25 @@ extern int Time;
 extern int initial_seed;
 extern unsigned long long seed_draws;
 extern string folder;
-extern bool follow_single_individual;
-extern bool follow_with_fixed_symbionts;
-extern bool trace_lineage;
-extern bool log_lineage;
+
 extern string genome_initialisation;
 extern string expression_initialisation;
 extern string backup_reboot;
 extern string anctrace_reboot;
 extern string lineage_record;
+
+extern int TimeZero;
 extern int SimTime;
+extern int TimeTerminalOutput;
+extern int TimeSaveGrid;
+extern int TimePruneFossils;
+extern int TimeOutputFossils;
+extern int TimeSaveBackup;
+
+extern bool follow_single_individual;
+extern bool follow_with_fixed_symbionts;
+extern bool trace_lineage;
+extern bool log_lineage;
 extern bool mutations_on;
 
 extern dsfmt_t dsfmt;

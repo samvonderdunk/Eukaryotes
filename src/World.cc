@@ -13,13 +13,22 @@ dsfmt_t dsfmt;
 int Time;
 int initial_seed = time(0);
 unsigned long long seed_draws = 0;
+
 string folder = "/linuxhome/tmp/sam/Eukaryotes/";
 string genome_initialisation = genome_file;
 string expression_initialisation = expression_file;
 string backup_reboot = backup_file;
 string anctrace_reboot = anctrace_file;
 string lineage_record = lineage_file;
+
+int TimeZero = default_TimeZero;
 int SimTime = default_SimTime;
+int TimeTerminalOutput = default_TimeTerminalOutput;
+int TimeSaveGrid = default_TimeSaveGrid;
+int TimePruneFossils = default_TimePruneFossils;
+int TimeOutputFossils = default_TimeOutputFossils;
+int TimeSaveBackup = default_TimeSaveBackup;
+
 bool mutations_on = true;
 bool follow_single_individual = false;
 bool follow_with_fixed_symbionts = false;
@@ -79,7 +88,7 @@ int main(int argc, char** argv) {
 
 void PrintUsage(bool full)
 {
-	printf("\n\033[93m### Eukaryotes --- usage ###\033[0m\nArguments:\n   -s [seed]\t\t\tSet seed for random number generator (e.g. 211)\n   -p [project title]\t\tDefines folder for local storage\n   -g [genomes file]\t\tSee World.cc for format (e.g. CellX.g)\n   -e [expressions file]\tSee World.cc for format (e.g. CellX_G1.g)\n   -b [backup file]\t\tStart from backup (e.g. /path/backup00090000.txt)\n   -a [ancestor file]\t\tContinue ancestor trace (e.g. /path/anctrace00090000.txt)\n   -l [lineage file]\t\tLineage record (e.g. Host_MRCA_t1960k.out, see Programmes -L1 and -L2)\n   -t [max. time]\t\tSet simulation time (e.g. 100)\n\nFlags:\n   --nomut\t\t\tNo mutations\n   --help\t\t\tPrint full usage info\n\nProgrammes:\n   -S1\t\t\t\tFollow single cell with growing symbionts\n   -S2\t\t\t\tFollow single with fixed symbiont numbers\n   -L1\t\t\t\tTrace complete lineage (every organelle is considered a mutant)\n   -L2\t\t\t\tLog complete lineage (obtained using -L1)\n");
+	printf("\n\033[93m### Eukaryotes --- usage ###\033[0m\nArguments:\n   -s [seed]\t\t\tSet seed for random number generator (e.g. 211)\n   -p [project title]\t\tDefines folder for local storage\n   -g [genomes file]\t\tSee World.cc for format (e.g. CellX.g)\n   -e [expressions file]\tSee World.cc for format (e.g. CellX_G1.g)\n   -b [backup file]\t\tStart from backup (e.g. /path/backup00090000.txt)\n   -a [ancestor file]\t\tContinue ancestor trace (e.g. /path/anctrace00090000.txt)\n   -l [lineage file]\t\tLineage record (e.g. Host_MRCA_t1960k.out, see Programmes -L1 and -L2)\n   -t0 [start time]\t\tSet starting time (default: 0)\n   -tN [end time]\t\tSet simulation time (default: 10M)\n   -tT [term time]\t\tSet interval for terminal output (default: 100)\n   -tS [snap time]\t\tSet interval for saving snapshot (default: 100)\n   -tP [prune time]\t\tSet time interval for fossil pruning (default: 1000)\n   -tF [fossil time]\t\tSet time interval for saving fossil record (default: 10k)\n   -tB [backup time]\t\tSet interval for saving backup (default: 10k)\n\nFlags:\n   --nomut\t\t\tNo mutations\n   --help\t\t\tPrint full usage info\n\nProgrammes:\n   -S1\t\t\t\tFollow single cell with growing symbionts\n   -S2\t\t\t\tFollow single with fixed symbiont numbers\n   -L1\t\t\t\tTrace complete lineage (every organelle is considered a mutant)\n   -L2\t\t\t\tLog complete lineage (obtained using -L1)\n");
 	if (full)
 	{
 		printf("\n\033[93m### Eukaryotes --- formats ###\033[0m\n\n<genomes file>\t\tHost genome on first line, each next line a symbiont.\n   (G2:0:-3:1:10010100010101010001).(H).(0:01010101000110010100).(...\n   (G4:1:-1:2:01010101100101000001).(H).(2:10100011001010001010).(...\n   (G4:1:-1:2:01010101100101000001).(H).(2:10100011001010001010).(...\n\n<expressions file>\tHost expression on first line, each next line a symbiont (matching with genomes file)\n   {10101110}\n   {...\n   {...\n");
@@ -158,10 +167,58 @@ void Setup(int argc, char** argv) {
 			continue;
 		}
 
-		else if(ReadOut=="-t" && (i+1)!=argc)
+		else if(ReadOut=="-t0" && (i+1)!=argc)
+		{
+			TimeZero = atoi(argv[i+1]);
+			printf("Starting time: %d\n", TimeZero);
+			i++;
+			continue;
+		}
+
+		else if(ReadOut=="-tN" && (i+1)!=argc)
 		{
 			SimTime = atoi(argv[i+1]);
 			printf("Simulation time: %d\n", SimTime);
+			i++;
+			continue;
+		}
+
+		else if(ReadOut=="-tT" && (i+1)!=argc)
+		{
+			TimeTerminalOutput = atoi(argv[i+1]);
+			printf("Time interval for terminal output: %d\n", TimeTerminalOutput);
+			i++;
+			continue;
+		}
+
+		else if(ReadOut=="-tS" && (i+1)!=argc)
+		{
+			TimeSaveGrid = atoi(argv[i+1]);
+			printf("Time interval for saving snapshot: %d\n", TimeSaveGrid);
+			i++;
+			continue;
+		}
+
+		else if(ReadOut=="-tP" && (i+1)!=argc)
+		{
+			TimePruneFossils = atoi(argv[i+1]);
+			printf("Time interval for fossil pruning: %d\n", TimePruneFossils);
+			i++;
+			continue;
+		}
+
+		else if(ReadOut=="-tF" && (i+1)!=argc)
+		{
+			TimeOutputFossils = atoi(argv[i+1]);
+			printf("Time interval for saving fossils: %d\n", TimeOutputFossils);
+			i++;
+			continue;
+		}
+
+		else if(ReadOut=="-tB" && (i+1)!=argc)
+		{
+			TimeSaveBackup = atoi(argv[i+1]);
+			printf("Time interval for saving backup: %d\n", TimeSaveBackup);
 			i++;
 			continue;
 		}
