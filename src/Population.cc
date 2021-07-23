@@ -503,8 +503,8 @@ void Population::ReadBackupFile()
 	char* data_element, *number;
 	string::iterator sit;
 	Genome::i_bead it;
-	int r, c, s, begin_data, end_data, success, stage, pfork, pterm, nr, nc, count_lines = 0, nn = 0, idx_primary, idx_secondary;
-	unsigned long long org_id, anc_id;
+	int r, c, s, begin_data, end_data, success, stage, pfork, pterm, nr, nc, count_lines = 0, nn = 0, idx_primary, idx_secondary, init_seed;
+	unsigned long long org_id, anc_id, sdraws, illu;
 	char temp_is_mutant[20], temp_priv[20];
 	double fit;
 	size_t pos;
@@ -524,7 +524,7 @@ void Population::ReadBackupFile()
 
 		if (line.substr(0,1)=="#")	continue;
 
-		else if (line=="NR:50\tNC:50")
+		else if (line.substr(0,2)=="NR")
 		{
 			data_element = (char*)line.c_str();
 			success = sscanf(data_element, "NR:%d\tNC:%d", &nr, &nc);
@@ -537,6 +537,28 @@ void Population::ReadBackupFile()
 			{
 				cerr << "NR and NC of backup did not match parameter settings.\n" << endl;
 				exit(1);
+			}
+		}
+
+		else if(line.substr(0,12)=="Initial seed")		//Old backup files where we have to do random draws from the initial seed to match the backup data.
+		{
+			data_element = (char*)line.c_str();
+
+			success = sscanf(data_element, "Initial seed:%d\tSeed draws:%llu", &init_seed, &sdraws);
+			if (success != 2)
+			{
+				cerr << "Failed to read seed and draws from an old backup.\n" << endl;
+				exit(1);
+			}
+			else
+			{
+				cout << "Drawing " << sdraws << " random numbers to match old backup." << endl;;
+				dsfmt_init_gen_rand(&dsfmt, init_seed);	//Used to seed uniform().
+				srand(init_seed);												//Used to seed random_shuffle(...).
+				for (illu=0; illu<sdraws; illu++)
+				{
+					uniform();
+				}
 			}
 		}
 
@@ -574,12 +596,8 @@ void Population::ReadBackupFile()
 			}
 		}
 
-		else
+		else			//Start reading "Main" data from backup file.
 		{
-			//Start reading "Main" data from backup file.
-			if (count_lines%10000 == 0 && count_lines!=0)	printf("%d\n", count_lines);	//Print some progress.
-
-
 			pos = line.find("NULL");
 			if (pos != string::npos)	//Empty site.
 			{

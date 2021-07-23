@@ -122,7 +122,7 @@ const double house_transfer_mu_StoH = 		0.0000;
 
 //Variables defined in World.cc
 extern int Time;
-extern int initial_seed;
+extern int seed;
 extern unsigned long long seed_draws;
 extern string folder;
 

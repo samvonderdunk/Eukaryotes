@@ -11,8 +11,8 @@
 
 dsfmt_t dsfmt;
 int Time;
-int initial_seed = time(0);
-unsigned long long seed_draws = 0;
+int seed = time(0);	//Unless changed at command line.
+unsigned long long seed_draws = 0;	//May be obsolete in the future, but still needed for old backups (before 23/07/2021).
 
 string folder = "/linuxhome/tmp/sam/Eukaryotes/";
 string genome_file = init_genome_file;
@@ -47,8 +47,8 @@ int main(int argc, char** argv) {
 	Population* P;
 	for(int q=0; q<argc; q++)	printf("%s ", argv[q]);
 	Setup(argc, argv);
-	dsfmt_init_gen_rand(&dsfmt, initial_seed);	//Used to seed uniform().
-	srand(initial_seed);	//Used to seed random_shuffle(...).
+	dsfmt_init_gen_rand(&dsfmt, seed);	//Used to seed uniform().
+	srand(seed);												//Used to seed random_shuffle(...).
 	printf("\b\nSetup completed...\n\n");
 
 	if (follow_single_individual)
@@ -110,7 +110,7 @@ void Setup(int argc, char** argv) {
 
 		if(ReadOut=="-s" && (i+1)!=argc)
 		{
-			initial_seed = atoi(argv[i+1]);
+			seed = atoi(argv[i+1]);
 			i++;
 			continue;
 		}
