@@ -76,7 +76,7 @@ const int default_TimeSaveBackup =			10000;
 const double death_rate_host =								0.001;
 const double death_rate_symbiont =						0.001;
 const double default_nutrient_abundance =			30.;
-const int default_nutrient_competition =				2;
+const int default_nutrient_competition =			2;
 //Options for nutrient_competition:
 // 1, classic nutrient function (e.g. Paramecium tetraurelia):		n_ij = ( n_tot - (x_nei-x_i) ) / x_i
 // 2, first smooth nutrient function (e.g. Paramecium caudatum):	n_ij = n_tot / x_nei
@@ -160,8 +160,6 @@ inline int uniform_shuffle (int i)
 {
 	return (int)(RAND_MAX*uniform()) % i;
 }
-
-
 
 //The current definition of the stages.
 const bool StageTargets[4][5] = {

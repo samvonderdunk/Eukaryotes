@@ -20,7 +20,6 @@ class Organelle{
 		unsigned long long fossil_id;
 		Organelle* Ancestor;
 
-
 		typedef std::list<Bead*>::iterator i_bead;
 
 		Organelle();

@@ -39,6 +39,18 @@ void Fossils::BuryFossil(Organelle* O)
 	FossilRecord.push_back(O);
 }
 
+bool compare_fossils(const Organelle* first, const Organelle* second)
+{
+    if(first->fossil_id < second->fossil_id) return true;
+    else if(first->fossil_id > second->fossil_id) return false;
+		return true;	//Impossible!
+}
+
+void Fossils::SortFossils()
+{
+	FossilRecord.sort(compare_fossils);
+}
+
 void Fossils::ExhibitFossils()
 {
 	FILE* f;

@@ -16,6 +16,7 @@ class Fossils
 
 	void EraseFossil(unsigned long long fossilID);
 	void BuryFossil(Organelle* O);
+	void SortFossils();
 	void ExhibitFossils();
 
 };

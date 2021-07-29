@@ -806,6 +806,9 @@ void Population::ReadAncestorFile()
 		}
 		count_lines++;
 	}
+
+	FossilSpace->SortFossils();
+
 	assert (count_lines == count_alive+count_fossils);
 	assert (FossilSpace->FossilRecord.size() == (size_t)count_lines);
 }
