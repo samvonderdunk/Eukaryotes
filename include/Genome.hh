@@ -27,6 +27,7 @@ class Genome {
 	void ReplicateStep(double resource);
 
 	void SplitGenome(Genome* parentG);
+	void AbortChildGenome();
 	void DevelopChildrenGenomes(Genome* parentG);
 	void PotentialTypeChange(i_bead ii);
 	int CountTypeAbundance(int type);

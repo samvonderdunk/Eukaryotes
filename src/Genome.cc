@@ -157,9 +157,9 @@ void Genome::ReplicateStep(double resource)
 	int gene_length = 0, repl_remaining_steps, wb;
 	double res_int, res_fract, fract_repl_remaining;
 
-	if (relative_replication)	//Modify resource to represent relative replication. Still, the fractional part of the resulting (normalised) resource is seen as a probability.
+	if (relative_replication > 0)	//Modify resource to represent relative replication. Still, the fractional part of the resulting (normalised) resource is seen as a probability.
 	{
-		fract_repl_remaining = resource / rel_repl_full;
+		fract_repl_remaining = resource / relative_replication;
 		resource = fract_repl_remaining * terminus_position;
 	}
 
@@ -239,6 +239,39 @@ void Genome::SplitGenome(Genome* parentG)	//Used to split a genome upon division
 	BeadList->splice(BeadList->begin(), *parentG->BeadList, i_split, parentG->BeadList->end());
 
 	DevelopChildrenGenomes(parentG);
+}
+
+
+
+void Genome::AbortChildGenome()
+{
+	i_bead it = BeadList->begin();
+	advance(it, terminus_position);
+
+	while (it != BeadList->end())
+	{
+		switch ( WhatBead(*it) )
+		{
+			case REGULATOR:
+				gnr_regulators--;
+				break;
+			case BSITE:
+				gnr_bsites--;
+				break;
+			case HOUSE:
+				gnr_houses--;
+				break;
+		}
+		g_length--;
+		delete(*it);
+		it++;
+	}
+
+	it = BeadList->begin();
+	advance(it, terminus_position);
+	it = BeadList->erase(it, BeadList->end());
+
+	fork_position = 0;
 }
 
 

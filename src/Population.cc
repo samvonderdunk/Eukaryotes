@@ -183,7 +183,7 @@ void Population::ResetSingleCell(Cell** CP, Cell** CP_reset)
 void Population::UpdatePopulation()
 {
 	int update_order[NR*NC];
-	int u, i, j, s;
+	int u, i, j, s, pick_s;
 	Organelle* SymbiontCopy;
 
 	for(i=0; i<NR; i++)	for(j=0; j<NC; j++)	NutrientSpace[i][j] = 0.;
@@ -216,18 +216,21 @@ void Population::UpdatePopulation()
 				Space[i][j] = NULL;
 				continue;
 			}
-			for (s=Space[i][j]->nr_symbionts-1; s>=0; s--)
+			if (moran_symbionts == -1)	//Otherwise, if no moran process, then symbionts cannot die.
 			{
-				if (uniform() < death_rate_symbiont)
+				for (s=Space[i][j]->nr_symbionts-1; s>=0; s--)
 				{
-					Space[i][j]->DeathOfSymbiont(s);
-					Space[i][j]->nr_symbionts--;
+					if (uniform() < death_rate_symbiont)
+					{
+						Space[i][j]->DeathOfSymbiont(s);
+						Space[i][j]->nr_symbionts--;
+					}
 				}
-			}
-			if (Space[i][j]->CheckCellDeath(false))
-			{
-				Space[i][j] = NULL;
-				continue;
+				if (Space[i][j]->CheckCellDeath(false))
+				{
+					Space[i][j] = NULL;
+					continue;
+				}
 			}
 			/* ~Basal death */
 
@@ -242,8 +245,15 @@ void Population::UpdatePopulation()
 			{
 				if ( Space[i][j]->Symbionts->at(s)->Stage == 5)
 				{
-					Space[i][j]->DeathOfSymbiont(s);
-					Space[i][j]->nr_symbionts--;
+					if (moran_symbionts > 0)
+					{
+						Space[i][j]->Symbionts->at(s)->Abort();	//No death but just abortion.
+					}
+					else
+					{
+						Space[i][j]->DeathOfSymbiont(s);
+						Space[i][j]->nr_symbionts--;
+					}
 				}
 			}
 			if (Space[i][j]->CheckCellDeath(false))
@@ -269,12 +279,23 @@ void Population::UpdatePopulation()
 
 				for (s=Space[i][j]->nr_symbionts-1; s>=0; s--)
 				{
-					if (uniform() < 0.5)	//Transfer the symbiont to the new cell (just a matter of using the right pointers).
+					if (moran_symbionts > 0)
 					{
-						Space[neigh.first][neigh.second]->Symbionts->push_back(Space[i][j]->Symbionts->at(s));
-						Space[i][j]->Symbionts->erase(Space[i][j]->Symbionts->begin()+s);
+						SymbiontCopy = new Organelle();
+						id_count++;
+						SymbiontCopy->CloneOrganelle(Space[i][j]->Symbionts->at(s), id_count);
+						Space[neigh.first][neigh.second]->Symbionts->push_back(SymbiontCopy);
 						Space[neigh.first][neigh.second]->nr_symbionts++;
-						Space[i][j]->nr_symbionts--;
+					}
+					else
+					{
+						if (uniform() < 0.5)	//Transfer the symbiont to the new cell (just a matter of using the right pointers).
+						{
+							Space[neigh.first][neigh.second]->Symbionts->push_back(Space[i][j]->Symbionts->at(s));
+							Space[i][j]->Symbionts->erase(Space[i][j]->Symbionts->begin()+s);
+							Space[neigh.first][neigh.second]->nr_symbionts++;
+							Space[i][j]->nr_symbionts--;
+						}
 					}
 				}
 				if (!Space[neigh.first][neigh.second]->CheckCellDeath(false))	//Don't continue, since we have killed the child which lies at a different site.
@@ -303,9 +324,17 @@ void Population::UpdatePopulation()
 					SymbiontCopy = new Organelle();
 					id_count++;
 					SymbiontCopy->Mitosis(Space[i][j]->Symbionts->at(s), id_count);
-					Space[i][j]->Symbionts->push_back(SymbiontCopy);
 					Space[i][j]->DNATransfertoSymbiont(SymbiontCopy);
-					Space[i][j]->nr_symbionts++;
+					if (moran_symbionts > 0)
+					{
+						while(pick_s != s)	pick_s = (int) (uniform() * (double)Space[i][j]->nr_symbionts);
+						Space[i][j]->DeathOfSymbiont(pick_s);
+					}
+					else
+					{
+						Space[i][j]->nr_symbionts++;
+					}
+					Space[i][j]->Symbionts->push_back(SymbiontCopy);
 					if (Space[i][j]->Symbionts->at(Space[i][j]->nr_symbionts-1)->mutant)
 					{
 						FossilSpace->BuryFossil(Space[i][j]->Symbionts->at(Space[i][j]->nr_symbionts-1));

@@ -30,9 +30,11 @@ class Organelle{
 
 		void Mitosis(Organelle* parent, unsigned long long id_count);
 		void Replicate(double resource);
+		void Abort();
 
 		void InitialiseOrganelle(string genome, string expression);
 		void CloneOrganelle(Organelle* ImageO, unsigned long long id_count);
+
 		string Show(bool backup);
 		string Output(bool backup);
 

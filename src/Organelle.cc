@@ -126,6 +126,14 @@ void Organelle::Replicate(double resource)
 	}
 }
 
+void Organelle::Abort()
+{
+	G->AbortChildGenome();
+
+	Stage = 0;
+	privilige = false;
+}
+
 void Organelle::InitialiseOrganelle(string genome, string expression)
 {
 	mutant = true;
