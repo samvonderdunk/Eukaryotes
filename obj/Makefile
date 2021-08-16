@@ -8,7 +8,7 @@
 CXX = g++
 
 CPPFLAGS = -w -O2 -march=x86-64 -mmmx -msse -msse2 -DDSFMT_MEXP=19937 -DHAVE_SSE2 -fPIE	###1
-#CPPFLAGS = -g -O0 -Wall -march=x86-64 -DDSFMT_MEXP=521	###2
+#CPPFLAGS = -g -O0 -Wall -march=x86-64 -DDSFMT_MEXP=19937	###2
 #CPPFLAGS = -Wall -pg -DDSFMT_MEXP=19937	###3
 #CPPFLAGS= -ggdb3 -Wall -DDSFMT_MEXP=19937 -DHAVE_SSE2	###4
 
