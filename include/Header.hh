@@ -52,7 +52,8 @@ const int NC = 50;	//Gradient is over columns.
 //Main settings
 const int relative_replication = -1;	// -1 to turn off. If we're doing relative replication (i.e. not -1), how many nutrients are considered to be needed for replication of the entire genome. This removes selection against genome size by scaling replication length with genome length.
 const bool gene_replication = false;	//Only genes take time to replicate.
-const int moran_symbionts = 5;	// -1 for no Moran process, positive number defines constant number of symbionts inside each host.
+const int moran_symbionts = -1;	// -1 for no Moran process, positive number defines constant number of symbionts inside each host.
+const bool safe_symbiont_distribution = true;	//If true, it means that daughter cell can end up with no less than 1 symbiont (if initial division says 0, then copy one of the symbionts from the other daughter). Symbionts can still be lost by their own fault (basal death and failed division). Only makes sense without Moran process.
 
 //Genome parameters
 const int nr_household_genes =			50;

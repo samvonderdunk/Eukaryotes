@@ -212,6 +212,8 @@ void Population::UpdatePopulation()
 
 			if (log_lineage)	LogLineage(i,j);
 
+
+
 			/* Basal death */
 			if (uniform() < death_rate_host)
 			{
@@ -237,6 +239,8 @@ void Population::UpdatePopulation()
 			}
 			/* ~Basal death */
 
+
+
 			/* Failed division */
 			if (Space[i][j]->Host->Stage == 5)
 			{
@@ -248,10 +252,7 @@ void Population::UpdatePopulation()
 			{
 				if ( Space[i][j]->Symbionts->at(s)->Stage == 5)
 				{
-					if (moran_symbionts > 0)
-					{
-						Space[i][j]->Symbionts->at(s)->Abort();	//No death but just abortion.
-					}
+					if (moran_symbionts > 0)	Space[i][j]->Symbionts->at(s)->Abort();	//No death but just abortion.
 					else
 					{
 						Space[i][j]->DeathOfSymbiont(s);
@@ -265,6 +266,8 @@ void Population::UpdatePopulation()
 				continue;
 			}
 			/* ~Failed division */
+
+
 
 			/* Division of host */
 			if (Space[i][j]->Host->Stage == 4   &&   (uniform() < Space[i][j]->Host->fitness))
@@ -282,18 +285,7 @@ void Population::UpdatePopulation()
 
 				for (s=Space[i][j]->nr_symbionts-1; s>=0; s--)
 				{
-					if (moran_symbionts > 0)
-					{
-						SymbiontCopy = new Organelle();
-						id_count++;
-						SymbiontCopy->CloneOrganelle(Space[i][j]->Symbionts->at(s), id_count);
-						if (SymbiontCopy->mutant || trace_lineage || log_lineage)
-						{
-							FossilSpace->BuryFossil(SymbiontCopy);
-						}
-						Space[neigh.first][neigh.second]->Symbionts->push_back(SymbiontCopy);
-						Space[neigh.first][neigh.second]->nr_symbionts++;
-					}
+					if (moran_symbionts > 0)	CloneSymbiont(i, j, s, neigh.first, neigh.second);
 					else
 					{
 						if (uniform() < 0.5)	//Transfer the symbiont to the new cell (just a matter of using the right pointers).
@@ -305,6 +297,21 @@ void Population::UpdatePopulation()
 						}
 					}
 				}
+
+				if (safe_symbiont_distribution)	//If we do not allow division to remove all symbionts from one of the daughters.
+				{
+					if (Space[neigh.first][neigh.second]->nr_symbionts == 0)
+					{
+						pick_s = (int) (uniform() * (double)Space[i][j]->nr_symbionts);
+						CloneSymbiont(i, j, pick_s, neigh.first, neigh.second);
+					}
+					else if (Space[i][j]->nr_symbionts == 0)
+					{
+						pick_s = (int) (uniform() * (double)Space[neigh.first][neigh.second]->nr_symbionts);
+						CloneSymbiont(neigh.first, neigh.second, pick_s, i, j);
+					}
+				}
+
 				if (!Space[neigh.first][neigh.second]->CheckCellDeath(false))	//Don't continue, since we have killed the child which lies at a different site.
 				{
 					Space[neigh.first][neigh.second]->DNATransferToHost();	//Instead, use the cell death check to know whether we need to do DNA transfer.
@@ -322,6 +329,8 @@ void Population::UpdatePopulation()
 				}
 			}
 			/* ~Division of host */
+
+
 
 			/* Division of symbionts */
 			for (s=0; s<Space[i][j]->nr_symbionts; s++)
@@ -350,7 +359,9 @@ void Population::UpdatePopulation()
 			}
 			/* ~Division of symbionts */
 
+
 			Space[i][j]->UpdateOrganelles();	//Expression dynamics within cell.
+
 
 			/* Replication */
 			if (Space[i][j]->Host->Stage == 2   &&   Space[i][j]->Host->privilige)
@@ -368,6 +379,20 @@ void Population::UpdatePopulation()
 
 		}
 	}
+}
+
+
+
+void Population::CloneSymbiont(int source_i, int source_j, int s, int target_i, int target_j)
+{
+	Organelle* SymbiontCopy;
+
+	SymbiontCopy = new Organelle();
+	id_count++;
+	SymbiontCopy->CloneOrganelle(Space[source_i][source_j]->Symbionts->at(s), id_count);
+	if (SymbiontCopy->mutant || trace_lineage || log_lineage)		FossilSpace->BuryFossil(SymbiontCopy);
+	Space[target_i][target_j]->Symbionts->push_back(SymbiontCopy);
+	Space[target_i][target_j]->nr_symbionts++;
 }
 
 
