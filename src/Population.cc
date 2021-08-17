@@ -4,6 +4,7 @@ Population::Population()
 {
 	int i,j;
 	id_count = 0;
+	nr_strains = 0;
 
 	for(i=0;i<NR;i++) for(j=0;j<NC;j++)
 	{
@@ -44,7 +45,7 @@ void Population::FollowSingleCell()
 	int s, nutrients;
 
 	C_init = new Cell();
-	C_init->InitialiseCell();
+	C_init->InitialiseCell(0);
 	C = new Cell();
 	C->CloneCell(C_init, &id_count);
 
@@ -185,7 +186,6 @@ void Population::UpdatePopulation()
 	int update_order[NR*NC];
 	int u, i, j, s, pick_s;
 	Organelle* SymbiontCopy;
-	Cell* SpaceMirror[NR][NC];
 
 	if (well_mixing)	WellMix();	//Well-mixing (before determining nutrient levels).
 
@@ -515,22 +515,40 @@ void Population::CollectNutrientsFromSite(int i, int j)
 
 void Population::InitialisePopulation()
 {
-	Cell* CellZero;
-	Cell* CellOne;
-	int i, j, s;
+	Cell* InitCells[max_input_files] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+	int k, i, j, s;
 
-	//First create one Cell.
-	CellZero = new Cell();
-	CellZero->InitialiseCell();
-
-	//Now fill the field with this cell.
-	for(i=0; i<NR; i++) for(j=0; j<NC; j++){
-		// if(row<20 && col<20)	//Initialise square
-		if (uniform() < 0.6)	//Initialise lower density
+	//Each input file (genome & expression) will be made into a cell.
+	for (k=0; k<max_input_files; k++)
+	{
+		if (genome_files[k] == "")
 		{
-			CellOne = new Cell();
-			CellOne->CloneCell(CellZero, &id_count);
-			Space[i][j] = CellOne;
+			nr_strains = k;
+			break;
+		}
+
+		InitCells[k] = new Cell();
+		InitCells[k]->InitialiseCell(k);
+	}
+
+	for (i=0; i<NR; i++) for(j=0; j<NC; j++)
+	{
+		//Determine which strain we will put here.
+		if (strain_competition == 1)
+		{
+			k = j / (NC/nr_strains);
+		}
+		else if (strain_competition == 2)
+		{
+			k = (int)(uniform()*nr_strains);
+		}
+
+		//Take InitCell[k] and copy to Space[i][j].
+		//Still we might not want to fill the entire grid, so roll another die.
+		if (uniform() < 0.6)
+		{
+			Space[i][j] = new Cell();
+			Space[i][j]->CloneCell(InitCells[k], &id_count);
 			FossilSpace->BuryFossil(Space[i][j]->Host);
 			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
@@ -539,8 +557,11 @@ void Population::InitialisePopulation()
 		}
 	}
 
-	delete CellZero;	//I cannot delete PP_Copy, because each is actually turned into one of grid spaces. I can however delete this single bit of memory.
-	CellZero = NULL;
+	for (k=0; k<max_input_files; k++)
+	{
+		if (InitCells[k] != NULL)	delete InitCells[k];
+		InitCells[k] = NULL;
+	}
 }
 
 void Population::ContinuePopulationFromBackup()

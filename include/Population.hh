@@ -14,6 +14,7 @@ class Population
 		std::vector<unsigned long long> Lineage;
 
 		unsigned long long id_count;
+		int nr_strains;
 
 		typedef std::pair<int,int> coords;
 		typedef std::vector<Organelle*>::iterator i_org;

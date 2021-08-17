@@ -34,9 +34,9 @@ using namespace std;
 #define BSITE 1
 #define HOUSE 2
 
+const int max_input_files=10;
+
 //Input files.
-const string init_genome_file="";
-const string init_expression_file="";
 const string init_backup_file="";
 const string init_anctrace_file="";
 const string init_lineage_file="";
@@ -53,7 +53,7 @@ const int NC = 50;	//Gradient is over columns.
 const int relative_replication = -1;	// -1 to turn off. If we're doing relative replication (i.e. not -1), how many nutrients are considered to be needed for replication of the entire genome. This removes selection against genome size by scaling replication length with genome length.
 const bool gene_replication = false;	//Only genes take time to replicate.
 const int moran_symbionts = -1;	// -1 for no Moran process, positive number defines constant number of symbionts inside each host.
-const bool safe_symbiont_distribution = true;	//If true, it means that daughter cell can end up with no less than 1 symbiont (if initial division says 0, then copy one of the symbionts from the other daughter). Symbionts can still be lost by their own fault (basal death and failed division). Only makes sense without Moran process.
+const bool safe_symbiont_distribution = false;	//If true, it means that daughter cell can end up with no less than 1 symbiont (if initial division says 0, then copy one of the symbionts from the other daughter). Symbionts can still be lost by their own fault (basal death and failed division). Only makes sense without Moran process.
 
 //Genome parameters
 const int nr_household_genes =			50;
@@ -87,6 +87,10 @@ const int default_nutrient_competition =			2;
 //       x_nei is total number of organelles in the neighbourhood,
 //       x_i is total number of organelles at site i,
 //       c_nei is number of cells (or hosts) in the neighbourhood.
+const int default_strain_competition = 1;
+//Options for strain competition (i.e. initial distribution):
+// 1, each strain in its own sector (vertical stripes).
+// 2, all strains mixed (i.e. each site has equal probability to be any of the strains).
 
 /* MUTATION PARAMETERS */
 const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
@@ -127,8 +131,8 @@ extern int seed;
 extern unsigned long long seed_draws;
 extern string folder;
 
-extern string genome_file;
-extern string expression_file;
+extern string genome_files[max_input_files];
+extern string expression_files[max_input_files];
 extern string backup_file;
 extern string anctrace_file;
 extern string lineage_file;
@@ -150,6 +154,7 @@ extern bool well_mixing;
 
 extern double nutrient_abundance;
 extern int nutrient_competition;
+extern int strain_competition;
 
 extern dsfmt_t dsfmt;
 inline double uniform()

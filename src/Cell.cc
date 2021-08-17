@@ -197,29 +197,30 @@ void Cell::TransferBead(i_bead it, Organelle* Target)
 	Target->mutant = true;
 }
 
-void Cell::InitialiseCell()
+void Cell::InitialiseCell(int input_nr)
 {
 	int i=0;
-	ifstream in_genome(genome_file.c_str());
-	ifstream in_expression(expression_file.c_str());
+	ifstream in_genome(genome_files[input_nr].c_str());
+	ifstream in_expression(expression_files[input_nr].c_str());
 	string genome;
 	string expression;
 	Organelle* Symbiont;
 
 	if ( !in_genome.is_open() )
 	{
-		printf("Genome file %s could not be opened.\n", genome_file.c_str());
+		printf("Genome file %s could not be opened.\n", genome_files[input_nr].c_str());
 		exit(1);
 	}
 
 	if ( !in_expression.is_open() )
 	{
-		printf("Expression file %s could not be opened.\n", expression_file.c_str());
+		printf("Expression file %s could not be opened.\n", expression_files[input_nr].c_str());
 		exit(1);
 	}
 
 	while ( !in_genome.eof() & !in_expression.eof() )
 	{
+		// if (i>0)	cout << "InitCell " << i << " " << genome << " " << expression << endl;
 		//We start reading below, because when we reach the end of the file, there will still be one round through the while-loop.
 		if (i==1)
 		{
@@ -236,6 +237,7 @@ void Cell::InitialiseCell()
 
 		in_genome >> genome;
 		in_expression >> expression;
+
 
 		i++;
 	}
