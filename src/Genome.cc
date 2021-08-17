@@ -1003,7 +1003,6 @@ void Genome::ReadBuffer(string buffer, bool* array, char start_sign, char stop_s
 void Genome::ReadExpression(string expression)
 {
 	string data;
-	// char* token;
 	int i;
 	i_bead it;
 	Regulator* reg;

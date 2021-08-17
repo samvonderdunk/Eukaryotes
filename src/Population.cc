@@ -221,7 +221,7 @@ void Population::UpdatePopulation()
 				Space[i][j] = NULL;
 				continue;
 			}
-			if (moran_symbionts == -1)	//Otherwise, if no moran process, then symbionts cannot die.
+			if (!moran_symbionts)	//Otherwise, if no moran process, then symbionts cannot die.
 			{
 				for (s=Space[i][j]->nr_symbionts-1; s>=0; s--)
 				{
@@ -252,7 +252,7 @@ void Population::UpdatePopulation()
 			{
 				if ( Space[i][j]->Symbionts->at(s)->Stage == 5)
 				{
-					if (moran_symbionts > 0)	Space[i][j]->Symbionts->at(s)->Abort();	//No death but just abortion.
+					if (moran_symbionts)	Space[i][j]->Symbionts->at(s)->Abort();	//No death but just abortion.
 					else
 					{
 						Space[i][j]->DeathOfSymbiont(s);
@@ -285,7 +285,7 @@ void Population::UpdatePopulation()
 
 				for (s=Space[i][j]->nr_symbionts-1; s>=0; s--)
 				{
-					if (moran_symbionts > 0)	CloneSymbiont(i, j, s, neigh.first, neigh.second);
+					if (moran_symbionts)	CloneSymbiont(i, j, s, neigh.first, neigh.second);
 					else
 					{
 						if (uniform() < 0.5)	//Transfer the symbiont to the new cell (just a matter of using the right pointers).
@@ -341,7 +341,7 @@ void Population::UpdatePopulation()
 					id_count++;
 					SymbiontCopy->Mitosis(Space[i][j]->Symbionts->at(s), id_count);
 					Space[i][j]->DNATransfertoSymbiont(SymbiontCopy);
-					if (moran_symbionts > 0)
+					if (moran_symbionts)
 					{
 						while(pick_s != s)	pick_s = (int) (uniform() * (double)Space[i][j]->nr_symbionts);
 						Space[i][j]->DeathOfSymbiont(pick_s);
