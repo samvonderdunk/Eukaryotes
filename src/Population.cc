@@ -185,6 +185,9 @@ void Population::UpdatePopulation()
 	int update_order[NR*NC];
 	int u, i, j, s, pick_s;
 	Organelle* SymbiontCopy;
+	Cell* SpaceMirror[NR][NC];
+
+	if (well_mixing)	WellMix();	//Well-mixing (before determining nutrient levels).
 
 	for(i=0; i<NR; i++)	for(j=0; j<NC; j++)	NutrientSpace[i][j] = 0.;
 	for(i=0; i<NR; i++)	for(j=0; j<NC; j++)	CollectNutrientsFromSite(i,j);
@@ -364,6 +367,24 @@ void Population::UpdatePopulation()
 			/* ~Replication */
 
 		}
+	}
+}
+
+
+
+void Population::WellMix()
+{
+	int Space1D[NR*NC];
+	int u, i, j;
+	Cell* SpaceMirror[NR][NC];
+
+	for(u=0; u<NR*NC; u++)	Space1D[u]=u;
+	random_shuffle(&Space1D[0], &Space1D[NR*NC], uniform_shuffle);
+	for(u=0; u<NR*NC; u++)	SpaceMirror[u/NC][u%NC] = Space[Space1D[u]/NC][Space1D[u]%NC];
+	for(i=0; i<NR; i++) for(j=0; j<NC; j++)
+	{
+		Space[i][j] = SpaceMirror[i][j];
+		SpaceMirror[i][j] = NULL;	//Should not be really necessary.
 	}
 }
 

@@ -145,6 +145,7 @@ extern bool follow_with_fixed_symbionts;
 extern bool trace_lineage;
 extern bool log_lineage;
 extern bool mutations_on;
+extern bool well_mixing;
 
 extern double nutrient_abundance;
 extern int nutrient_competition;

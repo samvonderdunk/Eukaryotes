@@ -30,6 +30,7 @@ int TimeOutputFossils = default_TimeOutputFossils;
 int TimeSaveBackup = default_TimeSaveBackup;
 
 bool mutations_on = true;
+bool well_mixing = false;
 bool follow_single_individual = false;
 bool follow_with_fixed_symbionts = false;
 bool trace_lineage = false;
@@ -87,7 +88,7 @@ int main(int argc, char** argv) {
 
 void PrintUsage(bool full)
 {
-	printf("\n\033[93m### Eukaryotes --- usage ###\033[0m\nArguments:\n   -s [seed]\t\t\tSet seed for random number generator (e.g. 211)\n   -p [project title]\t\tDefines folder for local storage\n   -g [genomes file]\t\tSee World.cc for format (e.g. CellX.g)\n   -e [expressions file]\tSee World.cc for format (e.g. CellX_G1.g)\n   -b [backup file]\t\tStart from backup (e.g. /path/backup00090000.txt)\n   -a [ancestor file]\t\tContinue ancestor trace (e.g. /path/anctrace00090000.txt)\n   -l [lineage file]\t\tLineage record (e.g. Host_MRCA_t1960k.out, see Programmes -L1 and -L2)\n   -t0 [start time]\t\tSet starting time (default: 0)\n   -tN [end time]\t\tSet simulation time (default: 10M)\n   -tT [term time]\t\tSet interval for terminal output (default: 100)\n   -tS [snap time]\t\tSet interval for saving snapshot (default: 100)\n   -tP [prune time]\t\tSet time interval for fossil pruning (default: 1000)\n   -tF [fossil time]\t\tSet time interval for saving fossil record (default: 10k)\n   -tB [backup time]\t\tSet interval for saving backup (default: 10k)\n   -nA [nutrient abundance]\tSet nutrient influx per site\n   -nC [nutrient competition]\tChoose type of nutrient competition (1: subtract/divide, 2: divide all, 3: divide/divide)\n\nFlags:\n   --nomut\t\t\tNo mutations\n   --help\t\t\tPrint full usage info\n\nProgrammes:\n   -S1\t\t\t\tFollow single cell with growing symbionts\n   -S2\t\t\t\tFollow single with fixed symbiont numbers\n   -L1\t\t\t\tTrace complete lineage (every organelle is considered a mutant)\n   -L2\t\t\t\tLog complete lineage (obtained using -L1)\n");
+	printf("\n\033[93m### Eukaryotes --- usage ###\033[0m\nArguments:\n   -s [seed]\t\t\tSet seed for random number generator (e.g. 211)\n   -p [project title]\t\tDefines folder for local storage\n   -g [genomes file]\t\tSee World.cc for format (e.g. CellX.g)\n   -e [expressions file]\tSee World.cc for format (e.g. CellX_G1.g)\n   -b [backup file]\t\tStart from backup (e.g. /path/backup00090000.txt)\n   -a [ancestor file]\t\tContinue ancestor trace (e.g. /path/anctrace00090000.txt)\n   -l [lineage file]\t\tLineage record (e.g. Host_MRCA_t1960k.out, see Programmes -L1 and -L2)\n   -t0 [start time]\t\tSet starting time (default: 0)\n   -tN [end time]\t\tSet simulation time (default: 10M)\n   -tT [term time]\t\tSet interval for terminal output (default: 100)\n   -tS [snap time]\t\tSet interval for saving snapshot (default: 100)\n   -tP [prune time]\t\tSet time interval for fossil pruning (default: 1000)\n   -tF [fossil time]\t\tSet time interval for saving fossil record (default: 10k)\n   -tB [backup time]\t\tSet interval for saving backup (default: 10k)\n   -nA [nutrient abundance]\tSet nutrient influx per site\n   -nC [nutrient competition]\tChoose type of nutrient competition (1: subtract/divide, 2: divide all, 3: divide/divide)\n\nFlags:\n   --nomut\t\t\tNo mutations\n   --mixed\t\t\tWell-mixing\n   --help\t\t\tPrint full usage info\n\nProgrammes:\n   -S1\t\t\t\tFollow single cell with growing symbionts\n   -S2\t\t\t\tFollow single with fixed symbiont numbers\n   -L1\t\t\t\tTrace complete lineage (every organelle is considered a mutant)\n   -L2\t\t\t\tLog complete lineage (obtained using -L1)\n");
 	if (full)
 	{
 		printf("\n\033[93m### Eukaryotes --- formats ###\033[0m\n\n<genomes file>\t\tHost genome on first line, each next line a symbiont.\n   (G2:0:-3:1:10010100010101010001).(H).(0:01010101000110010100).(...\n   (G4:1:-1:2:01010101100101000001).(H).(2:10100011001010001010).(...\n   (G4:1:-1:2:01010101100101000001).(H).(2:10100011001010001010).(...\n\n<expressions file>\tHost expression on first line, each next line a symbiont (matching with genomes file)\n   {10101110}\n   {...\n   {...\n");
@@ -230,6 +231,11 @@ void Setup(int argc, char** argv) {
 			mutations_on = false;
 		}
 
+		else if(ReadOut=="--mixed")
+		{
+			well_mixing = true;
+		}
+
 		else if(ReadOut=="--help")
 		{
 			PrintUsage(true);
@@ -268,7 +274,7 @@ void Setup(int argc, char** argv) {
 
 	if (!project_name_found)	folder += "Project_Name";	//I did not manage to give the date as an extension to the folder.
 
-	printf("\n\nFolder:\t\t\t%s\nGenomes:\t\t%s\nExpression:\t\t%s\nBackup:\t\t\t%s\nAnctrace:\t\t%s\nLineage:\t\t%s\nStart time:\t\t%d\nEnd time:\t\t%d\nt-Terminal:\t\t%d\nt-Snap:\t\t\t%d\nt-Prune:\t\t%d\nt-Ancestry:\t\t%d\nt-Backup:\t\t%d\nNutrient abundance:\t%f\nNutrient comp.:\t\t%d\n\nMutations:\t\t%s\nFollow var. host:\t%s\nFollow fixed host:\t%s\nTrace lineage:\t\t%s\nLog lineage:\t\t%s\n", folder.c_str(), genome_file.c_str(), expression_file.c_str(), backup_file.c_str(), anctrace_file.c_str(), lineage_file.c_str(), TimeZero, SimTime, TimeTerminalOutput, TimeSaveGrid, TimePruneFossils, TimeOutputFossils, TimeSaveBackup, nutrient_abundance, nutrient_competition, mutations_on?"Yes":"No", follow_single_individual?"Yes":"No", follow_with_fixed_symbionts?"Yes":"No", trace_lineage?"Yes":"No", log_lineage?"Yes":"No");
+	printf("\n\nFolder:\t\t\t%s\nGenomes:\t\t%s\nExpression:\t\t%s\nBackup:\t\t\t%s\nAnctrace:\t\t%s\nLineage:\t\t%s\nStart time:\t\t%d\nEnd time:\t\t%d\nt-Terminal:\t\t%d\nt-Snap:\t\t\t%d\nt-Prune:\t\t%d\nt-Ancestry:\t\t%d\nt-Backup:\t\t%d\nNutrient abundance:\t%f\nNutrient comp.:\t\t%d\n\nMutations:\t\t%s\nMixing:\t\t\t%s\nFollow var. host:\t%s\nFollow fixed host:\t%s\nTrace lineage:\t\t%s\nLog lineage:\t\t%s\n", folder.c_str(), genome_file.c_str(), expression_file.c_str(), backup_file.c_str(), anctrace_file.c_str(), lineage_file.c_str(), TimeZero, SimTime, TimeTerminalOutput, TimeSaveGrid, TimePruneFossils, TimeOutputFossils, TimeSaveBackup, nutrient_abundance, nutrient_competition, mutations_on?"Yes":"No", well_mixing?"Yes":"No", follow_single_individual?"Yes":"No", follow_with_fixed_symbionts?"Yes":"No", trace_lineage?"Yes":"No", log_lineage?"Yes":"No");
 
 
 	//Set up all directories for data.

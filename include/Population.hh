@@ -29,6 +29,7 @@ class Population
 
 		void UpdatePopulation();
 
+		void WellMix();
 		bool CheckLineage(int i, int j);
 		void LogLineage(int i, int j);
 		coords PickNeighbour(int i, int j);
