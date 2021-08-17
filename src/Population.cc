@@ -284,6 +284,10 @@ void Population::UpdatePopulation()
 						SymbiontCopy = new Organelle();
 						id_count++;
 						SymbiontCopy->CloneOrganelle(Space[i][j]->Symbionts->at(s), id_count);
+						if (SymbiontCopy->mutant || trace_lineage || log_lineage)
+						{
+							FossilSpace->BuryFossil(SymbiontCopy);
+						}
 						Space[neigh.first][neigh.second]->Symbionts->push_back(SymbiontCopy);
 						Space[neigh.first][neigh.second]->nr_symbionts++;
 					}
