@@ -160,7 +160,8 @@ void Setup(int argc, char** argv) {
 			{
 				ReadOutN = (char*) argv[i+j];
 				if (ReadOutN.substr(0,1)=="-" || j == max_input_files+1){
-					i += j-1;
+					i += j-1;	//The main for-loop will also add 1 to i.
+					j=1;
 					break;
 				}
 				else	//Haven't gotten to the next different command-line argument (or max. number of input files), so keep interpreting as another genome file.
@@ -184,6 +185,7 @@ void Setup(int argc, char** argv) {
 				ReadOutN = (char*) argv[i+j];
 				if (ReadOutN.substr(0,1)=="-" || j == max_input_files+1){
 					i += j-1;
+					j=1;	//Otherwise the statement below might think that i+j==argc, even though that is not really true.
 					break;
 				}
 				else
