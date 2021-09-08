@@ -478,7 +478,12 @@ void Population::CollectNutrientsFromSite(int i, int j)
 		}
 	}
 
-	if (nutrient_competition == 1)	//Finish classic nutrient function here.
+	if (nutrient_competition == 0)	//Constant nutrient level.
+	{
+		NutrientSpace[i][j] += nutrient_abundance;
+	}
+
+	else if (nutrient_competition == 1)	//Finish classic nutrient function here.
 	{
 		if (Space[i][j] == NULL)	NutrientSpace[i][j] += nutrient_abundance - (double)organelle_density;
 		else											NutrientSpace[i][j] += (nutrient_abundance - (double)organelle_density) / (double)(Space[i][j]->nr_symbionts+1);

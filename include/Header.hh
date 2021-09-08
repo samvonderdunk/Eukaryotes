@@ -46,8 +46,8 @@ const int sequence_length =	20;
 const int signalp_length =	1;	//As long as I am not using it, make it small.
 
 //Grid size and host size, setting the dimensions of the model.
-const int NR = 50;
-const int NC = 50;	//Gradient is over columns.
+const int NR = 100;
+const int NC = 100;	//Gradient is over columns.
 
 //Main settings
 const int relative_replication = -1;	// -1 to turn off. If we're doing relative replication (i.e. not -1), how many nutrients are considered to be needed for replication of the entire genome. This removes selection against genome size by scaling replication length with genome length.
@@ -79,6 +79,7 @@ const double death_rate_symbiont =						0.001;
 const double default_nutrient_abundance =			30.;
 const int default_nutrient_competition =			2;
 //Options for nutrient_competition:
+// 0, constant nutrient level, unaffected by cells.
 // 1, classic nutrient function (e.g. Paramecium tetraurelia):		n_ij = ( n_tot - (x_nei-x_i) ) / x_i
 // 2, first smooth nutrient function (e.g. Paramecium caudatum):	n_ij = n_tot / x_nei
 // 3, distribute by cell, by organelle (e.g. Volvox carteri IV):	n_ij = (n_tot / c_nei) / x_i
