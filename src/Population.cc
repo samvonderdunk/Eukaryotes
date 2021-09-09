@@ -584,7 +584,7 @@ void Population::ContinuePopulationFromBackup()
 			{
 				id_count++;
 				Space[i][j]->Host->fossil_id = id_count;	//Other things such as time_of_appearance and Ancestor are set to zero by the EmptyProkaryote function.
-				for (s=0; Space[i][j]->nr_symbionts; s++)
+				for (s=0; s<Space[i][j]->nr_symbionts; s++)
 				{
 					id_count++;
 					Space[i][j]->Symbionts->at(s)->fossil_id = id_count;
