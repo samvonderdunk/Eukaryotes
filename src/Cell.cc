@@ -58,7 +58,7 @@ void Cell::UpdateOrganelles()
 
 void Cell::RegulatorTransport()
 {
-	i_bead it;
+	i_bead it, it2;
 	int s, it_cntr;
 	Regulator* reg;
 
@@ -71,7 +71,9 @@ void Cell::RegulatorTransport()
 			reg = dynamic_cast<Regulator*>(*it);
 			if (perfect_transport && reg->signalp[0] == false)
 			{
-				Host->ExpressedGenes->splice(Host->ExpressedGenes->begin(), *Symbionts->at(s)->ExpressedGenes, it);
+				it2 = it;
+				it--;
+				Host->ExpressedGenes->splice(Host->ExpressedGenes->begin(), *Symbionts->at(s)->ExpressedGenes, it2);
 			}
 			else if (uniform() < leakage_to_host)
 			{
@@ -90,7 +92,9 @@ void Cell::RegulatorTransport()
 			{
 				if (s == nr_symbionts-1)	//Only erase the expressed gene from the host if we get to the last symbiont (already transported to all other symbionts).
 				{
-					Symbionts->at(s)->ExpressedGenes->splice(Symbionts->at(s)->ExpressedGenes->begin(), *Host->ExpressedGenes, it);
+					it2 = it;
+					it--;
+					Symbionts->at(s)->ExpressedGenes->splice(Symbionts->at(s)->ExpressedGenes->begin(), *Host->ExpressedGenes, it2);
 				}
 				else
 				{
