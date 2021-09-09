@@ -60,6 +60,7 @@ void Cell::RegulatorTransport()
 {
 	i_bead it;
 	int s, it_cntr;
+	Regulator* reg;
 
 	for (s=0; s<nr_symbionts; s++)
 	{
@@ -67,7 +68,12 @@ void Cell::RegulatorTransport()
 		it = Symbionts->at(s)->ExpressedGenes->begin();
 		while (it != Symbionts->at(s)->ExpressedGenes->end())
 		{
-			if (ActiveTransport(it, Symbionts->at(s)->ExpressedGenes, Host->ExpressedGenes) || uniform() < leakage_to_host)
+			reg = dynamic_cast<Regulator*>(*it);
+			if (perfect_transport && reg->signalp[0] == false)
+			{
+				Host->ExpressedGenes->splice(Host->ExpressedGenes->begin(), *Symbionts->at(s)->ExpressedGenes, it);
+			}
+			else if (uniform() < leakage_to_host)
 			{
 				Host->ExpressedGenes->push_back(*it);
 			}
@@ -79,7 +85,19 @@ void Cell::RegulatorTransport()
 		it_cntr = 0;
 		while (it_cntr < Host->nr_native_expressed)
 		{
-			if (ActiveTransport(it, Host->ExpressedGenes, Symbionts->at(s)->ExpressedGenes) || uniform() < leakage_to_symbiont)
+			reg = dynamic_cast<Regulator*>(*it);
+			if (perfect_transport && reg->signalp[0] == true)
+			{
+				if (s == nr_symbionts-1)	//Only erase the expressed gene from the host if we get to the last symbiont (already transported to all other symbionts).
+				{
+					Symbionts->at(s)->ExpressedGenes->splice(Symbionts->at(s)->ExpressedGenes->begin(), *Host->ExpressedGenes, it);
+				}
+				else
+				{
+					Symbionts->at(s)->ExpressedGenes->push_back(*it);
+				}
+			}
+			else if (uniform() < leakage_to_symbiont)
 			{
 				Symbionts->at(s)->ExpressedGenes->push_back(*it);
 			}
@@ -87,13 +105,6 @@ void Cell::RegulatorTransport()
 			it_cntr++;
 		}
 	}
-}
-
-bool Cell::ActiveTransport(i_bead it, list<Bead*>* SourceCompartment, list<Bead*>* TargetCompartment)
-{
-	//For future use: based on signal peptides of proteins, more protein movement can occur.
-	//Maybe passing BeadLists is a bit cumbersome as well...
-	return false;	//For now, there will be no active transport.
 }
 
 

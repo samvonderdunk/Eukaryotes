@@ -18,8 +18,7 @@ class Cell{
 		~Cell();
 
 		void UpdateOrganelles();
-		void RegulatorTransport();	//Including leakage.
-		bool ActiveTransport(i_bead it, list<Bead*>* SourceCompartment, list<Bead*>* TargetCompartment);
+		void RegulatorTransport();	//Including leakage & all transport at this point.
 
 		void DNATransferToHost();
 		void DNATransfertoSymbiont(Organelle* Symbiont);
