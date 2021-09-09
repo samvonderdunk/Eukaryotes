@@ -341,7 +341,7 @@ void Population::UpdatePopulation()
 					id_count++;
 					SymbiontCopy->Mitosis(Space[i][j]->Symbionts->at(s), id_count);
 					Space[i][j]->DNATransfertoSymbiont(SymbiontCopy);
-					if (moran_symbionts)
+					if (moran_symbionts || (symbiont_overgrowth>0 && uniform()<(double)Space[i][j]->nr_symbionts/symbiont_overgrowth) )	//If there is overgrowth, the chance of killing a colleague is proportional to the number of colleagues divided by the total room available.
 					{
 						while(pick_s != s)	pick_s = (int) (uniform() * (double)Space[i][j]->nr_symbionts);
 						Space[i][j]->DeathOfSymbiont(pick_s);
