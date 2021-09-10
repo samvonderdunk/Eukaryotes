@@ -315,7 +315,7 @@ void Population::UpdatePopulation()
 
 				if (!Space[neigh.first][neigh.second]->CheckCellDeath(false))	//Don't continue, since we have killed the child which lies at a different site.
 				{
-					Space[neigh.first][neigh.second]->DNATransferToHost();	//Instead, use the cell death check to know whether we need to do DNA transfer.
+					if (mutations_on)	Space[neigh.first][neigh.second]->DNATransferToHost();	//Instead, use the cell death check to know whether we need to do DNA transfer.
 					if (Space[neigh.first][neigh.second]->Host->mutant || trace_lineage || log_lineage)
 					{
 						FossilSpace->BuryFossil(Space[neigh.first][neigh.second]->Host);	//Bury fossil only after potential transfer events (also count as mutations).
