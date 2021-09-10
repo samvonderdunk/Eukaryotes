@@ -394,7 +394,7 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 		if(uniform() < regulator_innovation_mu)
 		{
 			it = InventRegulator();
-			PotentialTypeChange(it);
+			if (!perfect_transport)	PotentialTypeChange(it);
 			(*pdup_length)++;
 		}
 		if(uniform() < bsite_innovation_mu)
@@ -462,7 +462,7 @@ void Genome::PotentialTypeChange(i_bead it)
 		}
 		it2++;
 	}
-	if(found_matching_type == false && (type_abundance > 1 || reg->type==0))	//We haven't been able to convert it to an existing type, so let's define it as a new type. type_abundance should always be more than 1 because there is always an original copy on the parental section of the genome.
+	if(found_matching_type == false && (type_abundance > 1 || reg->type==0))	//We haven't been able to convert it to an existing type, so let's define it as a new type. type_abundance should always be more than 1 because there is always an original copy on the parental section of the genome (I think that statement is no longer true, because we mutate after genomes have been split in two).
 	{
 		list<int>::iterator ix;
 		int x=0;
@@ -530,7 +530,13 @@ Genome::i_bead Genome::MutateRegulator(i_bead it, int* pdel_length)
 
 	else
 	{
-		if(uniform() < regulator_threshold_mu)	//Parameters mutate independently.
+		if (perfect_transport && uniform() < regulator_type_mu)
+		{
+			reg->type = ChangeType();
+			is_mutated = true;
+		}
+
+		if (uniform() < regulator_threshold_mu)	//Parameters mutate independently.
 		{
 			reg->threshold = ChangeParameter(reg->threshold);
 			is_mutated = true;
@@ -554,7 +560,7 @@ Genome::i_bead Genome::MutateRegulator(i_bead it, int* pdel_length)
 			}
 		}
 
-		if (potential_type_change){
+		if (potential_type_change && !perfect_transport){
 			PotentialTypeChange(it);	//Check type change, activity or sequence has been mutated.
 		}
 		it++;
@@ -644,6 +650,14 @@ int Genome::ChangeParameter(int value)
 		}
 	}
 
+	return new_value;
+}
+
+int Genome::ChangeType()
+{
+	int new_value;
+
+	new_value = 1+(int)(uniform()*nr_types);
 	return new_value;
 }
 

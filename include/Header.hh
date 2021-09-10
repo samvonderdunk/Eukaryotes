@@ -55,7 +55,7 @@ const bool gene_replication = false;	//Only genes take time to replicate.
 const bool moran_symbionts = false;	// If true, hosts evolve with constant symbiont numbers (i.e. Moran process), at the level that they are initialised.
 const bool safe_symbiont_distribution = false;	//If true, it means that daughter cell can end up with no less than 1 symbiont (if initial division says 0, then copy one of the symbionts from the other daughter). Symbionts can still be lost by their own fault (basal death and failed division). Only makes sense without Moran process.
 const int symbiont_overgrowth = -1;	//The maximal number of symbiont spots. If value is set to -1, there is no max. and no overgrowth (new symbionts are always appended). If value is positive, there is overgrowth (symbiont division always carries a probability to overgrow a colleague, and this probability equals 1 when nr_symbionts==symbiont_overgrowth).
-const bool perfect_transport = false;	//Genes with a 0 in their signalp, are always moved to the host; genes with a 1 in their signalp always get targetted to the symbionts. Moving here means that they do not stick around in the compartment where they are created.
+const bool perfect_transport = false;	//Genes with a 0 in their signalp, are always moved to the host; genes with a 1 in their signalp always get targetted to the symbionts. Moving here means that they do not stick around in the compartment where they are created. Currently perfect_transport is also associated with independent mutation of gene types, a break in the evolutionary dynamics with respect to Prokaryotes.
 
 //Genome parameters
 const int nr_household_genes =			50;
@@ -127,6 +127,10 @@ const double bsite_transfer_mu_HtoS = 		0.00001;
 const double bsite_transfer_mu_StoH = 		0.00001;
 const double house_transfer_mu_HtoS = 		0.00001;
 const double house_transfer_mu_StoH = 		0.00001;
+
+//Newest additions.
+const double regulator_type_mu =					0.00001;
+const int nr_types = 100;
 
 //Variables defined in World.cc
 extern int Time;

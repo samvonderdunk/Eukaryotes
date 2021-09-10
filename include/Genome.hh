@@ -38,6 +38,7 @@ class Genome {
 	i_bead MutateHouse(i_bead it, int* pdel_length);
 
 	int ChangeParameter(int value);
+	int ChangeType();
 
 	i_bead DeleteGene(i_bead it, int* pdel_length);
 	i_bead DeleteBead(i_bead it);
