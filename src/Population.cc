@@ -270,9 +270,10 @@ void Population::UpdatePopulation()
 
 
 			/* Division of host */
-			if (Space[i][j]->Host->Stage == 4   &&   (uniform() < Space[i][j]->Host->fitness))
+			coords neigh = PickNeighbour(i, j);
+
+			if ( Space[i][j]->Host->Stage == 4  &&  (uniform() < Space[i][j]->Host->fitness)  &&  (host_growth == 0 || (host_growth == 1 && Space[neigh.first][neigh.second] == NULL)) )	//All division criteria in this line.
 			{
-				coords neigh = PickNeighbour(i, j);
 				if (Space[neigh.first][neigh.second] != NULL)
 				{
 					Space[neigh.first][neigh.second]->DeathOfCell();

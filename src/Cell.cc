@@ -42,7 +42,10 @@ void Cell::UpdateOrganelles()
 
 	RegulatorTransport();	//Move around expression products.
 
-	Host->UpdateState();	//Update organelle state. If foreign products should not interfere with organelle state, put that in the UpdateState() function.
+	if (!(host_growth == 1 && Host->Stage == 4))	//If waiting is free (option 1), host stays in M 'forever'.
+	{
+		Host->UpdateState();	//Update organelle state. If foreign products should not interfere with organelle state, put that in the UpdateState() function.
+	}
 	Host->G->UpdateGeneExpression(Host->ExpressedGenes);	//Update gene expression states.
 	it = Host->ExpressedGenes->erase(Host->ExpressedGenes->begin(), Host->ExpressedGenes->end());	//Erase ExpressedGenes to avoid conflicts with pointers during cell dynamics.
 	Host->nr_native_expressed = 0;
