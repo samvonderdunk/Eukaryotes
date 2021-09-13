@@ -550,6 +550,8 @@ void Population::InitialisePopulation()
 			k = (int)(uniform()*nr_strains);
 		}
 
+		if (k >= nr_strains)	continue;	//Leave empty, if NC is not divisible by nr_strains (i.e. when you don't get an integer).
+
 		//Take InitCell[k] and copy to Space[i][j].
 		//Still we might not want to fill the entire grid, so roll another die.
 		if (uniform() < 0.6)
