@@ -522,8 +522,9 @@ void Population::CollectNutrientsFromSite(int i, int j)
 
 void Population::InitialisePopulation()
 {
-	Cell* InitCells[max_input_files] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
-	int k, i, j, s;
+	Cell* InitCells[max_input_files] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+	int k, i, j, s, blocks, r, c;
+	double b, b_dbl, b_int;
 
 	//Each input file (genome & expression) will be made into a cell.
 	for (k=0; k<max_input_files; k++)
@@ -538,6 +539,19 @@ void Population::InitialisePopulation()
 		InitCells[k]->InitialiseCell(k);
 	}
 
+	if (strain_competition == 3)	//Determine how many squares will divide the grid (hopefully 2x2, 3x3 or 4x4 and no more).
+	{
+		if (NR != NC)
+		{
+			printf("Warning: Might be difficult to initialise blocks of strains on a non-square field.\n");
+		}
+
+		b = sqrt((double)nr_strains);
+		b_dbl = modf(b, &b_int);	//Split double into its integer and fractional parts.
+		blocks = (int) b_int;
+		if (b_dbl > 0.)	blocks++;
+	}
+
 	for (i=0; i<NR; i++) for(j=0; j<NC; j++)
 	{
 		//Determine which strain we will put here.
@@ -548,6 +562,16 @@ void Population::InitialisePopulation()
 		else if (strain_competition == 2)
 		{
 			k = (int)(uniform()*nr_strains);
+		}
+		else if (strain_competition == 3)
+		{
+			r = i / (NR/blocks);
+			c = j / (NC/blocks);
+
+			if (r < blocks && c < blocks)	//Otherwise leave empty, outside square blocks.
+			{
+				k = r*blocks + c;
+			}
 		}
 
 		if (k >= nr_strains)	continue;	//Leave empty, if NC is not divisible by nr_strains (i.e. when you don't get an integer).

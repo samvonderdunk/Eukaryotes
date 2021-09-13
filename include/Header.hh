@@ -34,7 +34,7 @@ using namespace std;
 #define BSITE 1
 #define HOUSE 2
 
-const int max_input_files=10;
+const int max_input_files=20;
 
 //Input files.
 const string init_backup_file="";
@@ -99,6 +99,7 @@ const int default_strain_competition = 1;
 //Options for strain competition (i.e. initial distribution):
 // 1, each strain in its own sector (vertical stripes).
 // 2, all strains mixed (i.e. each site has equal probability to be any of the strains).
+// 3, field divided into blocks (both horizontal and vertical division, assumed to start with a square number of strains).
 
 /* MUTATION PARAMETERS */
 const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
