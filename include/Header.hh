@@ -127,14 +127,14 @@ const double house_innovation_mu = 				0.0;
 const double house_shuffle_mu = 					0.001;
 
 //Transfer mutations.
-const double regulator_transfer_mu_HtoS = 0.00001;
-const double regulator_transfer_mu_StoH = 0.00001;
-const double bsite_transfer_mu_HtoS = 		0.00001;
-const double bsite_transfer_mu_StoH = 		0.00001;
-const double house_transfer_mu_HtoS = 		0.00001;
-const double house_transfer_mu_StoH = 		0.00001;
+const double regulator_transfer_mu_HtoS = 0.0000;
+const double regulator_transfer_mu_StoH = 0.0000;
+const double bsite_transfer_mu_HtoS = 		0.0000;
+const double bsite_transfer_mu_StoH = 		0.0000;
+const double house_transfer_mu_HtoS = 		0.0000;
+const double house_transfer_mu_StoH = 		0.0000;
 
-//Newest additions.
+//Type mutations only active when perfect_transport == true.
 const double regulator_type_mu =					0.00001;
 const int nr_types = 100;
 
