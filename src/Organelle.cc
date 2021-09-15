@@ -156,6 +156,8 @@ void Organelle::CloneOrganelle(Organelle* ImageO, unsigned long long id_count)
 	alive = ImageO->alive;
 	time_of_appearance = ImageO->time_of_appearance;
 
+	Ancestor = ImageO->Ancestor;
+
 	G->CloneGenome(ImageO->G);
 }
 
