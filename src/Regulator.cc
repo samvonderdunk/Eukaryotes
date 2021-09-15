@@ -57,7 +57,7 @@ void Regulator::RandomRegulator()
 	int i;
 
 	duplicate = false;
-	type = (int)(uniform()*nr_types);	//Useful if we do perfect_transport; otherwise will be redefined after InventRegulator anyway.
+	type = 1+(int)(uniform()*nr_types);	//Useful if we do perfect_transport; otherwise will be redefined after InventRegulator anyway.
   threshold = (int)(uniform()*(2*WeightRange+1) - WeightRange);	//Value between -WeightRange and +WeightRange (incl. borders).
   activity = (int)(uniform()*(2*WeightRange+1) - WeightRange);
   for (i=0; i<sequence_length; i++)	sequence[i] = (uniform()>0.5) ? true : false;
