@@ -394,7 +394,7 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 		if(uniform() < regulator_innovation_mu)
 		{
 			it = InventRegulator();
-			if (!perfect_transport)	PotentialTypeChange(it);
+			if (!independent_regtypes)	PotentialTypeChange(it);
 			(*pdup_length)++;
 		}
 		if(uniform() < bsite_innovation_mu)
@@ -530,7 +530,7 @@ Genome::i_bead Genome::MutateRegulator(i_bead it, int* pdel_length)
 
 	else
 	{
-		if (perfect_transport && uniform() < regulator_type_mu)
+		if (independent_regtypes && uniform() < regulator_type_mu)
 		{
 			reg->type = ChangeType();
 			is_mutated = true;
@@ -560,7 +560,7 @@ Genome::i_bead Genome::MutateRegulator(i_bead it, int* pdel_length)
 			}
 		}
 
-		if (potential_type_change && !perfect_transport){
+		if (potential_type_change && !independent_regtypes){
 			PotentialTypeChange(it);	//Check type change, activity or sequence has been mutated.
 		}
 		it++;

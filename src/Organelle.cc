@@ -49,8 +49,8 @@ void Organelle::UpdateState()
 		if (G->WhatBead(*it)==REGULATOR)
 		{
 			reg = dynamic_cast<Regulator*>(*it);
-			if (it_cntr < nr_native_expressed || perfect_transport)	//Native genes from the organelle itself; just look at the type.
-			//For now, under perfect transport, we assume no complication in the definition of regulatory type between compartments; something assigned to type 1 in the host, will also be counted as type 1 in the symbiont.
+			if (it_cntr < nr_native_expressed || independent_regtypes)	//Native genes from the organelle itself; just look at the type.
+			//For now, under independent reg types, we assume no complication in the definition of regulatory type between compartments; something assigned to type 1 in the host, will also be counted as type 1 in the symbiont.
 			{
 				if (reg->type < 6)
 				{
