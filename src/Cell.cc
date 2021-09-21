@@ -3,6 +3,7 @@
 Cell::Cell()
 {
 	nr_symbionts = 0;
+	barcode = -1;	//Not initialised here.
 	Host = NULL;
 	Host = new Organelle();
 	Symbionts = NULL;
@@ -224,6 +225,8 @@ void Cell::InitialiseCell(int input_nr)
 	string expression;
 	Organelle* Symbiont;
 
+	barcode = input_nr;
+
 	if ( !in_genome.is_open() )
 	{
 		printf("Genome file %s could not be opened.\n", genome_files[input_nr].c_str());
@@ -268,6 +271,7 @@ void Cell::CloneCell(Cell* ImageC, unsigned long long* pid_count)
 	Organelle* Symbiont;
 
 	nr_symbionts = ImageC->nr_symbionts;
+	barcode = ImageC->barcode;
 
 	(*pid_count)++;
 	Host->CloneOrganelle(ImageC->Host, *pid_count);

@@ -280,6 +280,7 @@ void Population::UpdatePopulation()
 					Space[neigh.first][neigh.second] = NULL;
 				}
 				Space[neigh.first][neigh.second] = new Cell();
+				Space[neigh.first][neigh.second]->barcode = Space[i][j]->barcode;	//Transmit strain info.
 				Space[neigh.first][neigh.second]->Host = new Organelle();
 				id_count++;
 				Space[neigh.first][neigh.second]->Host->Mitosis(Space[i][j]->Host, id_count);
@@ -1132,10 +1133,10 @@ void Population::OutputGrid(bool backup)
 		}
 		else	//Print internal state and genome of prokaryote to file.
 		{
-			fprintf(f, "%d %d -1 %f\t%s\n", i, j, NutrientSpace[i][j], Space[i][j]->Host->Output(backup).c_str());
+			fprintf(f, "%d %d -1 %f %d\t%s\n", i, j, NutrientSpace[i][j], Space[i][j]->barcode, Space[i][j]->Host->Output(backup).c_str());
 			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
-				fprintf(f, "%d %d %d %f\t%s\n", i, j, s, NutrientSpace[i][j], Space[i][j]->Symbionts->at(s)->Output(backup).c_str());
+				fprintf(f, "%d %d %d %f %d\t%s\n", i, j, s, NutrientSpace[i][j], Space[i][j]->barcode, Space[i][j]->Symbionts->at(s)->Output(backup).c_str());
 			}
 		}
 	}
