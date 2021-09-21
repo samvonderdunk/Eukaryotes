@@ -60,7 +60,7 @@ const bool host_growth = 0;
 // 0, as in Prokaryotes: hosts overgrow one another, dividing as soon as they reach M.
 // 1, hosts wait for empty sites, but waiting is free (expression unimportant once they reach M).
 // 2, hosts wait for empty sites, but need to actively maintain M expression (i.e. making the whole cell-cycle more complex again). This option may be implemented later...
-const bool perfect_transport = true;	//Genes with a 0 in their signalp, are always moved to the host; genes with a 1 in their signalp always get targetted to the symbionts. Moving here means that they do not stick around in the compartment where they are created.
+const bool perfect_transport = false;	//Genes with a 0 in their signalp, are always moved to the host; genes with a 1 in their signalp always get targetted to the symbionts. Moving here means that they do not stick around in the compartment where they are created.
 const bool independent_regtypes = false;	//Independent mutation of gene types, a break in the evolutionary dynamics with respect to Prokaryotes. In E. viridis I, we do perfect_transport w/o independent_regtypes; in E. viridis II, we do both.
 
 //Genome parameters

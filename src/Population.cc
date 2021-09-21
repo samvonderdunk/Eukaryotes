@@ -1169,7 +1169,7 @@ void Population::OutputLineage(int i, int j)
 void Population::ShowGeneralProgress()
 {
 	int i, j, host_count=0, symbiont_count=0;
-	int stage_counts[6] = {0, 0, 0, 0, 0, 0};
+	int stage_counts[2][6] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	i_org iS;
 
 	for (i=0; i<NR; i++) for(j=0; j<NC; j++)
@@ -1178,11 +1178,11 @@ void Population::ShowGeneralProgress()
 		{
 			host_count++;
 			symbiont_count += Space[i][j]->nr_symbionts;
-			stage_counts[Space[i][j]->Host->Stage]++;
+			stage_counts[0][Space[i][j]->Host->Stage]++;
 			iS = Space[i][j]->Symbionts->begin();
 			while (iS != Space[i][j]->Symbionts->end())
 			{
-				stage_counts[(*iS)->Stage]++;
+				stage_counts[1][(*iS)->Stage]++;
 				iS++;
 			}
 		}
@@ -1191,7 +1191,7 @@ void Population::ShowGeneralProgress()
 	cout << "Time " << Time;
 	cout << "\tHosts " << host_count;
 	cout << "\tSymbionts " << symbiont_count;
-	for (i=0; i<6; i++)	cout << "\tS(" << i << ") " << stage_counts[i];
+	for (i=0; i<6; i++)	cout << "\tS(" << i << ") " << stage_counts[0][i] << "," << stage_counts[1][i];
 	cout << endl;
 
 	if (host_count==0)
