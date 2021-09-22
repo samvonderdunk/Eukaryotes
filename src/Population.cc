@@ -828,6 +828,7 @@ void Population::ReadBackupFile()
 				{
 					C = new Cell();
 					C->Host = O;
+					C->barcode = count_lines;
 					Space[r][c] = C;
 				}
 				else
