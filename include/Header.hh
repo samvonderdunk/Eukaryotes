@@ -62,6 +62,7 @@ const bool host_growth = 0;
 // 2, hosts wait for empty sites, but need to actively maintain M expression (i.e. making the whole cell-cycle more complex again). This option may be implemented later...
 const bool perfect_transport = false;	//Genes with a 0 in their signalp, are always moved to the host; genes with a 1 in their signalp always get targetted to the symbionts. Moving here means that they do not stick around in the compartment where they are created.
 const bool independent_regtypes = false;	//Independent mutation of gene types, a break in the evolutionary dynamics with respect to Prokaryotes. In E. viridis I, we do perfect_transport w/o independent_regtypes; in E. viridis II, we do both.
+const bool nutshare_evolve = true;	//Host can evolve how much nutrients it claims from the environment, passing on the remaining fraction to its symbionts (equally divided among these). Each host has an identical claim on environmental nutrients, i.e. independent of how many symbionts it has. This corresponds to nutrient competition 4.
 
 //Genome parameters
 const int nr_household_genes =			50;
@@ -91,11 +92,15 @@ const int default_nutrient_competition =			2;
 // 1, classic nutrient function (e.g. Paramecium tetraurelia):		n_ij = ( n_tot - (x_nei-x_i) ) / x_i
 // 2, first smooth nutrient function (e.g. Paramecium caudatum):	n_ij = n_tot / x_nei
 // 3, distribute by cell, by organelle (e.g. Volvox carteri IV):	n_ij = (n_tot / c_nei) / x_i
+// 4, distribute by cell, let host claim its share and then divide among symbionts:	n_iH = (n_tot / c_nei)*claim_H and n_iS = (n_tot / c_nei)*(1 - claim_H) / (x_i - 1)
 // where n_ij is nutrients at site i for organelle j,
 //       n_tot is total nutrient_abundance (see par above), i.e. influx per site,
 //       x_nei is total number of organelles in the neighbourhood,
 //       x_i is total number of organelles at site i,
-//       c_nei is number of cells (or hosts) in the neighbourhood.
+//       c_nei is number of cells (or hosts) in the neighbourhood,
+//       claim_H is the fraction of nutrients claimed by the host over its symbionts,
+//       n_iH is the number of nutrients ending up in the host.
+//       n_iS is the number of nutrients ending up in each of the symbionts.
 const int default_strain_competition = 1;
 //Options for strain competition (i.e. initial distribution):
 // 1, each strain in its own sector (vertical stripes).
@@ -103,6 +108,12 @@ const int default_strain_competition = 1;
 // 3, field divided into blocks (both horizontal and vertical division, assumed to start with a square number of strains).
 
 /* MUTATION PARAMETERS */
+
+// Used by nutshare_evolve option.
+const double init_nutrient_claim =				0.2;	//If we start with 4 symbionts and 1 hosts, that means they initially share fairly.
+const double nutrient_claim_mu =					0.001;
+const double nutrient_claim_mu_delta =		0.05;
+
 const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
 
 const double regulator_threshold_mu = 		0.0005;

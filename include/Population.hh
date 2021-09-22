@@ -17,6 +17,7 @@ class Population
 		int nr_strains;
 
 		typedef std::pair<int,int> coords;
+		typedef std::pair<double,double> nuts;
 		typedef std::vector<Organelle*>::iterator i_org;
 		typedef std::list<Organelle*>::iterator i_fos;
 		typedef std::list<unsigned long long>::iterator i_ull;
@@ -36,6 +37,7 @@ class Population
 		void LogLineage(int i, int j);
 		coords PickNeighbour(int i, int j);
 		void CollectNutrientsFromSite(int i, int j);
+		nuts HandleNutrientClaims(int i, int j);
 
 		void InitialisePopulation();
 		void ContinuePopulationFromBackup();

@@ -12,6 +12,7 @@ class Organelle{
 		int nr_native_expressed;
 		Genome* G;
 		double fitness;
+		double nutrient_claim;
 
 		//Fossil info.
 		bool alive;

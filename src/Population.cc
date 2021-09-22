@@ -367,15 +367,17 @@ void Population::UpdatePopulation()
 
 
 			/* Replication */
+			nuts nutrients = HandleNutrientClaims(i, j);
+
 			if (Space[i][j]->Host->Stage == 2   &&   Space[i][j]->Host->privilige)
 			{
-				Space[i][j]->Host->Replicate(NutrientSpace[i][j]);
+				Space[i][j]->Host->Replicate(nutrients.first);
 			}
 			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
 				if ( Space[i][j]->Symbionts->at(s)->Stage == 2   &&   Space[i][j]->Symbionts->at(s)->privilige)
 				{
-					Space[i][j]->Symbionts->at(s)->Replicate(NutrientSpace[i][j]);
+					Space[i][j]->Symbionts->at(s)->Replicate(nutrients.second);
 				}
 			}
 			/* ~Replication */
@@ -462,7 +464,7 @@ void Population::CollectNutrientsFromSite(int i, int j)
 	int ii, jj, nrow, ncol, cell_density=0, organelle_density=0;
 	double nutrient_share;
 
-	//First obtain organelle density in 3x3 neighbourhood.
+	//First obtain organelle and cell density in 3x3 neighbourhood.
 	for (ii=i-1; ii<=i+1; ii++) for (jj=j-1; jj<=j+1; jj++)
 	{
 		if (nutrient_competition == 1 && (ii == i && jj == j))	continue;		//Only skipped in classic nutrient function.
@@ -496,8 +498,9 @@ void Population::CollectNutrientsFromSite(int i, int j)
 	{
 		if (organelle_density == 0)					nutrient_share = nutrient_abundance;
 		else if (nutrient_competition == 2)	nutrient_share = nutrient_abundance / (double)organelle_density;	//Used in first smooth nutrient function.
-		else																nutrient_share = nutrient_abundance / (double)cell_density;	//Used in second smooth nutrient function.
+		else																nutrient_share = nutrient_abundance / (double)cell_density;	//Used in second smooth nutrient function and in third nutshare_evolve protocol.
 
+		//Here we actually add the nutrient share to each site.
 		for (ii=i-1; ii<=i+1; ii++) for (jj=j-1; jj<=j+1; jj++)
 		{
 			if (ii < 0)					nrow = ii + NR;
@@ -507,7 +510,7 @@ void Population::CollectNutrientsFromSite(int i, int j)
 			else if (jj >= NC)	ncol = jj - NC;
 			else								ncol = jj;
 
-			if (nutrient_competition == 2)		NutrientSpace[nrow][ncol] += nutrient_share;	//Used in first nutrient function.
+			if (nutrient_competition == 2 || nutrient_competition == 4)		NutrientSpace[nrow][ncol] += nutrient_share;	//Used in first smooth nutrient function. But also when we evolve nutrient_sharing, the whole site gets the unshared total nutrients. These will be further depleted upon replication.
 			else	//Used in second nutrient function.
 			{
 				if (Space[nrow][ncol] == NULL)	NutrientSpace[nrow][ncol] += nutrient_share;
@@ -516,6 +519,21 @@ void Population::CollectNutrientsFromSite(int i, int j)
 		}
 	}
 }
+
+Population::nuts Population::HandleNutrientClaims(int i, int j)
+{
+	//In principle, only necessary when we do nutrient competition between host and symbiont (nutrient competition 4).
+	double nutH, nutS;
+	nutH = NutrientSpace[i][j];
+	nutS = NutrientSpace[i][j];
+	if (nutrient_competition == 4)
+	{
+		nutH *= Space[i][j]->Host->nutrient_claim;
+		nutS *= (1-Space[i][j]->Host->nutrient_claim)/Space[i][j]->nr_symbionts;
+	}
+	return std::make_pair(nutH, nutS);
+}
+
 
 /* ######################################################################## */
 /*			INITIALISATION	INITIALISATION	INITIALISATION	INITIALISATION			*/
@@ -640,7 +658,7 @@ void Population::ReadBackupFile()
 	int r, c, s, begin_data, end_data, success, stage, pfork, pterm, nr, nc, count_lines = 0, nn = 0, idx_primary, idx_secondary, init_seed;
 	unsigned long long org_id, anc_id, sdraws, illu;
 	char temp_is_mutant[20], temp_priv[20];
-	double fit;
+	double fit, nutcl;
 	size_t pos;
 	Organelle* O, * OF, * SaveO;
 	Cell* C;
@@ -766,8 +784,8 @@ void Population::ReadBackupFile()
 				data_element = strtok((char*)data.c_str(),"\t");
 				while(data_element != NULL)
 				{
-					success = sscanf(data_element, "%llu %llu %s %lf %d %s %d %d", &org_id, &anc_id, temp_is_mutant, &fit, &stage, temp_priv, &pfork, &pterm);
-					if(success != 8)
+					success = sscanf(data_element, "%llu %llu %s %lf %lf %d %s %d %d", &org_id, &anc_id, temp_is_mutant, &fit, &nutcl, &stage, temp_priv, &pfork, &pterm);
+					if(success != 9)
 					{
 						cerr << "Could not find sufficient information for this prokaryote. Backup file potentially corrupt.\n" << endl;
 						exit(1);
@@ -776,6 +794,7 @@ void Population::ReadBackupFile()
 					data_element = strtok(NULL, "\t");
 					O->Stage = stage;
 					O->fitness = fit;
+					O->nutrient_claim = nutcl;
 					O->G->fork_position = pfork;
 					O->G->terminus_position = pterm;
 					O->fossil_id = org_id;
@@ -855,6 +874,7 @@ void Population::ReadAncestorFile()
 	string line, data;
 	int begin_data, end_data, TimeOA, count_alive = 0, count_fossils = 0, count_lines = 0;
 	unsigned long long ID, AncID;
+	double NutCL;
 	i_fos iF;
 	Organelle* O;
 
@@ -883,6 +903,11 @@ void Population::ReadAncestorFile()
 		stringstream(data) >> TimeOA;
 
 		begin_data = end_data;
+		end_data = line.find("\t",end_data+1);
+		data = line.substr(begin_data, end_data-begin_data);
+		stringstream(data) >> NutCL;
+
+		begin_data = end_data;
 		end_data = line.size();
 		data = line.substr(begin_data+1, end_data-begin_data);
 
@@ -903,7 +928,7 @@ void Population::ReadAncestorFile()
 				O->G->ReadGenome(data);
 				O->G->terminus_position = O->G->g_length;	//Relevant for printing.
 			}
-			O->time_of_appearance = TimeOA;
+			O->time_of_appearance = TimeOA;	//Only this was not in the backup.
 
 			if (AncID == 0)	O->Ancestor = NULL;
 			else
@@ -923,6 +948,7 @@ void Population::ReadAncestorFile()
 			O->fossil_id = ID;
 			O->mutant = true;
 			O->time_of_appearance = TimeOA;
+			O->nutrient_claim = NutCL;
 			if(AncID == 0)	O->Ancestor = NULL;
 			else
 			{
@@ -1105,6 +1131,7 @@ void Population::OutputGrid(bool backup)
 	FILE* f;
 	char OutputFile[800];
 	int i, j, s;
+	double nutH, nutS;
 
 	if (backup)
 	{
@@ -1134,10 +1161,13 @@ void Population::OutputGrid(bool backup)
 		}
 		else	//Print internal state and genome of prokaryote to file.
 		{
-			fprintf(f, "%d %d -1 %f %d\t%s\n", i, j, NutrientSpace[i][j], Space[i][j]->barcode, Space[i][j]->Host->Output(backup).c_str());
+
+			nuts nutrients = HandleNutrientClaims(i, j);
+
+			fprintf(f, "%d %d -1 %f %d\t%s\n", i, j, nutrients.first, Space[i][j]->barcode, Space[i][j]->Host->Output(backup).c_str());
 			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
-				fprintf(f, "%d %d %d %f %d\t%s\n", i, j, s, NutrientSpace[i][j], Space[i][j]->barcode, Space[i][j]->Symbionts->at(s)->Output(backup).c_str());
+				fprintf(f, "%d %d %d %f %d\t%s\n", i, j, s, nutrients.second, Space[i][j]->barcode, Space[i][j]->Symbionts->at(s)->Output(backup).c_str());
 			}
 		}
 	}
@@ -1155,10 +1185,12 @@ void Population::OutputLineage(int i, int j)
 	f=fopen(OutputFile, "a");
 	if (f == NULL)	printf("Failed to open file for writing the backup.\n");
 
-	fprintf(f, "%d %d %d -1 %f\t%s\n", Time, i, j, NutrientSpace[i][j], Space[i][j]->Host->Output(true).c_str());
+	nuts nutrients = HandleNutrientClaims(i, j);
+
+	fprintf(f, "%d %d %d -1 %f\t%s\n", Time, i, j, nutrients.first, Space[i][j]->Host->Output(true).c_str());
 	for (s=0; s<Space[i][j]->nr_symbionts; s++)
 	{
-		fprintf(f, "%d %d %d %d %f\t%s\n", Time, i, j, s, NutrientSpace[i][j], Space[i][j]->Symbionts->at(s)->Output(true).c_str());
+		fprintf(f, "%d %d %d %d %f\t%s\n", Time, i, j, s, nutrients.second, Space[i][j]->Symbionts->at(s)->Output(true).c_str());
 	}
 
 	fclose(f);

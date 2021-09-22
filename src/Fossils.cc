@@ -67,11 +67,11 @@ void Fossils::ExhibitFossils()
 	{
 		if ((*iF)->Ancestor == NULL)
 		{
-			fprintf(f, "%llu\t%d\t%d\t%s\n", (*iF)->fossil_id, 0, (*iF)->time_of_appearance, (*iF)->G->Show(NULL, false, true).c_str());
+			fprintf(f, "%llu\t%d\t%d\t%f\t%s\n", (*iF)->fossil_id, 0, (*iF)->time_of_appearance, (*iF)->nutrient_claim, (*iF)->G->Show(NULL, false, true).c_str());
 		}
 		else
 		{
-			fprintf(f, "%llu\t%llu\t%d\t%s\n", (*iF)->fossil_id, ((*iF)->Ancestor)->fossil_id, (*iF)->time_of_appearance, (*iF)->G->Show(NULL, false, true).c_str());
+			fprintf(f, "%llu\t%llu\t%d\t%f\t%s\n", (*iF)->fossil_id, ((*iF)->Ancestor)->fossil_id, (*iF)->time_of_appearance, (*iF)->nutrient_claim, (*iF)->G->Show(NULL, false, true).c_str());
 		}
 		iF++;
 	}

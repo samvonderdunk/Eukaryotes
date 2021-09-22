@@ -5,6 +5,7 @@ Organelle::Organelle()
 	Stage=0;
 	privilige=false;
 	fitness=1.;
+	nutrient_claim=1.;
 	G = NULL;
 	G = new Genome();
 	ExpressedGenes = NULL;
@@ -113,6 +114,12 @@ void Organelle::Mitosis(Organelle* parent, unsigned long long id_count)
 	fossil_id = id_count;
 	alive = true;
 
+	nutrient_claim = parent->nutrient_claim;
+	if (nutshare_evolve && uniform() < nutrient_claim_mu)
+	{
+		nutrient_claim += nutrient_claim_mu_delta*(uniform()-0.5);
+	}
+
 	if (G->is_mutated)	mutant = true;
 
 	if (parent->mutant || trace_lineage || log_lineage)		Ancestor = parent;
@@ -143,6 +150,10 @@ void Organelle::InitialiseOrganelle(string genome, string expression)
 
 	G->ReadGenome(genome);
 	G->ReadExpression(expression);
+
+	fitness = 1. - abs(nr_household_genes - G->gnr_houses) / (float)10;
+	nutrient_claim = init_nutrient_claim;
+
 	cout << G->Show(NULL, true, false) << endl;	//This should just do the Show() function.
 }
 
@@ -152,6 +163,7 @@ void Organelle::CloneOrganelle(Organelle* ImageO, unsigned long long id_count)
 	Stage = ImageO->Stage;
 	privilige = ImageO->privilige;
 	fitness = ImageO->fitness;
+	nutrient_claim = ImageO->nutrient_claim;
 	mutant = ImageO->mutant;
 	alive = ImageO->alive;
 	time_of_appearance = ImageO->time_of_appearance;
@@ -176,11 +188,11 @@ string Organelle::Show(bool backup)
 		is_mutant = (mutant)?"Y":"N";
 		has_privilige = (privilige)?"Y":"N";
 
-		ss << "[" << fossil_id << " " << AncestorID << " " << is_mutant << " " << fitness << " " << Stage << " " << has_privilige << " " << G->fork_position << " " << G->terminus_position << "]";
+		ss << "[" << fossil_id << " " << AncestorID << " " << is_mutant << " " << fitness << " " << nutrient_claim << " " << Stage << " " << has_privilige << " " << G->fork_position << " " << G->terminus_position << "]";
 	}
 	else
 	{
-		ss << Stage << "\t" << G->g_length << "\t" << G->terminus_position << "\t" << G->gnr_regulators << "\t" << G->gnr_bsites << "\t" << G->gnr_houses;
+		ss << Stage << "\t" << G->g_length << "\t" << G->terminus_position << "\t" << G->gnr_regulators << "\t" << G->gnr_bsites << "\t" << G->gnr_houses << "\t" << nutrient_claim;
 	}
 
 	Content += ss.str();

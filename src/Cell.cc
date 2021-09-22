@@ -241,7 +241,6 @@ void Cell::InitialiseCell(int input_nr)
 
 	while ( !in_genome.eof() & !in_expression.eof() )
 	{
-		// if (i>0)	cout << "InitCell " << i << " " << genome << " " << expression << endl;
 		//We start reading below, because when we reach the end of the file, there will still be one round through the while-loop.
 		if (i==1)
 		{
