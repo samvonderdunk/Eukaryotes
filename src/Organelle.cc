@@ -180,19 +180,19 @@ string Organelle::Show(bool backup)
 	string is_mutant, has_privilige;
 	std::stringstream ss;
 
+	has_privilige = (privilige)?"Y":"N";
 	if (backup)
 	{
 		if (Ancestor==NULL)	AncestorID = 0;
 		else	AncestorID = Ancestor->fossil_id;
 
 		is_mutant = (mutant)?"Y":"N";
-		has_privilige = (privilige)?"Y":"N";
 
 		ss << "[" << fossil_id << " " << AncestorID << " " << is_mutant << " " << fitness << " " << nutrient_claim << " " << Stage << " " << has_privilige << " " << G->fork_position << " " << G->terminus_position << "]";
 	}
 	else
 	{
-		ss << Stage << "\t" << G->g_length << "\t" << G->terminus_position << "\t" << G->gnr_regulators << "\t" << G->gnr_bsites << "\t" << G->gnr_houses << "\t" << nutrient_claim;
+		ss << fossil_id << "\t" << fitness << "\t" << nutrient_claim << "\t" << Stage << "\t" << has_privilige << "\t" << G->terminus_position << "\t" << G->g_length;
 	}
 
 	Content += ss.str();
