@@ -445,7 +445,7 @@ void Genome::DetermineRegType(i_bead it)
 
 	for (i=1; i<=5; i++)
 	{
-		if (BindingAffinity(reg->typeseq, regtype[i-1], typeseq_length) <= 2)
+		if (BindingAffinity(reg->typeseq, regtype[i-1], typeseq_length) <= typeseq_length - 2)
 		{
 			reg->type = i;
 			type_change = true;
