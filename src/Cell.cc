@@ -77,7 +77,8 @@ void Cell::RegulatorTransport()
 			{
 				it2 = it;
 				it--;
-				Host->ExpressedGenes->splice(Host->ExpressedGenes->begin(), *Symbionts->at(s)->ExpressedGenes, it2);
+				Host->ExpressedGenes->splice(Host->ExpressedGenes->end(), *Symbionts->at(s)->ExpressedGenes, it2);
+				Symbionts->at(s)->nr_native_expressed--;
 			}
 			else if (uniform() < leakage_to_host)
 			{
@@ -98,7 +99,8 @@ void Cell::RegulatorTransport()
 				{
 					it2 = it;
 					it--;
-					Symbionts->at(s)->ExpressedGenes->splice(Symbionts->at(s)->ExpressedGenes->begin(), *Host->ExpressedGenes, it2);
+					Symbionts->at(s)->ExpressedGenes->splice(Symbionts->at(s)->ExpressedGenes->end(), *Host->ExpressedGenes, it2);
+					Host->nr_native_expressed--;	//I think this will be fine (although it defines the while-loop), because the iterator takes a step back.
 				}
 				else
 				{
