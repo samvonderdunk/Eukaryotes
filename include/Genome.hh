@@ -29,6 +29,7 @@ class Genome {
 	void SplitGenome(Genome* parentG);
 	void AbortChildGenome();
 	void DevelopChildrenGenomes(Genome* parentG);
+	void DetermineRegType(i_bead it);
 	void PotentialTypeChange(i_bead ii);
 	int CountTypeAbundance(int type);
 
@@ -38,7 +39,6 @@ class Genome {
 	i_bead MutateHouse(i_bead it, int* pdel_length);
 
 	int ChangeParameter(int value);
-	int ChangeType();
 
 	i_bead DeleteGene(i_bead it, int* pdel_length);
 	i_bead DeleteBead(i_bead it);
@@ -63,10 +63,10 @@ class Genome {
 
 	void ReadGenome(string genome);
 	void ReadExpression(string expression);
-	void ReadBuffer(string buffer, bool* array, char start_sign, char stop_sign);
+	void ReadBuffer(string buffer, bool* array, char start_sign, char stop_sign, int ith_start_sign = 1, int ith_stop_sign = 1);
 
 	int WhatBead(Bead* bead) const;
-	int BindingAffinity(bool* sequenceA, bool* sequenceB) const;
+	int BindingAffinity(const bool* sequenceA, const bool* sequenceB, int seqlen = sequence_length) const;
 
 	string Show(list<Bead*>* chromosome, bool terminal, bool only_parent);
 	string ShowExpression(list<Bead*>* chromosome, bool only_parent);
@@ -87,10 +87,10 @@ inline int Genome::WhatBead(Bead* bead) const
 	}
 }
 
-inline int Genome::BindingAffinity(bool* sequenceA, bool* sequenceB) const
+inline int Genome::BindingAffinity(const bool* sequenceA, const bool* sequenceB, int seqlen) const
 {
 	int affinity = 0;
-	for (int i=0; i<sequence_length; i++)
+	for (int i=0; i<seqlen; i++)
 	{
 		affinity += (int)(sequenceA[i]^sequenceB[i]);
 	}

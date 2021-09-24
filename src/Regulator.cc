@@ -8,13 +8,14 @@ Regulator::Regulator() : Bead()
   type = 0;
   threshold = 0;
   activity = 0;
+	for(i=0; i<typeseq_length; i++)	typeseq[i] = false;
 	for(i=0; i<signalp_length; i++)	signalp[i] = false;
   for(i=0; i<sequence_length; i++) sequence[i] = false;
   expression = 0;
 	express = 0;
 }
 
-Regulator::Regulator(int typ, int thr, int act, bool sig[], bool seq[], int exp) : Bead()
+Regulator::Regulator(int typ, int thr, int act, bool tsq[], bool sig[], bool seq[], int exp) : Bead()
 {
 	int i;
 
@@ -22,6 +23,7 @@ Regulator::Regulator(int typ, int thr, int act, bool sig[], bool seq[], int exp)
 	type = typ;
 	threshold = thr;
 	activity = act;
+	for(i=0; i<typeseq_length; i++)	typeseq[i] = tsq[i];
 	for(i=0; i<signalp_length; i++)	signalp[i] = sig[i];
 	for(i=0; i<sequence_length; i++) sequence[i] = seq[i];
   expression = exp;
@@ -37,6 +39,7 @@ Regulator::Regulator(const Regulator &reg) : Bead(reg)
   type = reg.type;
   threshold = reg.threshold;
   activity = reg.activity;
+	for(i=0; i<typeseq_length; i++)	typeseq[i] = reg.typeseq[i];
 	for(i=0; i<signalp_length; i++) signalp[i] = reg.signalp[i];
   for(i=0; i<sequence_length; i++) sequence[i] = reg.sequence[i];
   expression = reg.expression;
@@ -57,12 +60,12 @@ void Regulator::RandomRegulator()
 	int i;
 
 	duplicate = false;
-	if(independent_regtypes)	type = 1+(int)(uniform()*nr_types);	//Useful if we do independent_regtypes; otherwise will be redefined after InventRegulator anyway.
-	else	type = 0;
+	type = 0;
   threshold = (int)(uniform()*(2*WeightRange+1) - WeightRange);	//Value between -WeightRange and +WeightRange (incl. borders).
   activity = (int)(uniform()*(2*WeightRange+1) - WeightRange);
-  for (i=0; i<sequence_length; i++)	sequence[i] = (uniform()>0.5) ? true : false;
+	for (i=0; i<typeseq_length; i++)	typeseq[i] = (uniform()>0.5) ? true : false;
 	for (i=0; i<signalp_length; i++)	signalp[i] = (uniform()>0.5) ? true : false;
+  for (i=0; i<sequence_length; i++)	sequence[i] = (uniform()>0.5) ? true : false;
   expression = 0;
 	express = 0;
 }

@@ -1131,7 +1131,6 @@ void Population::OutputGrid(bool backup)
 	FILE* f;
 	char OutputFile[800];
 	int i, j, s;
-	double nutH, nutS;
 
 	if (backup)
 	{

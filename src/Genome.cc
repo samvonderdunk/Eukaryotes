@@ -394,7 +394,8 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 		if(uniform() < regulator_innovation_mu)
 		{
 			it = InventRegulator();
-			if (!independent_regtypes)	PotentialTypeChange(it);
+			if (independent_regtypes)		DetermineRegType(it);
+			else												PotentialTypeChange(it);
 			(*pdup_length)++;
 		}
 		if(uniform() < bsite_innovation_mu)
@@ -430,6 +431,32 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 
 	terminus_position = g_length;
 
+}
+
+
+
+void Genome::DetermineRegType(i_bead it)
+{
+	int i;
+	bool type_change = false;
+	Regulator* reg;
+
+	reg = dynamic_cast<Regulator*>(*it);
+
+	for (i=1; i<=5; i++)
+	{
+		if (BindingAffinity(reg->typeseq, regtype[i-1], typeseq_length) <= 2)
+		{
+			reg->type = i;
+			type_change = true;
+			break;
+		}
+	}
+
+	if (reg->type == 0 || ((reg->type >= 1 && reg->type <= 5) && !type_change))
+	{
+		reg->type = 6+(int)(uniform()*45);	//Type invention gets random type. Also for divergence from type 1-5, a new random type will be defined. In all other cases (type 1-5 to type 1-5, or type >6 to type >6), you don't have to do anything.
+	}
 }
 
 
@@ -530,12 +557,6 @@ Genome::i_bead Genome::MutateRegulator(i_bead it, int* pdel_length)
 
 	else
 	{
-		if (independent_regtypes && uniform() < regulator_type_mu)
-		{
-			reg->type = ChangeType();
-			is_mutated = true;
-		}
-
 		if (uniform() < regulator_threshold_mu)	//Parameters mutate independently.
 		{
 			reg->threshold = ChangeParameter(reg->threshold);
@@ -549,12 +570,26 @@ Genome::i_bead Genome::MutateRegulator(i_bead it, int* pdel_length)
 			is_mutated = true;
 		}
 
+		if (independent_regtypes)
+		{
+			for(i=0; i<typeseq_length; i++)
+			{
+				if (uniform() < regulator_typeseq_mu)
+				{
+					if (reg->typeseq[i] == false)			reg->typeseq[i] = true;
+					else if(reg->typeseq[i] == true)	reg->typeseq[i] = false;
+					DetermineRegType(it);
+					is_mutated = true;
+				}
+			}
+		}
+
 		for(i=0; i<sequence_length; i++)
 		{
 			if(uniform() < regulator_sequence_mu)
 			{
-				if (reg->sequence[i] == false) reg->sequence[i] = true;
-				else if (reg->sequence[i] == true) reg->sequence[i] = false;
+				if (reg->sequence[i] == false)			reg->sequence[i] = true;
+				else if (reg->sequence[i] == true)	reg->sequence[i] = false;
 				potential_type_change = true;
 				is_mutated = true;
 			}
@@ -650,14 +685,6 @@ int Genome::ChangeParameter(int value)
 		}
 	}
 
-	return new_value;
-}
-
-int Genome::ChangeType()
-{
-	int new_value;
-
-	new_value = 1+(int)(uniform()*nr_types);
 	return new_value;
 }
 
@@ -946,7 +973,7 @@ void Genome::ReadGenome(string genome)
 
 	char* bead, *buffer;
 	int success, type, threshold, activity;
-	bool signalp[signalp_length], sequence[sequence_length];
+	bool typeseq[typeseq_length], signalp[signalp_length], sequence[sequence_length];
 	Regulator* reg;
 	House* house;
 	Bsite* bsite;
@@ -956,14 +983,15 @@ void Genome::ReadGenome(string genome)
 	{
 		if(bead[1] == 'R')
 		{
-			buffer = new char[signalp_length+sequence_length+2];
+			buffer = new char[typeseq_length+signalp_length+sequence_length+2];
 			success = sscanf(bead, "(R%d:%d:%d:%s)", &type, &threshold, &activity, buffer);
 			if(success != 4) cerr << "Could not find sufficient information for this regulatory gene. Genome file potentially corrupt. \n" << endl;
 
-			ReadBuffer(buffer, signalp, 'X', ':');
-			ReadBuffer(buffer, sequence, ':', ')');
+			ReadBuffer(buffer, typeseq, 'X', ':');
+			ReadBuffer(buffer, signalp, ':', ':', 1, 2);
+			ReadBuffer(buffer, sequence, ':', ')', 2);
 
-			reg = new Regulator(type, threshold, activity, signalp, sequence, 0);
+			reg = new Regulator(type, threshold, activity, typeseq, signalp, sequence, 0);
 			(*BeadList).push_back(reg);
 			gnr_regulators++;
 			g_length++;
@@ -1000,17 +1028,25 @@ void Genome::ReadGenome(string genome)
 	terminus_position = g_length;
 }
 
-void Genome::ReadBuffer(string buffer, bool* array, char start_sign, char stop_sign)
+void Genome::ReadBuffer(string buffer, bool* array, char start_sign, char stop_sign, int ith_start_sign, int ith_stop_sign)
 {
 	int q = 0;
 	int start_reading = -1;
+	int nstart = 0, nstop = 0;
 
 	if (start_sign == 'X')					start_reading = 0;
-	while(buffer[q] != stop_sign)
+	while(nstop < ith_stop_sign)
 	{
 		if (start_reading != -1)			array[q-start_reading] = (buffer[q]=='1');
-		if (buffer[q] == start_sign)	start_reading = q+1;
+		if (buffer[q] == start_sign)
+		{
+			nstart++;
+			if (nstart == ith_start_sign){
+				start_reading = q+1;
+			}
+		}
 		q++;
+		if (buffer[q] == stop_sign)		nstop++;
 	}
 }
 
@@ -1090,6 +1126,8 @@ string Genome::Show(list<Bead*>* chromosome, bool terminal, bool only_parent)
 				// if (reg->expression > 0)	prefix = expressed_prefix;
 				// else									prefix = reg_color_prefix;
 				ss << reg_color_prefix << "R" << reg->type << ":" << reg->threshold << ":" << reg->activity << ":";
+				for(i=0; i<typeseq_length; i++)	ss << reg->typeseq[i];
+				ss << ":";
 				for(i=0; i<signalp_length; i++)	ss << reg->signalp[i];
 				ss << ":";
 				for(i=0; i<sequence_length; i++)	ss << reg->sequence[i];
