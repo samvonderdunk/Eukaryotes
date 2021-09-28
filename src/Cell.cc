@@ -253,6 +253,7 @@ void Cell::InitialiseCell(int input_nr)
 		{
 			Symbiont = new Organelle();
 			Symbiont->InitialiseOrganelle(genome, expression);
+			Symbiont->G->is_symbiont = true;
 			Symbionts->push_back(Symbiont);
 			nr_symbionts++;
 		}

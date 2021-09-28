@@ -103,6 +103,7 @@ int Organelle::EvaluateState(int eval_state, int* readout)
 
 void Organelle::Mitosis(Organelle* parent, unsigned long long id_count)
 {
+	G->is_symbiont = parent->G->is_symbiont;
 	G->SplitGenome(parent->G);
 
 	parent->Stage = 0;

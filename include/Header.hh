@@ -61,9 +61,9 @@ const bool host_growth = 0;
 // 0, as in Prokaryotes: hosts overgrow one another, dividing as soon as they reach M.
 // 1, hosts wait for empty sites, but waiting is free (expression unimportant once they reach M).
 // 2, hosts wait for empty sites, but need to actively maintain M expression (i.e. making the whole cell-cycle more complex again). This option may be implemented later...
-const bool perfect_transport = false;	//Genes with a 0 in their signalp, are always moved to the host; genes with a 1 in their signalp always get targetted to the symbionts. Moving here means that they do not stick around in the compartment where they are created.
-const bool independent_regtypes = false;	//Independent mutation of gene types, a break in the evolutionary dynamics with respect to Prokaryotes. In E. viridis I, we do perfect_transport w/o independent_regtypes; in E. viridis II, we do both.
-const bool nutshare_evolve = true;	//Host can evolve how much nutrients it claims from the environment, passing on the remaining fraction to its symbionts (equally divided among these). Each host has an identical claim on environmental nutrients, i.e. independent of how many symbionts it has. This corresponds to nutrient competition 4.
+const bool perfect_transport = true;	//Genes with a 0 in their signalp, are always moved to the host; genes with a 1 in their signalp always get targetted to the symbionts. Moving here means that they do not stick around in the compartment where they are created.
+const bool independent_regtypes = true;	//Independent mutation of gene types, a break in the evolutionary dynamics with respect to Prokaryotes. In E. viridis I, we do perfect_transport w/o independent_regtypes; in E. viridis II, we do both.
+const bool nutshare_evolve = false;	//Host can evolve how much nutrients it claims from the environment, passing on the remaining fraction to its symbionts (equally divided among these). Each host has an identical claim on environmental nutrients, i.e. independent of how many symbionts it has. This corresponds to nutrient competition 4.
 
 //Genome parameters
 const int nr_household_genes =			50;
@@ -118,6 +118,8 @@ const double nutrient_claim_mu_delta =		0.05;
 
 const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
 
+const double symbiont_mu_factor =					3.;	//Symbiont mutation rates multiplied by this factor (except the rates that are already specified for symbiont and host separately, like transfer mutations).
+
 const double regulator_threshold_mu = 		0.0005;
 const double regulator_activity_mu = 			0.0005;
 const double regulator_sequence_mu = 			0.0001;
@@ -141,12 +143,12 @@ const double house_innovation_mu = 				0.0;
 const double house_shuffle_mu = 					0.001;
 
 //Transfer mutations.
-const double regulator_transfer_mu_HtoS = 0.0000;
-const double regulator_transfer_mu_StoH = 0.0000;
-const double bsite_transfer_mu_HtoS = 		0.0000;
-const double bsite_transfer_mu_StoH = 		0.0000;
-const double house_transfer_mu_HtoS = 		0.0000;
-const double house_transfer_mu_StoH = 		0.0000;
+const double regulator_transfer_mu_HtoS = 0.00001;
+const double regulator_transfer_mu_StoH = 0.00001;
+const double bsite_transfer_mu_HtoS = 		0.00001;
+const double bsite_transfer_mu_StoH = 		0.00001;
+const double house_transfer_mu_HtoS = 		0.00001;
+const double house_transfer_mu_StoH = 		0.00001;
 
 //Type mutations only active when perfect_transport == true.
 const double regulator_typeseq_mu =				0.00001;

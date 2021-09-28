@@ -16,6 +16,7 @@ class Genome {
   int g_length, gnr_regulators, gnr_bsites, gnr_houses;
   int fork_position, terminus_position;	//position of the replication fork and the terminus, where it stops.
   bool is_mutated;
+	bool is_symbiont;
 
   Genome();
   ~Genome();

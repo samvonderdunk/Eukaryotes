@@ -11,6 +11,7 @@ Genome::Genome()
 	fork_position=0;
 	terminus_position=0;
 	is_mutated=false;
+	is_symbiont=false;
 }
 
 Genome::~Genome()
@@ -282,6 +283,9 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 	vector<bool>* MutationList;
 	int wb, del_length, dup_length, index, g_length_before_mut;
 	int* pdup_length, * pdel_length;
+	double muf;
+
+	muf = (is_symbiont?symbiont_mu_factor:1.);	//Symbionts can get higher mutation rates.
 
 	g_length = BeadList->size();
 	g_length_before_mut = g_length;
@@ -391,19 +395,19 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 
 		//Innovations.
 		//Note that g_length is updated in DuplicateGene() and DeleteGene() so that any position along the genome is allowed for the novel bead. Here all counters are also updated within the functions.
-		if(uniform() < regulator_innovation_mu)
+		if(uniform() < regulator_innovation_mu*muf)
 		{
 			it = InventRegulator();
 			if (independent_regtypes)		DetermineRegType(it);
 			else												PotentialTypeChange(it);
 			(*pdup_length)++;
 		}
-		if(uniform() < bsite_innovation_mu)
+		if(uniform() < bsite_innovation_mu*muf)
 		{
 			InventBsite();
 			(*pdup_length)++;
 		}
-		if(uniform() < house_innovation_mu)
+		if(uniform() < house_innovation_mu*muf)
 		{
 			InventHouse();
 			(*pdup_length)++;
@@ -414,9 +418,9 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 		while(it != BeadList->end())
 		{
 			wb = WhatBead(*it);
-			if(wb==REGULATOR && uniform() < regulator_shuffle_mu)	it=ShuffleGene(it);
-			else if(wb==BSITE && uniform() < bsite_shuffle_mu)	it=ShuffleBead(it);
-			else if(wb==HOUSE && uniform() < house_shuffle_mu) it=ShuffleBead(it);
+			if(wb==REGULATOR && uniform() < regulator_shuffle_mu*muf)	it=ShuffleGene(it);
+			else if(wb==BSITE && uniform() < bsite_shuffle_mu*muf)		it=ShuffleBead(it);
+			else if(wb==HOUSE && uniform() < house_shuffle_mu*muf)		it=ShuffleBead(it);
 			else	it++;
 		}
 
@@ -539,16 +543,17 @@ Genome::i_bead Genome::MutateRegulator(i_bead it, int* pdel_length)
 	reg = dynamic_cast<Regulator*>(*it);
 	bool potential_type_change = false;
 	int i;
+	double muf = (is_symbiont?symbiont_mu_factor:1.);
 
 	double uu = uniform();
-	if(uu < regulator_duplication_mu)
+	if(uu < regulator_duplication_mu*muf)
 	{
 		(*it)->duplicate = true;	//Mark for duplication during divison.
 		is_mutated = true;
 		it++;
 	}
 
-	else if(uu < regulator_deletion_mu+regulator_duplication_mu)
+	else if(uu < (regulator_deletion_mu+regulator_duplication_mu)*muf)
 	{
 		it = DeleteGene(it, pdel_length);
 		gnr_regulators--;
@@ -557,13 +562,13 @@ Genome::i_bead Genome::MutateRegulator(i_bead it, int* pdel_length)
 
 	else
 	{
-		if (uniform() < regulator_threshold_mu)	//Parameters mutate independently.
+		if (uniform() < regulator_threshold_mu*muf)	//Parameters mutate independently.
 		{
 			reg->threshold = ChangeParameter(reg->threshold);
 			is_mutated = true;
 		}
 
-		if (uniform() < regulator_activity_mu)
+		if (uniform() < regulator_activity_mu*muf)
 		{
 			reg->activity = ChangeParameter(reg->activity);
 			potential_type_change = true;
@@ -574,7 +579,7 @@ Genome::i_bead Genome::MutateRegulator(i_bead it, int* pdel_length)
 		{
 			for(i=0; i<typeseq_length; i++)
 			{
-				if (uniform() < regulator_typeseq_mu)
+				if (uniform() < regulator_typeseq_mu*muf)
 				{
 					if (reg->typeseq[i] == false)			reg->typeseq[i] = true;
 					else if(reg->typeseq[i] == true)	reg->typeseq[i] = false;
@@ -586,7 +591,7 @@ Genome::i_bead Genome::MutateRegulator(i_bead it, int* pdel_length)
 
 		for(i=0; i<sequence_length; i++)
 		{
-			if(uniform() < regulator_sequence_mu)
+			if(uniform() < regulator_sequence_mu*muf)
 			{
 				if (reg->sequence[i] == false)			reg->sequence[i] = true;
 				else if (reg->sequence[i] == true)	reg->sequence[i] = false;
@@ -609,16 +614,17 @@ Genome::i_bead Genome::MutateBsite(i_bead it, int* pdel_length)
 	Bsite* bsite;
 	bsite = dynamic_cast<Bsite*>(*it);
 	int i;
+	double muf = (is_symbiont?symbiont_mu_factor:1.);
 
 	double uu = uniform();
-	if(uu < bsite_duplication_mu)
+	if(uu < bsite_duplication_mu*muf)
 	{
 		(*it)->duplicate = true;
 		is_mutated = true;
 		it++;
 	}
 
-	else if(uu < bsite_duplication_mu+bsite_deletion_mu)
+	else if(uu < (bsite_duplication_mu+bsite_deletion_mu)*muf)
 	{
 		it = DeleteBead(it);
 		gnr_bsites--;
@@ -630,14 +636,14 @@ Genome::i_bead Genome::MutateBsite(i_bead it, int* pdel_length)
 	{
 		for (i=0; i<sequence_length; i++)
 		{
-			if(uniform() < bsite_sequence_mu)
+			if(uniform() < bsite_sequence_mu*muf)
 			{
 				if (bsite->sequence[i] == false) bsite->sequence[i] = true;
 				else if (bsite->sequence[i] == true) bsite->sequence[i] = false;
 				is_mutated = true;
 			}
 		}
-		if(uniform() < bsite_activity_mu)
+		if(uniform() < bsite_activity_mu*muf)
 		{
 			bsite->activity = ChangeParameter(bsite->activity);
 			is_mutated = true;
@@ -650,14 +656,15 @@ Genome::i_bead Genome::MutateBsite(i_bead it, int* pdel_length)
 Genome::i_bead Genome::MutateHouse(i_bead it, int* pdel_length)
 {
 	double uu = uniform();
+	double muf = (is_symbiont?symbiont_mu_factor:1.);
 
-	if(uu < house_duplication_mu)
+	if(uu < house_duplication_mu*muf)
 	{
 		(*it)->duplicate = true;
 		is_mutated = true;
 		it++;
 	}
-	else if(uu < house_duplication_mu+house_deletion_mu)
+	else if(uu < (house_duplication_mu+house_deletion_mu)*muf)
 	{
 		it = DeleteBead(it);
 		gnr_houses--;
@@ -950,6 +957,7 @@ void Genome::CloneGenome(const Genome* ImageG)
 	fork_position = ImageG->fork_position;
 	terminus_position = ImageG->terminus_position;
 	is_mutated = ImageG->is_mutated;
+	is_symbiont = ImageG->is_symbiont;
 }
 
 
