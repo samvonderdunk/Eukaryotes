@@ -531,6 +531,12 @@ Population::nuts Population::HandleNutrientClaims(int i, int j)
 		nutH *= Space[i][j]->Host->nutrient_claim;
 		nutS *= (1-Space[i][j]->Host->nutrient_claim)/Space[i][j]->nr_symbionts;
 	}
+	else if (nutrient_competition == 5)
+	{
+		nutH *= max(0., 1 - Space[i][j]->nr_symbionts*Space[i][j]->Host->nutrient_claim);
+		nutS *= min(1., Space[i][j]->nr_symbionts*Space[i][j]->Host->nutrient_claim) / Space[i][j]->nr_symbionts;
+	}
+
 	return std::make_pair(nutH, nutS);
 }
 

@@ -61,9 +61,9 @@ const bool host_growth = 0;
 // 0, as in Prokaryotes: hosts overgrow one another, dividing as soon as they reach M.
 // 1, hosts wait for empty sites, but waiting is free (expression unimportant once they reach M).
 // 2, hosts wait for empty sites, but need to actively maintain M expression (i.e. making the whole cell-cycle more complex again). This option may be implemented later...
-const bool perfect_transport = true;	//Genes with a 0 in their signalp, are always moved to the host; genes with a 1 in their signalp always get targetted to the symbionts. Moving here means that they do not stick around in the compartment where they are created.
+const bool perfect_transport = false;	//Genes with a 0 in their signalp, are always moved to the host; genes with a 1 in their signalp always get targetted to the symbionts. Moving here means that they do not stick around in the compartment where they are created.
 const bool independent_regtypes = false;	//Independent mutation of gene types, a break in the evolutionary dynamics with respect to Prokaryotes. In E. viridis I, we do perfect_transport w/o independent_regtypes; in E. viridis II, we do both.
-const bool nutshare_evolve = false;	//Host can evolve how much nutrients it claims from the environment, passing on the remaining fraction to its symbionts (equally divided among these). Each host has an identical claim on environmental nutrients, i.e. independent of how many symbionts it has. This corresponds to nutrient competition 4.
+const bool nutshare_evolve = true;	//Host can evolve how much nutrients it claims from the environment, passing on the remaining fraction to its symbionts (equally divided among these). Each host has an identical claim on environmental nutrients, i.e. independent of how many symbionts it has. This corresponds to nutrient competition 4.
 
 //Genome parameters
 const int nr_household_genes =			50;
@@ -94,6 +94,7 @@ const int default_nutrient_competition =			2;
 // 2, first smooth nutrient function (e.g. Paramecium caudatum):	n_ij = n_tot / x_nei
 // 3, distribute by cell, by organelle (e.g. Volvox carteri IV):	n_ij = (n_tot / c_nei) / x_i
 // 4, distribute by cell, let host claim its share and then divide among symbionts:	n_iH = (n_tot / c_nei)*claim_H and n_iS = (n_tot / c_nei)*(1 - claim_H) / (x_i - 1)
+// 5, distribute by cell, let host give a fraction nutrient_claim to each of its symbionts, itself taking whatever's left: n_iH = max(0, 1 - (x_i-1)*claim_H) * (n_tot / c_nei) and n_iS = min(1, (x_i-1)*claim_H)/(x_i-1) * (n_tot / c_nei)
 // where n_ij is nutrients at site i for organelle j,
 //       n_tot is total nutrient_abundance (see par above), i.e. influx per site,
 //       x_nei is total number of organelles in the neighbourhood,
@@ -140,15 +141,15 @@ const double house_innovation_mu = 				0.0;
 const double house_shuffle_mu = 					0.001;
 
 //Transfer mutations.
-const double regulator_transfer_mu_HtoS = 0.00001;
-const double regulator_transfer_mu_StoH = 0.00001;
-const double bsite_transfer_mu_HtoS = 		0.00001;
-const double bsite_transfer_mu_StoH = 		0.00001;
-const double house_transfer_mu_HtoS = 		0.00001;
-const double house_transfer_mu_StoH = 		0.00001;
+const double regulator_transfer_mu_HtoS = 0.0000;
+const double regulator_transfer_mu_StoH = 0.0000;
+const double bsite_transfer_mu_HtoS = 		0.0000;
+const double bsite_transfer_mu_StoH = 		0.0000;
+const double house_transfer_mu_HtoS = 		0.0000;
+const double house_transfer_mu_StoH = 		0.0000;
 
 //Type mutations only active when perfect_transport == true.
-const double regulator_typeseq_mu =				0.000001;
+const double regulator_typeseq_mu =				0.00001;
 const bool regtype[5][typeseq_length] =
 {
 	true, false, true, false, true, false, true, false, true, false,
