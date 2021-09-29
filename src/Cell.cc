@@ -122,6 +122,7 @@ void Cell::DNATransferToHost()
 {
 	i_bead it, insertsite;
 	int s;
+	double uu;
 
 	for (s=0; s<nr_symbionts; s++)
 	{
@@ -133,16 +134,29 @@ void Cell::DNATransferToHost()
 				switch ( Symbionts->at(s)->G->WhatBead(*it) )
 				{
 					case REGULATOR:
-						if (uniform() < regulator_transfer_mu_StoH)	TransferGene(it, Symbionts->at(s), Host);
+						uu = uniform();
+						if (Symbionts->at(s)->Stage >= 2)
+						{
+							if (uu < regulator_transfer_mu_StoH)				it = TransferGene(it, Symbionts->at(s), Host, false, false);
+							else if (uu < 2*regulator_transfer_mu_StoH)	it = TransferGene(it, Symbionts->at(s), Host, true, false);
+							else	it++;
+						}
+						else
+						{
+							if (uu < regulator_transfer_mu_StoH)				it = TransferGene(it, Symbionts->at(s), Host, false, true);
+							else if (uu < 2*regulator_transfer_mu_StoH)	it = TransferGene(it, Symbionts->at(s), Host, true, true);
+							else	it++;
+						}
 						break;
 					case BSITE:
 						if (uniform() < bsite_transfer_mu_StoH) TransferBead(it, Host);
+						it++;
 						break;
 					case HOUSE:
 						if (uniform() < house_transfer_mu_StoH)	TransferBead(it, Host);
+						it++;
 						break;
 				}
-				it++;
 			}
 		}
 	}
@@ -150,37 +164,97 @@ void Cell::DNATransferToHost()
 
 void Cell::DNATransfertoSymbiont(Organelle* Symbiont)
 {
+	double uu;
 	i_bead it = Host->G->BeadList->begin();
 	while( it != Host->G->BeadList->end() )
 	{
 		switch ( Host->G->WhatBead(*it) )
 		{
 			case REGULATOR:
-				if (uniform() < regulator_transfer_mu_HtoS) TransferGene(it, Host, Symbiont);
+				uu = uniform();
+				if (Host->Stage >= 2)
+				{
+					if (uu < regulator_transfer_mu_HtoS) 				it = TransferGene(it, Host, Symbiont, false, false);
+					else if (uu < 2*regulator_transfer_mu_HtoS)	it = TransferGene(it, Host, Symbiont, true, false);
+					else	it++;
+				}
+				else
+				{
+					if (uu < regulator_transfer_mu_HtoS)				it = TransferGene(it, Host, Symbiont, false, true);
+					else if (uu < 2*regulator_transfer_mu_HtoS)	it = TransferGene(it, Host, Symbiont, true, true);
+					else	it++;
+				}
 				break;
 			case BSITE:
-				if (uniform() < bsite_transfer_mu_HtoS) TransferBead(it, Symbiont);
+				if (uniform() < bsite_transfer_mu_HtoS)	TransferBead(it, Symbiont);
+				it++;
 				break;
 			case HOUSE:
-				if (uniform() < house_transfer_mu_HtoS) TransferBead(it, Symbiont);
+				if (uniform() < house_transfer_mu_HtoS)	TransferBead(it, Symbiont);
+				it++;
 				break;
 		}
-		it++;
 	}
 }
 
 
-void Cell::TransferGene(i_bead it, Organelle* Source, Organelle* Target)
+Cell::i_bead Cell::TransferGene(i_bead it, Organelle* Source, Organelle* Target, bool include_distal, bool cut_and_paste)
 {
-	int copy_length;
-	i_bead insertsite, first, last;
+	int copy_length, wb;
+	i_bead insertsite, first, last, ii;
 	list<Bead*> BeadListTemp;	//Create a new temporary genome list.
 
 	last = it;		//Copy the gene with its upstream tfbs's to a temporary chromosome.
 	last++;   //One further than the gene position (the one not to be part of the dupl).
-	first=Source->G->FindFirstBsiteInFrontOfGene(it);	//First tfbs in front of gene.
+	first=Source->G->FindFirstBsiteInFrontOfGene(it, include_distal);	//First tfbs in front of gene.
 	copy_length=distance(first, last);
+
 	Source->G->CopyPartOfGenomeToTemplate(first, last, &BeadListTemp); //Makes a 'chromosome' with only this gene (and its tfbs) on it.
+
+	if (include_distal)
+	{
+		ii = BeadListTemp.begin();	//Don't transfer the household genes, because these will result in immediate fitness penalties.
+		while (ii != BeadListTemp.end())
+		{
+			if (Source->G->WhatBead(*ii)==HOUSE)
+			{
+				delete (*ii);
+				ii = BeadListTemp.erase(ii);
+				copy_length--;
+			}
+			else
+			{
+				ii++;
+			}
+		}
+	}
+
+	if (cut_and_paste)
+	{
+		ii = first;
+		while (ii != last)
+		{
+			wb = Source->G->WhatBead(*ii);
+			if (wb!=HOUSE)	//Houses are never transferred, also not with include_distal.
+			{
+				delete (*ii);
+				ii = Source->G->BeadList->erase(ii);
+				Source->G->g_length--;
+				Source->G->terminus_position--;
+				if (wb==REGULATOR)	Source->G->gnr_regulators--;
+				if (wb==BSITE)			Source->G->gnr_bsites--;
+			}
+			else
+			{
+				ii++;
+			}
+		}
+		if (!Source->mutant)	//It mutated, if it hadn't already. But currently don't know how to get it into the fossil record.
+		{
+			Source->G->is_mutated = true;
+			Source->mutant = true;
+		}
+	}
 
 	//Splice the temporary chromosome into the full genome.
 	insertsite=Target->G->FindRandomGenePosition(true,true);			//Find position to insert gene (may be the end of the genome).
@@ -194,6 +268,7 @@ void Cell::TransferGene(i_bead it, Organelle* Source, Organelle* Target)
 	Target->G->is_mutated = true;
 	Target->mutant = true;
 	Target->G->terminus_position = Target->G->g_length;
+	return last;
 }
 
 

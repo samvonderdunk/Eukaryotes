@@ -55,7 +55,7 @@ class Genome {
 	i_bead ShuffleGene(i_bead it);
 	i_bead ShuffleBead(i_bead it);
 
-	i_bead FindFirstBsiteInFrontOfGene(i_bead it) const;
+	i_bead FindFirstBsiteInFrontOfGene(i_bead it, bool ignore_houses=false) const;
 	i_bead FindRandomGenePosition(bool include_houses, bool include_end) const;
 	i_bead FindRandomPosition(bool include_end) const;
 	void CopyPartOfGenomeToTemplate(i_bead begin, i_bead end, list<Bead*>* template_beadlist);

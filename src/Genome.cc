@@ -875,14 +875,16 @@ Genome::i_bead Genome::ShuffleBead(i_bead it)
 	return nit;
 }
 
-Genome::i_bead Genome::FindFirstBsiteInFrontOfGene(i_bead it) const
+Genome::i_bead Genome::FindFirstBsiteInFrontOfGene(i_bead it, bool ignore_houses) const
 {
+	int wb;
 	ri_bead rit(it);	//BEHIND in this case means an element to the left in the list (i.e if ii points to the 6th element, rii(ii) will make rii point to the 5th element). The function .base() as used below will make rii.base() point to the 6th element again.
 
 	ri_bead rit2 = (*BeadList).rend();//search should be bounded
 	while(rit != rit2)//begin not yet reached
 	{
-		if(WhatBead(*rit)==BSITE)	rit++;
+		wb = WhatBead(*rit);
+		if(wb==BSITE || (wb==HOUSE && ignore_houses))	rit++;
 		else	rit2 = rit;
 	}
 	return rit2.base();

@@ -23,7 +23,7 @@ class Cell{
 
 		void DNATransferToHost();
 		void DNATransfertoSymbiont(Organelle* Symbiont);
-		void TransferGene(i_bead it, Organelle* Source, Organelle* Target);
+		i_bead TransferGene(i_bead it, Organelle* Source, Organelle* Target, bool include_distal, bool cut_and_paste);
 		void TransferBead(i_bead it, Organelle* Target);
 
 		void InitialiseCell(int input_nr);

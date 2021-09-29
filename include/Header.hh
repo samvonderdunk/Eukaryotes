@@ -112,13 +112,13 @@ const int default_strain_competition = 1;
 /* MUTATION PARAMETERS */
 
 // Used by nutshare_evolve option.
-const double init_nutrient_claim =				0.2;	//If we start with 4 symbionts and 1 hosts, that means they initially share fairly.
+const double init_nutrient_claim =				0.1;	//If we start with 4 symbionts and 1 hosts, that means they initially share fairly.
 const double nutrient_claim_mu =					0.001;
 const double nutrient_claim_mu_delta =		0.05;
 
 const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
 
-const double symbiont_mu_factor =					3.;	//Symbiont mutation rates multiplied by this factor (except the rates that are already specified for symbiont and host separately, like transfer mutations).
+const double symbiont_mu_factor =					1.;	//Symbiont mutation rates multiplied by this factor (except the rates that are already specified for symbiont and host separately, like transfer mutations).
 
 const double regulator_threshold_mu = 		0.0005;
 const double regulator_activity_mu = 			0.0005;
