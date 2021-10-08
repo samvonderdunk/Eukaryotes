@@ -9,14 +9,16 @@
 
 class Genome {
  public:
-  std::list<Bead*>* BeadList;
-  typedef std::list<Bead*>::iterator i_bead;
-  typedef std::list<Bead*>::reverse_iterator ri_bead;
+  std::list<Bead*>* 					BeadList;
+	std::array<Regulator*,5>		RegTypeList;
 
   int g_length, gnr_regulators, gnr_bsites, gnr_houses;
   int fork_position, terminus_position;	//position of the replication fork and the terminus, where it stops.
   bool is_mutated;
 	bool is_symbiont;
+
+	typedef std::list<Bead*>::iterator i_bead;
+	typedef std::list<Bead*>::reverse_iterator ri_bead;
 
   Genome();
   ~Genome();
@@ -64,6 +66,7 @@ class Genome {
 
 	void ReadGenome(string genome);
 	void ReadExpression(string expression);
+	void ReadDefinition(string definition);
 	void ReadBuffer(string buffer, bool* array, char start_sign, char stop_sign, int ith_start_sign = 1, int ith_stop_sign = 1);
 
 	int WhatBead(Bead* bead) const;
@@ -71,6 +74,7 @@ class Genome {
 
 	string Show(list<Bead*>* chromosome, bool terminal, bool only_parent);
 	string ShowExpression(list<Bead*>* chromosome, bool only_parent);
+	string ShowDefinition(bool terminal);
 
 };
 

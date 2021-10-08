@@ -37,6 +37,7 @@ void Organelle::UpdateState()
 	int readout[5] = {0, 0, 0, 0, 0};	//States of the five cell-cycle regulators.
 	i_bead it, it2;
 	Regulator* reg, *reg2;
+	int i;
 
 	int eval_state = Stage, it_cntr;
 	if (Stage == 2   &&   G->fork_position != G->terminus_position)	eval_state--;	//You cannot proceed to G2 without finishing replication.
@@ -60,22 +61,36 @@ void Organelle::UpdateState()
 			}
 			else	//Leaked/transported genes from other organelles; see if they match one of the 5 key regulator types in the current organelle; if not, not interesting for the state of the cell (i.e. do nothing). If you don't want to involve foreign expression in organelle state, exclude this entire part.
 			{
-				it2 = G->BeadList->begin();
-				while (it2 != G->BeadList->end())
+				if (regtypes_by_regulation)
 				{
-					if (G->WhatBead(*it2)==REGULATOR)
+					for (i=0; i<5; i++)
 					{
-						reg2 = dynamic_cast<Regulator*>(*it2);
-						if ( G->BindingAffinity(reg->sequence, reg2->sequence) == 0   &&   reg->activity == reg2->activity )
+						if (   G->BindingAffinity(reg->sequence, G->RegTypeList[i]->sequence) + abs(reg->activity - G->RegTypeList[i]->activity) <= regtype_hdist   )
 						{
-							if (reg2->type < 6)
-							{
-								readout[reg2->type-1] += reg->expression;	//Add the expression of this type to the native type that it resembles.
-							}
-							break;	//We have found a matching gene, and possibly also read its expression (if type 1-5), so we don't have to search any further in the genome.
+							readout[i] += reg->expression;
 						}
+						break;	//We assume that only 1 gene type will be matched. This means that when two type definitions come to close by mutation, only the lower gene type will be scored, probably preventing types from coming to close. NEW: actually check out PotentialTypeChange() to see that the type defs can never come within the regtype_hdist.
 					}
-					it2++;
+				}
+				else	//Primitive carry-over of Prokaryotes: check if you resemble one of the other genes currently in the genome that you end up in. This is primitive, because you could never fully replace a gene type, only function like already existing gene types.
+				{
+					it2 = G->BeadList->begin();
+					while (it2 != G->BeadList->end())
+					{
+						if (G->WhatBead(*it2)==REGULATOR)
+						{
+							reg2 = dynamic_cast<Regulator*>(*it2);
+							if ( G->BindingAffinity(reg->sequence, reg2->sequence) == 0   &&   reg->activity == reg2->activity )
+							{
+								if (reg2->type < 6)
+								{
+									readout[reg2->type-1] += reg->expression;	//Add the expression of this type to the native type that it resembles.
+								}
+								break;	//We have found a matching gene, and possibly also read its expression (if type 1-5), so we don't have to search any further in the genome.
+							}
+						}
+						it2++;
+					}
 				}
 			}
 		}
@@ -143,7 +158,7 @@ void Organelle::Abort()
 	privilige = false;
 }
 
-void Organelle::InitialiseOrganelle(string genome, string expression)
+void Organelle::InitialiseOrganelle(string genome, string expression, string definition)
 {
 	mutant = true;
 	alive = true;
@@ -151,6 +166,7 @@ void Organelle::InitialiseOrganelle(string genome, string expression)
 
 	G->ReadGenome(genome);
 	G->ReadExpression(expression);
+	G->ReadDefinition(definition);
 
 	fitness = 1. - abs(nr_household_genes - G->gnr_houses) / (float)10;
 	nutrient_claim = init_nutrient_claim;
@@ -210,6 +226,8 @@ string Organelle::Output(bool backup)
 
 	if (backup)
 	{
+		Content += "\t";
+		Content += G->ShowDefinition(false);
 		Content += "\t";
 		Content += G->ShowExpression(NULL, false);
 		Content += "\t";

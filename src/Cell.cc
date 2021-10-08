@@ -261,6 +261,9 @@ Cell::i_bead Cell::TransferGene(i_bead it, Organelle* Source, Organelle* Target,
 	insertsite=Target->G->FindFirstBsiteInFrontOfGene(insertsite);	//Find first tfbs in front of this gene.
 	Target->G->BeadList->splice(insertsite, BeadListTemp);	//Splice temporary list into chromosome.
 
+	insertsite--;	//Go to the just inserted gene.
+	Target->G->PotentialTypeChange(insertsite);	//Gene type will be redetermined based on the new genomic context (i.e. using the RegTypeList of the Target).
+
 	//Increment the number of beads and the number of genes.
 	Target->G->g_length+=copy_length;
 	Target->G->gnr_regulators++;
@@ -298,8 +301,10 @@ void Cell::InitialiseCell(int input_nr)
 	int i=0;
 	ifstream in_genome(genome_files[input_nr].c_str());
 	ifstream in_expression(expression_files[input_nr].c_str());
+	ifstream in_definition(definition_files[input_nr].c_str());
 	string genome;
 	string expression;
+	string definition;
 	Organelle* Symbiont;
 
 	barcode = input_nr;
@@ -316,18 +321,24 @@ void Cell::InitialiseCell(int input_nr)
 		exit(1);
 	}
 
-	while ( !in_genome.eof() & !in_expression.eof() )
+	if ( !in_definition.is_open() )
+	{
+		printf("Expression file %s could not be opened.\n", definition_files[input_nr].c_str());
+		exit(1);
+	}
+
+	while ( !in_genome.eof() & !in_expression.eof() & !in_definition.eof() )
 	{
 		//We start reading below, because when we reach the end of the file, there will still be one round through the while-loop.
 		if (i==1)
 		{
-			Host->InitialiseOrganelle(genome, expression);
+			Host->InitialiseOrganelle(genome, expression, definition);
 		}
 
 		else if (i>1)
 		{
 			Symbiont = new Organelle();
-			Symbiont->InitialiseOrganelle(genome, expression);
+			Symbiont->InitialiseOrganelle(genome, expression, definition);
 			Symbiont->G->is_symbiont = true;
 			Symbionts->push_back(Symbiont);
 			nr_symbionts++;
@@ -335,6 +346,7 @@ void Cell::InitialiseCell(int input_nr)
 
 		in_genome >> genome;
 		in_expression >> expression;
+		in_definition >> definition;
 
 
 		i++;

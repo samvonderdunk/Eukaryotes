@@ -33,7 +33,7 @@ class Organelle{
 		void Replicate(double resource);
 		void Abort();
 
-		void InitialiseOrganelle(string genome, string expression);
+		void InitialiseOrganelle(string genome, string expression, string definition);
 		void CloneOrganelle(Organelle* ImageO, unsigned long long id_count);
 
 		string Show(bool backup);

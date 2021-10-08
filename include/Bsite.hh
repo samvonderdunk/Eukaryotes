@@ -18,6 +18,8 @@ class Bsite : public Bead {
 
 		virtual Bead* Clone() const;
 		void RandomBsite();
+
+		string Show(bool terminal) const;
 };
 
 #endif

@@ -69,3 +69,34 @@ void Regulator::RandomRegulator()
   expression = 0;
 	express = 0;
 }
+
+string Regulator::Show(bool terminal) const
+{
+	int i;
+	string Content, color_prefix, color_suffix;
+	std::stringstream ss;
+
+	if (terminal)
+	{
+		color_prefix = "\033[94m";
+		color_suffix = "\033[0m";
+	}
+	else
+	{
+		color_prefix = "";
+		color_suffix = "";
+	}
+
+	ss << "(" << color_prefix << "R" << type << ":" << threshold << ":" << activity << ":";
+	for(i=0; i<typeseq_length; i++)	ss << typeseq[i];
+	ss << ":";
+	for(i=0; i<signalp_length; i++)	ss << signalp[i];
+	ss << ":";
+	for(i=0; i<sequence_length; i++)	ss << sequence[i];
+	ss << color_suffix << ")";
+
+	Content = ss.str();
+	ss.clear();
+
+	return Content;
+}

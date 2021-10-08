@@ -25,6 +25,8 @@ class Regulator : public Bead {
 		virtual Bead* Clone() const;
 		void RandomRegulator();
 
+		string Show(bool terminal) const;
+
 };
 
 #endif

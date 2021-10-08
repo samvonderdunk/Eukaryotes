@@ -4,6 +4,7 @@ Genome::Genome()
 {
 	BeadList=NULL;
 	BeadList = new list<Bead*>();
+	RegTypeList = {NULL, NULL, NULL, NULL, NULL};
 	g_length=0;
 	gnr_regulators=0;
 	gnr_bsites=0;
@@ -17,6 +18,7 @@ Genome::Genome()
 Genome::~Genome()
 {
 	i_bead it;
+	int i;
 
 	it=BeadList->begin();
 	while(it!=BeadList->end())
@@ -28,6 +30,11 @@ Genome::~Genome()
 	it=BeadList->erase(BeadList->begin(),BeadList->end());
 	delete BeadList;
 	BeadList=NULL;
+
+	for (i=0; i<5; i++)
+	{
+		delete RegTypeList[i];
+	}
 }
 
 
@@ -233,11 +240,16 @@ void Genome::ReplicateStep(double resource)
 
 void Genome::SplitGenome(Genome* parentG)	//Used to split a genome upon division
 {
+	int i;
+	i_bead it, i_split;
+
 	//Find the fork with i_split.
-	i_bead i_split = parentG->BeadList->begin();
+	i_split = parentG->BeadList->begin();
 	advance(i_split, parentG->terminus_position);	//terminus_position points to the end of the parental genome, which is now the first bead of the child genome.
 
 	BeadList->splice(BeadList->begin(), *parentG->BeadList, i_split, parentG->BeadList->end());
+
+	for(i=0; i<5; i++)		RegTypeList[i] = new Regulator(*parentG->RegTypeList[i]);
 
 	DevelopChildrenGenomes(parentG);
 }
@@ -470,42 +482,72 @@ void Genome::PotentialTypeChange(i_bead it)
 	i_bead it2;
 	Regulator* reg, *reg2;
 	list<int> UsedTypes;
-	bool found_matching_type = false;
-	int type_abundance;
+	list<int>::iterator ix;
+	int type_abundance, x, i;
 
 	reg = dynamic_cast<Regulator*>(*it);
 	type_abundance = CountTypeAbundance(reg->type);
 
-	it2 = BeadList->begin();	//The other genes in the genome
-	while(it2 != BeadList->end())
+	//Check convergence to an existing type.
+	// it2 = BeadList->begin();	//The other genes in the genome
+	// while(it2 != BeadList->end())
+	// {
+	// 	if( WhatBead(*it2)==REGULATOR && it2!=it )	//We don't convert genes to themselves.
+	// 	{
+	// 		reg2 = dynamic_cast<Regulator*>(*it2);
+	// 		UsedTypes.push_back(reg2->type);
+	//
+	// 		if ( BindingAffinity(reg->sequence, reg2->sequence) == 0   &&   reg->activity == reg2->activity )
+	// 		{
+	// 			reg->type = reg2->type;		//Convert to existing gene type. Leave type definition as it was; we don't want two types with the same definition.
+	// 			found_matching_type = true;
+	// 			return;		//We have found a match, converted the gene; time to try mutation of the next bead.
+	// 		}
+	// 	}
+	// 	it2++;
+	// }
+
+	//Check for convergence to types 1-5, as they are defined before the start of mutations and redefined as we go on mutating.
+	for (i=0; i<5; i++)
 	{
-		if( WhatBead(*it2)==REGULATOR && it2!=it )	//We don't convert genes to themselves.
+		if ( BindingAffinity(reg->sequence, RegTypeList[i]->sequence) + abs(reg->activity-RegTypeList[i]->activity) <= regtype_hdist )
 		{
-			reg2 = dynamic_cast<Regulator*>(*it2);
-			UsedTypes.push_back(reg2->type);
-
-			if ( BindingAffinity(reg->sequence, reg2->sequence) == 0   &&   reg->activity == reg2->activity )
-			{
-				reg->type = reg2->type;		//Convert to existing gene type.
-				found_matching_type = true;
-				return;		//We have found a match, converted the gene; time to try mutation of the next bead.
-			}
+			reg->type = i+1;
+			return;
 		}
-		it2++;
 	}
-	if(found_matching_type == false && (type_abundance > 1 || reg->type==0))	//We haven't been able to convert it to an existing type, so let's define it as a new type. type_abundance should always be more than 1 because there is always an original copy on the parental section of the genome (I think that statement is no longer true, because we mutate after genomes have been split in two).
-	{
-		list<int>::iterator ix;
-		int x=0;
 
-		while (ix != UsedTypes.end())		//WARNING: check that this is not true at the start. Otherwise initialise ix as something else then end().
+	//If there is at least one more copy of the gene, assign a new unique type to the gene, 6 at minimum.
+	if(type_abundance > 1 || reg->type==0)	//We haven't been able to convert it to an existing type, so let's define it as a new type.
+	{
+		//Check which gene types we already have, if you want gene types >5 to be at least evolutionarily meaningful.
+		it2 = BeadList->begin();
+		while (it2 != BeadList->end())
+		{
+			if( WhatBead(*it2)==REGULATOR)
+			{
+				reg2 = dynamic_cast<Regulator*>(*it2);
+				UsedTypes.push_back(reg2->type);
+			}
+			it2++;
+		}
+
+		x=6;
+		while (ix != UsedTypes.end())
 		{
 			x++;
 			ix = find(UsedTypes.begin(), UsedTypes.end(), x);
 		}
 		reg->type = x;
-		return;
 	}
+
+	//If there exists only copy of this type, then type is not changed, but the type definition has to be updated (i.e. replaced).
+	else if(reg->type < 6)	//We are only concerned with the defs of types 1-5.
+	{
+		delete RegTypeList[reg->type-1];
+		RegTypeList[reg->type-1] = new Regulator(*reg);
+	}
+
 }
 
 int Genome::CountTypeAbundance(int type)
@@ -949,8 +991,10 @@ void Genome::CopyPartOfGenomeToTemplate(i_bead begin, i_bead end, list<Bead*>* t
 
 void Genome::CloneGenome(const Genome* ImageG)
 {
-	// BeadList = new list<Bead*>();
+	int i;
+
 	CopyPartOfGenome(ImageG->BeadList->begin(),ImageG->BeadList->end());
+	for (i=0; i<5; i++)	RegTypeList[i] = new Regulator(*ImageG->RegTypeList[i]);
 
 	g_length = ImageG->g_length;
 	gnr_regulators = ImageG->gnr_regulators;
@@ -1000,13 +1044,13 @@ void Genome::ReadGenome(string genome)
 			ReadBuffer(buffer, typeseq, 'X', ':');
 			ReadBuffer(buffer, signalp, ':', ':', 1, 2);
 			ReadBuffer(buffer, sequence, ':', ')', 2);
+			delete [] buffer;
+			buffer = NULL;
 
 			reg = new Regulator(type, threshold, activity, typeseq, signalp, sequence, 0);
 			(*BeadList).push_back(reg);
 			gnr_regulators++;
 			g_length++;
-			delete [] buffer;
-			buffer = NULL;
 		}
 		else if(bead[1] == 'H')
 		{
@@ -1022,13 +1066,13 @@ void Genome::ReadGenome(string genome)
 			if(success != 2) cerr << "Could not find sufficient information for this binding site. Genome file potentially corrupt. \n" << endl;
 
 			ReadBuffer(buffer, sequence, 'X', ')');
+			delete [] buffer;
+			buffer = NULL;
 
 			bsite = new Bsite(activity, sequence);
 			(*BeadList).push_back(bsite);
 			gnr_bsites++;
 			g_length++;
-			delete [] buffer;
-			buffer = NULL;
 		}
 
 		bead = strtok(NULL, ".");
@@ -1036,28 +1080,6 @@ void Genome::ReadGenome(string genome)
 
 	fork_position = 0;
 	terminus_position = g_length;
-}
-
-void Genome::ReadBuffer(string buffer, bool* array, char start_sign, char stop_sign, int ith_start_sign, int ith_stop_sign)
-{
-	int q = 0;
-	int start_reading = -1;
-	int nstart = 0, nstop = 0;
-
-	if (start_sign == 'X')					start_reading = 0;
-	while(nstop < ith_stop_sign)
-	{
-		if (start_reading != -1)			array[q-start_reading] = (buffer[q]=='1');
-		if (buffer[q] == start_sign)
-		{
-			nstart++;
-			if (nstart == ith_start_sign){
-				start_reading = q+1;
-			}
-		}
-		q++;
-		if (buffer[q] == stop_sign)		nstop++;
-	}
 }
 
 void Genome::ReadExpression(string expression)
@@ -1086,33 +1108,61 @@ void Genome::ReadExpression(string expression)
 	}
 }
 
+void Genome::ReadDefinition(string definition)
+{
+	char* bead, *buffer;
+	int j, t = 0, success, activity;
+	bool sequence[sequence_length], typeseq[typeseq_length], signalp[signalp_length];
+
+	bead = strtok((char*)definition.c_str(),".");
+	while (bead != NULL)
+	{
+		buffer = new char[sequence_length+2];
+		success = sscanf(bead, "(%d:%s)", &activity, buffer);
+		if(success != 2) cerr << "Could not read regulatory type definitions. Definitions file potentially corrupt. \n" << endl;
+		ReadBuffer(buffer, sequence, 'X', ')');
+		delete [] buffer;
+		buffer = NULL;
+
+		for (j=0; j<typeseq_length; j++)	typeseq[j] = false;
+		for (j=0; j<signalp_length; j++)	signalp[j] = false;
+
+		RegTypeList[t] = new Regulator(t+1, 0, activity, typeseq, signalp, sequence, 0);
+
+		t++;
+		bead = strtok(NULL, ".");
+	}
+}
+
+void Genome::ReadBuffer(string buffer, bool* array, char start_sign, char stop_sign, int ith_start_sign, int ith_stop_sign)
+{
+	int q = 0;
+	int start_reading = -1;
+	int nstart = 0, nstop = 0;
+
+	if (start_sign == 'X')					start_reading = 0;
+	while(nstop < ith_stop_sign)
+	{
+		if (start_reading != -1)			array[q-start_reading] = (buffer[q]=='1');
+		if (buffer[q] == start_sign)
+		{
+			nstart++;
+			if (nstart == ith_start_sign){
+				start_reading = q+1;
+			}
+		}
+		q++;
+		if (buffer[q] == stop_sign)		nstop++;
+	}
+}
+
 string Genome::Show(list<Bead*>* chromosome, bool terminal, bool only_parent)
 {
-	string GenomeContent="", expressed_prefix, reg_color_prefix, reg_color_suffix, bsite_color_prefix, bsite_color_suffix, house_color_prefix, house_color_suffix, prefix;
+	string GenomeContent="";
 	i_bead it, end;
 	Regulator* reg;
 	Bsite* bsite;
-	int i;
-
-
-	if(terminal){
-		// expressed_prefix = "\033[43m";
-		reg_color_prefix = "\033[94m";
-		reg_color_suffix = "\033[0m";
-		bsite_color_prefix = "\033[92m";
-		bsite_color_suffix = "\033[0m";
-		house_color_prefix = "\033[95m";
-		house_color_suffix = "\033[0m";
-	}
-	else
-	{
-		reg_color_prefix = "";
-		reg_color_suffix = "";
-		bsite_color_prefix = "";
-		bsite_color_suffix = "";
-		house_color_prefix = "";
-		house_color_suffix = "";
-	}
+	House* house;
 
 	if(chromosome == NULL) chromosome = this->BeadList;
 	it = chromosome->begin();
@@ -1126,41 +1176,23 @@ string Genome::Show(list<Bead*>* chromosome, bool terminal, bool only_parent)
 	while(it != end)
 	{
 		if(it != chromosome->begin()) GenomeContent += ".";
-		GenomeContent += "(";
 
-		std::stringstream ss;
 		switch (WhatBead(*it))
 		{
 			case REGULATOR:
 				reg=dynamic_cast<Regulator*>(*it);
-				// if (reg->expression > 0)	prefix = expressed_prefix;
-				// else									prefix = reg_color_prefix;
-				ss << reg_color_prefix << "R" << reg->type << ":" << reg->threshold << ":" << reg->activity << ":";
-				for(i=0; i<typeseq_length; i++)	ss << reg->typeseq[i];
-				ss << ":";
-				for(i=0; i<signalp_length; i++)	ss << reg->signalp[i];
-				ss << ":";
-				for(i=0; i<sequence_length; i++)	ss << reg->sequence[i];
-				ss << reg_color_suffix;
-				GenomeContent += ss.str();
-				ss.clear();
+				GenomeContent += reg->Show(terminal);
 				break;
 			case BSITE:
 				bsite=dynamic_cast<Bsite*>(*it);
-				ss << bsite_color_prefix << bsite->activity << ":";
-				for(i=0; i<sequence_length; i++)	ss << bsite->sequence[i];
-				ss << bsite_color_suffix;
-				GenomeContent += ss.str();
-				ss.clear();
+				GenomeContent += bsite->Show(terminal);
 				break;
 			case HOUSE:
-				ss << house_color_prefix << "H" << house_color_suffix;
-				GenomeContent += ss.str();
-				ss.clear();
+				house=dynamic_cast<House*>(*it);
+				GenomeContent += house->Show(terminal);
 				break;
 		}
 
-		GenomeContent += ")";
 		it++;
 	}
 	return GenomeContent;
@@ -1170,7 +1202,7 @@ string Genome::ShowExpression(list<Bead*>* chromosome, bool only_parent)
 {
 	i_bead it, end;
 	Regulator* reg;
-	string ExpressionContent="{";
+	string Content="{";
 
 	if(chromosome == NULL) chromosome = this->BeadList;
 	it = chromosome->begin();
@@ -1188,12 +1220,25 @@ string Genome::ShowExpression(list<Bead*>* chromosome, bool only_parent)
 			std::stringstream ss;
 			reg = dynamic_cast<Regulator*>(*it);
 			ss << reg->expression;
-			ExpressionContent += ss.str();
+			Content += ss.str();
 			ss.clear();
 		}
 		it++;
 	}
 
-	ExpressionContent += "}";
-	return ExpressionContent;
+	Content += "}";
+	return Content;
+}
+
+string Genome::ShowDefinition(bool terminal)
+{
+	int i;
+	string Content="";
+
+	for (i=0; i<5; i++)
+	{
+		Content += RegTypeList[i]->Show(terminal);
+	}
+
+	return Content;
 }
