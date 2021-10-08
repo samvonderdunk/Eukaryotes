@@ -17,6 +17,7 @@ class Organelle{
 		//Fossil info.
 		bool alive;
 		bool mutant;
+		bool lifetime_mutant;	//Explicitly set whenever mutant is false (i.e. no mutations during the organelle's own division, but later during its life due to transfer).
 		int time_of_appearance;
 		unsigned long long fossil_id;
 		Organelle* Ancestor;

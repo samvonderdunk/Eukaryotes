@@ -121,6 +121,15 @@ void PrintLog()
 			printf("%s", expression_files[i].c_str());
 		}
 	}
+	printf("\nDefinition:\t\t");
+	for (i=0; i<max_input_files; i++)
+	{
+		if (definition_files[i] != "")
+		{
+			if (i > 0)	printf(", ");
+			printf("%s", definition_files[i].c_str());
+		}
+	}
 	printf("\nBackup:\t\t\t%s\nAnctrace:\t\t%s\nLineage:\t\t%s\nStart time:\t\t%d\nEnd time:\t\t%d\nt-Terminal:\t\t%d\nt-Snap:\t\t\t%d\nt-Prune:\t\t%d\nt-Ancestry:\t\t%d\nt-Backup:\t\t%d\nNutrient abundance:\t%f\nNutrient comp.:\t\t%d\nStrain comp.:\t\t%d\n\nMutations:\t\t%s\nMixing:\t\t\t%s\nFollow var. host:\t%s\nFollow fixed host:\t%s\nTrace lineage:\t\t%s\nLog lineage:\t\t%s\n", backup_file.c_str(), anctrace_file.c_str(), lineage_file.c_str(), TimeZero, SimTime, TimeTerminalOutput, TimeSaveGrid, TimePruneFossils, TimeOutputFossils, TimeSaveBackup, nutrient_abundance, nutrient_competition, strain_competition, mutations_on?"Yes":"No", well_mixing?"Yes":"No", follow_single_individual?"Yes":"No", follow_with_fixed_symbionts?"Yes":"No", trace_lineage?"Yes":"No", log_lineage?"Yes":"No");
 }
 

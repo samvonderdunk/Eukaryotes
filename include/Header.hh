@@ -124,35 +124,35 @@ const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
 
 const double symbiont_mu_factor =					1.;	//Symbiont mutation rates multiplied by this factor (except the rates that are already specified for symbiont and host separately, like transfer mutations).
 
-const double regulator_threshold_mu = 		0.005;
-const double regulator_activity_mu = 			0.005;
-const double regulator_sequence_mu = 			0.001;
+const double regulator_threshold_mu = 		0.0005;
+const double regulator_activity_mu = 			0.0005;
+const double regulator_sequence_mu = 			0.0001;
 
-const double bsite_sequence_mu = 					0.001;
-const double bsite_activity_mu = 					0.005;
+const double bsite_sequence_mu = 					0.0001;
+const double bsite_activity_mu = 					0.0005;
 
-const double regulator_duplication_mu = 	0.005;
-const double regulator_deletion_mu = 			0.005;
-const double regulator_innovation_mu = 		0.005;
-const double regulator_shuffle_mu = 			0.01;
+const double regulator_duplication_mu = 	0.0005;
+const double regulator_deletion_mu = 			0.0005;
+const double regulator_innovation_mu = 		0.0005;
+const double regulator_shuffle_mu = 			0.0005;
 
-const double bsite_duplication_mu = 			0.005;
-const double bsite_deletion_mu = 					0.005;
-const double bsite_innovation_mu = 				0.05;
-const double bsite_shuffle_mu = 					0.01;
+const double bsite_duplication_mu = 			0.0005;
+const double bsite_deletion_mu = 					0.0005;
+const double bsite_innovation_mu = 				0.005;
+const double bsite_shuffle_mu = 					0.0005;
 
-const double house_duplication_mu = 			0.001;
-const double house_deletion_mu = 					0.001;
+const double house_duplication_mu = 			0.0001;
+const double house_deletion_mu = 					0.0001;
 const double house_innovation_mu = 				0.0;
-const double house_shuffle_mu = 					0.01;
+const double house_shuffle_mu = 					0.0005;
 
 //Transfer mutations.
-const double regulator_transfer_mu_HtoS = 0.001;
-const double regulator_transfer_mu_StoH = 0.001;
-const double bsite_transfer_mu_HtoS = 		0.001;
-const double bsite_transfer_mu_StoH = 		0.001;
-const double house_transfer_mu_HtoS = 		0.001;
-const double house_transfer_mu_StoH = 		0.001;
+const double regulator_transfer_mu_HtoS = 0.0001;
+const double regulator_transfer_mu_StoH = 0.0001;
+const double bsite_transfer_mu_HtoS = 		0.0001;
+const double bsite_transfer_mu_StoH = 		0.0001;
+const double house_transfer_mu_HtoS = 		0.0001;
+const double house_transfer_mu_StoH = 		0.0001;
 
 //Type mutations only active when perfect_transport == true.
 const double regulator_typeseq_mu =				0.00001;

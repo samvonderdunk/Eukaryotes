@@ -249,10 +249,9 @@ Cell::i_bead Cell::TransferGene(i_bead it, Organelle* Source, Organelle* Target,
 				ii++;
 			}
 		}
-		if (!Source->mutant)	//It mutated, if it hadn't already. But currently don't know how to get it into the fossil record.
+		if (!Source->mutant)	//Cut-and-paste results in mutations during the lifetime of an organelle; these organelles (if not yet denoted as mutants) are flagged and added to the fossil record inside Population.cc.
 		{
-			Source->G->is_mutated = true;
-			Source->mutant = true;
+			Source->lifetime_mutant = true;
 		}
 	}
 

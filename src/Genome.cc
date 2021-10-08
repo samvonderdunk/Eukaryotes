@@ -1039,7 +1039,7 @@ void Genome::ReadGenome(string genome)
 		{
 			buffer = new char[typeseq_length+signalp_length+sequence_length+2];
 			success = sscanf(bead, "(R%d:%d:%d:%s)", &type, &threshold, &activity, buffer);
-			if(success != 4) cerr << "Could not find sufficient information for this regulatory gene. Genome file potentially corrupt. \n" << endl;
+			if(success != 4) cerr << "Could not read regulatory gene. Input seems corrupt. \n" << endl;
 
 			ReadBuffer(buffer, typeseq, 'X', ':');
 			ReadBuffer(buffer, signalp, ':', ':', 1, 2);
@@ -1063,7 +1063,7 @@ void Genome::ReadGenome(string genome)
 		{
 			buffer = new char[sequence_length+2];
 			success = sscanf(bead, "(%d:%s)", &activity, buffer);
-			if(success != 2) cerr << "Could not find sufficient information for this binding site. Genome file potentially corrupt. \n" << endl;
+			if(success != 2) cerr << "Could not read binding site. Input seems corrupt. \n" << endl;
 
 			ReadBuffer(buffer, sequence, 'X', ')');
 			delete [] buffer;
@@ -1098,7 +1098,7 @@ void Genome::ReadExpression(string expression)
 
 		if ((size_t) i > data.length())
 		{
-			cerr << "Could not find sufficient expression states. Expression file potentially corrupt.\n" << endl;
+			cerr << "Could not read expression states. Input seems corrupt.\n" << endl;
 			exit(1);
 		}
 
@@ -1111,15 +1111,15 @@ void Genome::ReadExpression(string expression)
 void Genome::ReadDefinition(string definition)
 {
 	char* bead, *buffer;
-	int j, t = 0, success, activity;
+	int j, success, activity, type;
 	bool sequence[sequence_length], typeseq[typeseq_length], signalp[signalp_length];
 
-	bead = strtok((char*)definition.c_str(),".");
+	bead = strtok((char*)definition.c_str(),";");
 	while (bead != NULL)
 	{
 		buffer = new char[sequence_length+2];
-		success = sscanf(bead, "(%d:%s)", &activity, buffer);
-		if(success != 2) cerr << "Could not read regulatory type definitions. Definitions file potentially corrupt. \n" << endl;
+		success = sscanf(bead, "(R%d:%d:%s)", &type, &activity, buffer);
+		if(success != 3) cerr << "Could not read regulatory type definitions. Input seems corrupt. \n" << endl;
 		ReadBuffer(buffer, sequence, 'X', ')');
 		delete [] buffer;
 		buffer = NULL;
@@ -1127,10 +1127,9 @@ void Genome::ReadDefinition(string definition)
 		for (j=0; j<typeseq_length; j++)	typeseq[j] = false;
 		for (j=0; j<signalp_length; j++)	signalp[j] = false;
 
-		RegTypeList[t] = new Regulator(t+1, 0, activity, typeseq, signalp, sequence, 0);
+		RegTypeList[type-1] = new Regulator(type, 0, activity, typeseq, signalp, sequence, 0);
 
-		t++;
-		bead = strtok(NULL, ".");
+		bead = strtok(NULL, ";");
 	}
 }
 
@@ -1181,7 +1180,7 @@ string Genome::Show(list<Bead*>* chromosome, bool terminal, bool only_parent)
 		{
 			case REGULATOR:
 				reg=dynamic_cast<Regulator*>(*it);
-				GenomeContent += reg->Show(terminal);
+				GenomeContent += reg->Show(terminal, false);
 				break;
 			case BSITE:
 				bsite=dynamic_cast<Bsite*>(*it);
@@ -1237,7 +1236,8 @@ string Genome::ShowDefinition(bool terminal)
 
 	for (i=0; i<5; i++)
 	{
-		Content += RegTypeList[i]->Show(terminal);
+		Content += RegTypeList[i]->Show(terminal, true);
+		if(i<4)	Content += ";";
 	}
 
 	return Content;

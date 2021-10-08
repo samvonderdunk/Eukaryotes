@@ -316,10 +316,22 @@ void Population::UpdatePopulation()
 
 				if (!Space[neigh.first][neigh.second]->CheckCellDeath(false))	//Don't continue, since we have killed the child which lies at a different site.
 				{
-					if (mutations_on)	Space[neigh.first][neigh.second]->DNATransferToHost();	//Instead, use the cell death check to know whether we need to do DNA transfer.
+					if (mutations_on)
+					{
+						Space[neigh.first][neigh.second]->DNATransferToHost();	//Instead, use the cell death check to know whether we need to do DNA transfer.
+					}
 					if (Space[neigh.first][neigh.second]->Host->mutant || trace_lineage || log_lineage)
 					{
 						FossilSpace->BuryFossil(Space[neigh.first][neigh.second]->Host);	//Bury fossil only after potential transfer events (also count as mutations).
+						for (s=0; s<Space[neigh.first][neigh.second]->nr_symbionts; s++)	//Check whether cut-and-paste led to new mutants among symbionts.
+						{
+							if (Space[neigh.first][neigh.second]->Symbionts->at(s)->lifetime_mutant && !Space[neigh.first][neigh.second]->Symbionts->at(s)->mutant)
+							{
+								FossilSpace->BuryFossil(Space[neigh.first][neigh.second]->Symbionts->at(s));
+								Space[neigh.first][neigh.second]->Symbionts->at(s)->G->is_mutated = true;
+								Space[neigh.first][neigh.second]->Symbionts->at(s)->mutant = true;
+							}
+						}
 					}
 
 				}
@@ -359,6 +371,12 @@ void Population::UpdatePopulation()
 						FossilSpace->BuryFossil(Space[i][j]->Symbionts->at(Space[i][j]->nr_symbionts-1));
 					}
 				}
+			}
+			if (Space[i][j]->Host->lifetime_mutant && !Space[i][j]->Host->mutant)
+			{
+				FossilSpace->BuryFossil(Space[i][j]->Host);
+				Space[i][j]->Host->G->is_mutated = true;
+				Space[i][j]->Host->mutant = true;
 			}
 			/* ~Division of symbionts */
 
@@ -774,6 +792,11 @@ void Population::ReadBackupFile()
 
 				//Read BeadList. Some variables are here initiated, but will be overwritten by information from the backup file below.
 				begin_data = line.find_first_of("(");
+				end_data = line.find("\t", begin_data+1);
+				data = line.substr(begin_data, end_data-begin_data);
+				O->G->ReadDefinition(data);
+
+				begin_data = end_data+1;
 				end_data = line.find_last_of(")");
 				data = line.substr(begin_data, end_data-begin_data+1);
 				O->G->ReadGenome(data);
@@ -878,7 +901,7 @@ void Population::ReadBackupFile()
 void Population::ReadAncestorFile()
 {
 	ifstream infile(anctrace_file.c_str());
-	string line, data;
+	string line, data, data2;
 	int begin_data, end_data, TimeOA, count_alive = 0, count_fossils = 0, count_lines = 0;
 	unsigned long long ID, AncID;
 	double NutCL;
@@ -915,8 +938,12 @@ void Population::ReadAncestorFile()
 		stringstream(data) >> NutCL;
 
 		begin_data = end_data;
+		end_data = line.find("\t",end_data+1);
+		data = line.substr(begin_data+1, end_data-begin_data-1);
+
+		begin_data = end_data;
 		end_data = line.size();
-		data = line.substr(begin_data+1, end_data-begin_data);
+		data2 = line.substr(begin_data+1, end_data-begin_data);
 
 		// 3 OPTIONS:
 		// 1) This line corresponds to an organelle that is still alive, we only need to know the time_of_appearance and where to have the Ancestor point to.
@@ -932,7 +959,8 @@ void Population::ReadAncestorFile()
 			{
 				count_fossils++;
 				O->mutant = true;
-				O->G->ReadGenome(data);
+				O->G->ReadDefinition(data);
+				O->G->ReadGenome(data2);
 				O->G->terminus_position = O->G->g_length;	//Relevant for printing.
 			}
 			O->time_of_appearance = TimeOA;	//Only this was not in the backup.
@@ -967,8 +995,9 @@ void Population::ReadAncestorFile()
 				}
 			}
 
-			//Set up its ghost genome.	It only has beads.
-			O->G->ReadGenome(data);
+			//Set up its ghost genome.	It only has beads and type definitions.
+			O->G->ReadDefinition(data);
+			O->G->ReadGenome(data2);
 			O->G->terminus_position = O->G->g_length;	//Relevant for printing.
 			FossilSpace->BuryFossil(O);
 		}
@@ -978,7 +1007,7 @@ void Population::ReadAncestorFile()
 	FossilSpace->SortFossils();
 
 	assert (count_lines == count_alive+count_fossils);
-	// FossilSpace->ExhibitFossils();
+	FossilSpace->ExhibitFossils();
 	assert (FossilSpace->FossilRecord.size() == (size_t)count_lines);
 }
 

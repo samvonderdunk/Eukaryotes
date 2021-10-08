@@ -14,6 +14,7 @@ Organelle::Organelle()
 
 	alive = false;
 	mutant = false;
+	lifetime_mutant = false;
 	time_of_appearance = 0;
 	fossil_id = 0;
 	Ancestor = NULL;
@@ -182,6 +183,7 @@ void Organelle::CloneOrganelle(Organelle* ImageO, unsigned long long id_count)
 	fitness = ImageO->fitness;
 	nutrient_claim = ImageO->nutrient_claim;
 	mutant = ImageO->mutant;
+	lifetime_mutant = ImageO->lifetime_mutant;
 	alive = ImageO->alive;
 	time_of_appearance = ImageO->time_of_appearance;
 
@@ -227,9 +229,9 @@ string Organelle::Output(bool backup)
 	if (backup)
 	{
 		Content += "\t";
-		Content += G->ShowDefinition(false);
-		Content += "\t";
 		Content += G->ShowExpression(NULL, false);
+		Content += "\t";
+		Content += G->ShowDefinition(false);
 		Content += "\t";
 		Content += G->Show(NULL, false, false);
 	}

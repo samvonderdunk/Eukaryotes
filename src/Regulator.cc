@@ -70,7 +70,7 @@ void Regulator::RandomRegulator()
 	express = 0;
 }
 
-string Regulator::Show(bool terminal) const
+string Regulator::Show(bool terminal, bool type_only) const
 {
 	int i;
 	string Content, color_prefix, color_suffix;
@@ -87,11 +87,16 @@ string Regulator::Show(bool terminal) const
 		color_suffix = "";
 	}
 
-	ss << "(" << color_prefix << "R" << type << ":" << threshold << ":" << activity << ":";
-	for(i=0; i<typeseq_length; i++)	ss << typeseq[i];
-	ss << ":";
-	for(i=0; i<signalp_length; i++)	ss << signalp[i];
-	ss << ":";
+	ss << "(" << color_prefix << "R" << type << ":";
+	if (!type_only) ss << threshold << ":";
+	ss << activity << ":";
+	if (!type_only)
+	{
+		for(i=0; i<typeseq_length; i++)	ss << typeseq[i];
+		ss << ":";
+		for(i=0; i<signalp_length; i++)	ss << signalp[i];
+		ss << ":";
+	}
 	for(i=0; i<sequence_length; i++)	ss << sequence[i];
 	ss << color_suffix << ")";
 
