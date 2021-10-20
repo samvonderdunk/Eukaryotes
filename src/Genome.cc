@@ -297,7 +297,18 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 	int* pdup_length, * pdel_length;
 	double muf;
 
-	muf = (is_symbiont?symbiont_mu_factor:1.);	//Symbionts can get higher mutation rates.
+	if (symbiont_mu_factor == -1)
+	{
+		muf = (is_symbiont?0.:1.);	//No mutations for symbionts.
+	}
+	else if(symbiont_mu_factor == -2)
+	{
+		muf = (is_symbiont?1.:0.);	//No mutations for hosts.
+	}
+	else
+	{
+		muf = (is_symbiont?symbiont_mu_factor:1.);	//Symbionts can get higher mutation rates.
+	}
 
 	g_length = BeadList->size();
 	g_length_before_mut = g_length;

@@ -122,7 +122,7 @@ const double nutrient_claim_mu_delta =		0.05;
 
 const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
 
-const double symbiont_mu_factor =					1.;	//Symbiont mutation rates multiplied by this factor (except the rates that are already specified for symbiont and host separately, like transfer mutations).
+const double symbiont_mu_factor =					1.;	//Symbiont mutation rates multiplied by this factor (except the rates that are already specified for symbiont and host separately, like transfer mutations). This factor can also be set to "-1" (no symbiont mutations, normal host mutations), or "-2" (no host mutations, normal symbiont mutations).
 
 const double regulator_threshold_mu = 		0.0005;
 const double regulator_activity_mu = 			0.0005;
