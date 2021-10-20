@@ -667,8 +667,8 @@ void Population::ContinuePopulationFromBackup()
 	//Only do these things if we're starting at an irregular timepoint (where we wouldn't already store info inside UpdatePop.).
 	if (TimeZero%TimeTerminalOutput != 0)										ShowGeneralProgress();
 	if (TimeZero%TimeSaveGrid != 0)													OutputGrid(false);
-	if (TimeZero%TimePruneFossils != 0 && !trace_lineage)		PruneFossilRecord();
-	if (TimeZero%TimeOutputFossils != 0 && !trace_lineage)	FossilSpace->ExhibitFossils();
+	if (TimeZero%TimePruneFossils != 0 && !trace_lineage && mutations_on)		PruneFossilRecord();
+	if (TimeZero%TimeOutputFossils != 0 && !trace_lineage && mutations_on)	FossilSpace->ExhibitFossils();
 	if (TimeZero%TimeSaveBackup != 0)												OutputGrid(true);
 }
 
