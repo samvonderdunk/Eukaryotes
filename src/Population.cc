@@ -192,11 +192,11 @@ void Population::UpdatePopulation()
 	for(i=0; i<NR; i++)	for(j=0; j<NC; j++)	NutrientSpace[i][j] = 0.;
 	for(i=0; i<NR; i++)	for(j=0; j<NC; j++)	CollectNutrientsFromSite(i,j);
 
-	if(Time%TimeTerminalOutput==0)															ShowGeneralProgress();
-	if(Time%TimeSaveGrid==0)																		OutputGrid(false);
-	if(Time%TimePruneFossils==0 && Time!=0)											PruneFossilRecord();
-	if(Time%TimeOutputFossils==0 && Time!=0)										FossilSpace->ExhibitFossils();
-	if(Time%TimeSaveBackup==0 && Time!=0)												OutputGrid(true);
+	if(Time%TimeTerminalOutput==0)																						ShowGeneralProgress();
+	if(Time%TimeSaveGrid==0 || (invasion_complete && Time%TimeSaveGrid==1))		OutputGrid(false);
+	if(Time%TimePruneFossils==0 && Time!=0)																		PruneFossilRecord();
+	if(Time%TimeOutputFossils==0 && Time!=0)																	FossilSpace->ExhibitFossils();
+	if(Time%TimeSaveBackup==0 && Time!=0)																			OutputGrid(true);
 
 	for(u=0; u<NR*NC; u++) update_order[u]=u;
 	random_shuffle(&update_order[0], &update_order[NR*NC], uniform_shuffle);	//Is also set by initial_seed through srand(initial_seed), see World.cc
@@ -471,6 +471,11 @@ Population::coords Population::PickNeighbour(int i, int j)
 		else if(nrow >= NR)	nrow -= NR;
 
 		ncol = j+nj-1;
+		if (invasion_experiment && (ncol<0 || ncol>=NC))	//If we go outside of the borders, we make you pick again. Nice that this was already a while-loop.
+		{
+			nrow = i;
+			ncol = j;
+		}
 		if(ncol < 0)	ncol += NC;
 		else if(ncol >= NC)	ncol -= NC;
 	}
@@ -480,7 +485,7 @@ Population::coords Population::PickNeighbour(int i, int j)
 void Population::CollectNutrientsFromSite(int i, int j)
 {
 	int ii, jj, nrow, ncol, cell_density=0, organelle_density=0;
-	double nutrient_share;
+	double nutrient_share, starting_nuts;
 
 	//First obtain organelle and cell density in 3x3 neighbourhood.
 	for (ii=i-1; ii<=i+1; ii++) for (jj=j-1; jj<=j+1; jj++)
@@ -490,15 +495,35 @@ void Population::CollectNutrientsFromSite(int i, int j)
 		if (ii < 0)					nrow = ii + NR;
 		else if (ii >= NR)	nrow = ii - NR;
 		else								nrow = ii;
-		if (jj < 0)					ncol = jj + NC;
-		else if (jj >= NC)	ncol = jj - NC;
-		else								ncol = jj;
+
+		if (invasion_experiment)
+		{
+			if (jj < 0)					ncol = 0;
+			else if (jj >= NC)	ncol = NC-1;
+			else								ncol = jj;
+		}
+		else
+		{
+			if (jj < 0)					ncol = jj + NC;
+			else if (jj >= NC)	ncol = jj - NC;
+			else								ncol = jj;
+		}
 
 		if (Space[nrow][ncol] != NULL)
 		{
 			cell_density++;
 			organelle_density += Space[nrow][ncol]->nr_symbionts + 1;		//Host always counts for one.
 		}
+	}
+
+	//If we don't have wrapped columns, border pixels get fewer nutrients to start with.
+	if (invasion_experiment && (j==0 || j==NC-1))
+	{
+		starting_nuts = (6/9)*nutrient_abundance;
+	}
+	else
+	{
+		starting_nuts = nutrient_abundance;
 	}
 
 	if (nutrient_competition == 0)	//Constant nutrient level.
@@ -508,15 +533,15 @@ void Population::CollectNutrientsFromSite(int i, int j)
 
 	else if (nutrient_competition == 1)	//Finish classic nutrient function here.
 	{
-		if (Space[i][j] == NULL)	NutrientSpace[i][j] += nutrient_abundance - (double)organelle_density;
-		else											NutrientSpace[i][j] += (nutrient_abundance - (double)organelle_density) / (double)(Space[i][j]->nr_symbionts+1);
+		if (Space[i][j] == NULL)	NutrientSpace[i][j] += starting_nuts - (double)organelle_density;
+		else											NutrientSpace[i][j] += (starting_nuts - (double)organelle_density) / (double)(Space[i][j]->nr_symbionts+1);
 	}
 
 	else
 	{
-		if (organelle_density == 0)					nutrient_share = nutrient_abundance;
-		else if (nutrient_competition == 2)	nutrient_share = nutrient_abundance / (double)organelle_density;	//Used in first smooth nutrient function.
-		else																nutrient_share = nutrient_abundance / (double)cell_density;	//Used in second smooth nutrient function and in third nutshare_evolve protocol.
+		if (organelle_density == 0)					nutrient_share = starting_nuts;
+		else if (nutrient_competition == 2)	nutrient_share = starting_nuts / (double)organelle_density;	//Used in first smooth nutrient function.
+		else																nutrient_share = starting_nuts / (double)cell_density;	//Used in second smooth nutrient function and in third nutshare_evolve protocol.
 
 		//Here we actually add the nutrient share to each site.
 		for (ii=i-1; ii<=i+1; ii++) for (jj=j-1; jj<=j+1; jj++)
@@ -597,6 +622,22 @@ void Population::InitialisePopulation()
 
 	for (i=0; i<NR; i++) for(j=0; j<NC; j++)
 	{
+
+		if (invasion_experiment)
+		{
+			if (j<NC/5)	//Only the left-most 10% of columns gets initialised.
+			{
+				Space[i][j] = new Cell();
+				Space[i][j]->CloneCell(InitCells[0], &id_count);
+				FossilSpace->BuryFossil(Space[i][j]->Host);
+				for (s=0; s<Space[i][j]->nr_symbionts; s++)
+				{
+					FossilSpace->BuryFossil(Space[i][j]->Symbionts->at(s));
+				}
+			}
+			continue;	//Don't bother with what's below.
+		}
+
 		//Determine which strain we will put here.
 		if (strain_competition == 1)
 		{
@@ -621,6 +662,7 @@ void Population::InitialisePopulation()
 
 		//Take InitCell[k] and copy to Space[i][j].
 		//Still we might not want to fill the entire grid, so roll another die.
+
 		if (uniform() < 0.6)
 		{
 			Space[i][j] = new Cell();
@@ -1196,7 +1238,6 @@ void Population::OutputGrid(bool backup)
 		}
 		else	//Print internal state and genome of prokaryote to file.
 		{
-
 			nuts nutrients = HandleNutrientClaims(i, j);
 
 			fprintf(f, "%d %d -1 %f %d\t%s\n", i, j, nutrients.first, Space[i][j]->barcode, Space[i][j]->Host->Output(backup).c_str());
@@ -1254,6 +1295,7 @@ void Population::ShowGeneralProgress()
 				stage_counts[1][(*iS)->Stage]++;
 				iS++;
 			}
+			if (invasion_experiment && invasion_complete==-1 && Time>equilibration_time && j==NC-1)	invasion_complete = Time;
 		}
 	}
 
@@ -1261,6 +1303,7 @@ void Population::ShowGeneralProgress()
 	cout << "\tHosts " << host_count;
 	cout << "\tSymbionts " << symbiont_count;
 	for (i=0; i<6; i++)	cout << "\tS(" << i << ") " << stage_counts[0][i] << "," << stage_counts[1][i];
+	if (invasion_complete==Time)	cout << "\tINVASION COMPLETE";
 	cout << endl;
 
 	if (host_count==0)

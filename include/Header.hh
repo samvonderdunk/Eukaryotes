@@ -47,8 +47,8 @@ const int signalp_length =	1;	//As long as I am not using it, make it small.
 const int sequence_length =	20;
 
 //Grid size and host size, setting the dimensions of the model.
-const int NR = 50;
-const int NC = 50;	//Gradient is over columns.
+const int NR_max = 100;
+const int NC_max = 100;	//Gradient is over columns.
 
 //Main settings
 const int relative_replication = -1;	// -1 to turn off. If we're doing relative replication (i.e. not -1), how many nutrients are considered to be needed for replication of the entire genome. This removes selection against genome size by scaling replication length with genome length.
@@ -113,6 +113,10 @@ const int default_strain_competition = 1;
 // 2, all strains mixed (i.e. each site has equal probability to be any of the strains).
 // 3, field divided into blocks (both horizontal and vertical division, assumed to start with a square number of strains).
 
+//INVASION parameters.
+const int equilibration_time = 1000;
+const int add_finish_time = 1000;
+
 /* MUTATION PARAMETERS */
 
 // Used by nutshare_evolve option.
@@ -122,7 +126,7 @@ const double nutrient_claim_mu_delta =		0.05;
 
 const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
 
-const double symbiont_mu_factor =					1.;	//Symbiont mutation rates multiplied by this factor (except the rates that are already specified for symbiont and host separately, like transfer mutations). This factor can also be set to "-1" (no symbiont mutations, normal host mutations), or "-2" (no host mutations, normal symbiont mutations).
+const double symbiont_mu_factor =					-2;	//Symbiont mutation rates multiplied by this factor (except the rates that are already specified for symbiont and host separately, like transfer mutations). This factor can also be set to "-1" (no symbiont mutations, normal host mutations), or "-2" (no host mutations, normal symbiont mutations).
 
 const double regulator_threshold_mu = 		0.0005;
 const double regulator_activity_mu = 			0.0005;
@@ -147,12 +151,12 @@ const double house_innovation_mu = 				0.0;
 const double house_shuffle_mu = 					0.0005;
 
 //Transfer mutations.
-const double regulator_transfer_mu_HtoS = 0.0001;
-const double regulator_transfer_mu_StoH = 0.0001;
-const double bsite_transfer_mu_HtoS = 		0.0001;
-const double bsite_transfer_mu_StoH = 		0.0001;
-const double house_transfer_mu_HtoS = 		0.0001;
-const double house_transfer_mu_StoH = 		0.0001;
+const double regulator_transfer_mu_HtoS = 0.000;
+const double regulator_transfer_mu_StoH = 0.000;
+const double bsite_transfer_mu_HtoS = 		0.000;
+const double bsite_transfer_mu_StoH = 		0.000;
+const double house_transfer_mu_HtoS = 		0.000;
+const double house_transfer_mu_StoH = 		0.000;
 
 //Type mutations only active when perfect_transport == true.
 const double regulator_typeseq_mu =				0.00001;
@@ -170,6 +174,9 @@ extern int Time;
 extern int seed;
 extern unsigned long long seed_draws;
 extern string folder;
+extern int NR;
+extern int NC;
+extern int NCfull;
 
 extern string genome_files[max_input_files];
 extern string expression_files[max_input_files];
@@ -186,6 +193,8 @@ extern int TimePruneFossils;
 extern int TimeOutputFossils;
 extern int TimeSaveBackup;
 
+extern bool invasion_experiment;	//If set, do an invasion experiment, and stop simulation when the first cell hits the right-most column.
+extern int invasion_complete;
 extern bool follow_single_individual;
 extern bool follow_with_fixed_symbionts;
 extern bool trace_lineage;

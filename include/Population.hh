@@ -8,8 +8,8 @@
 class Population
 {
 	public:
-		Cell* Space[NR][NC];
-		double NutrientSpace[NR][NC];
+		Cell* Space[NR_max][NC_max];
+		double NutrientSpace[NR_max][NC_max];
 		Fossils* FossilSpace;
 		std::vector<unsigned long long> Lineage;
 
