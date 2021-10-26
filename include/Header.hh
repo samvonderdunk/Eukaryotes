@@ -202,6 +202,8 @@ extern bool log_lineage;
 extern bool mutations_on;
 extern bool well_mixing;
 
+extern int init_stage;
+
 extern double nutrient_abundance;
 extern int nutrient_competition;
 extern int strain_competition;

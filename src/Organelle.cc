@@ -164,6 +164,7 @@ void Organelle::InitialiseOrganelle(string genome, string expression, string def
 	mutant = true;
 	alive = true;
 	time_of_appearance = 0;	//We don't do anything with id_count, because we will clone the initial organelle.
+	Stage = init_stage;
 
 	G->ReadGenome(genome);
 	G->ReadExpression(expression);
