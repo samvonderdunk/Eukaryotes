@@ -297,18 +297,9 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 	int* pdup_length, * pdel_length;
 	double muf;
 
-	if (symbiont_mu_factor == -1)
-	{
-		muf = (is_symbiont?0.:1.);	//No mutations for symbionts.
-	}
-	else if(symbiont_mu_factor == -2)
-	{
-		muf = (is_symbiont?1.:0.);	//No mutations for hosts.
-	}
-	else
-	{
-		muf = (is_symbiont?symbiont_mu_factor:1.);	//Symbionts can get higher mutation rates.
-	}
+	if (symbiont_mu_factor == -1)				muf = (is_symbiont?0.:1.);	//No mutations for symbionts.
+	else if(symbiont_mu_factor == -2)		muf = (is_symbiont?1.:0.);	//No mutations for hosts.
+	else																muf = (is_symbiont?symbiont_mu_factor:1.);	//Symbionts can get higher mutation rates.
 
 	g_length = BeadList->size();
 	g_length_before_mut = g_length;
@@ -356,15 +347,15 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 			{
 				case REGULATOR:
 					MutationList->at(index) = true;
-			 		it = MutateRegulator(it, pdel_length);
+			 		it = MutateRegulator(it, pdel_length, muf);
 					break;
 				case BSITE:
 					MutationList->at(index) = true;
-					it = MutateBsite(it, pdel_length);
+					it = MutateBsite(it, pdel_length, muf);
 					break;
 				case HOUSE:
 					MutationList->at(index) = true;
-					it = MutateHouse(it, pdel_length);
+					it = MutateHouse(it, pdel_length, muf);
 					break;
 			}
 			index++;
@@ -590,13 +581,12 @@ int Genome::CountTypeAbundance(int type)
 ###########################################################################
 */
 
-Genome::i_bead Genome::MutateRegulator(i_bead it, int* pdel_length)
+Genome::i_bead Genome::MutateRegulator(i_bead it, int* pdel_length, double muf)
 {
 	Regulator* reg;
 	reg = dynamic_cast<Regulator*>(*it);
 	bool potential_type_change = false;
 	int i;
-	double muf = (is_symbiont?symbiont_mu_factor:1.);
 
 	double uu = uniform();
 	if(uu < regulator_duplication_mu*muf)
@@ -662,12 +652,11 @@ Genome::i_bead Genome::MutateRegulator(i_bead it, int* pdel_length)
 	return it;
 }
 
-Genome::i_bead Genome::MutateBsite(i_bead it, int* pdel_length)
+Genome::i_bead Genome::MutateBsite(i_bead it, int* pdel_length, double muf)
 {
 	Bsite* bsite;
 	bsite = dynamic_cast<Bsite*>(*it);
 	int i;
-	double muf = (is_symbiont?symbiont_mu_factor:1.);
 
 	double uu = uniform();
 	if(uu < bsite_duplication_mu*muf)
@@ -706,10 +695,9 @@ Genome::i_bead Genome::MutateBsite(i_bead it, int* pdel_length)
 	return it;
 }
 
-Genome::i_bead Genome::MutateHouse(i_bead it, int* pdel_length)
+Genome::i_bead Genome::MutateHouse(i_bead it, int* pdel_length, double muf)
 {
 	double uu = uniform();
-	double muf = (is_symbiont?symbiont_mu_factor:1.);
 
 	if(uu < house_duplication_mu*muf)
 	{

@@ -37,9 +37,9 @@ class Genome {
 	int CountTypeAbundance(int type);
 
 	//Mutation functions.
-	i_bead MutateRegulator(i_bead it, int* pdel_length);
-	i_bead MutateBsite(i_bead it, int* pdel_length);
-	i_bead MutateHouse(i_bead it, int* pdel_length);
+	i_bead MutateRegulator(i_bead it, int* pdel_length, double muf);
+	i_bead MutateBsite(i_bead it, int* pdel_length, double muf);
+	i_bead MutateHouse(i_bead it, int* pdel_length, double muf);
 
 	int ChangeParameter(int value);
 
