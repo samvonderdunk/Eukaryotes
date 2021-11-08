@@ -632,6 +632,16 @@ Genome::i_bead Genome::MutateRegulator(i_bead it, int* pdel_length, double muf)
 			}
 		}
 
+		for(i=0; i<signalp_length; i++)
+		{
+			if(uniform() < regulator_signalp_mu*muf)
+			{
+				if (reg->signalp[i] == false)			reg->signalp[i] = true;
+				else if (reg->signalp[i] == true)	reg->signalp[i] = false;
+				is_mutated = true;
+			}
+		}
+
 		for(i=0; i<sequence_length; i++)
 		{
 			if(uniform() < regulator_sequence_mu*muf)
