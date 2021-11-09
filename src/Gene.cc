@@ -1,6 +1,6 @@
-#include "Regulator.hh"
+#include "Gene.hh"
 
-Regulator::Regulator() : Bead()
+Gene::Gene() : Bead()
 {
 	int i;
 
@@ -15,7 +15,7 @@ Regulator::Regulator() : Bead()
 	express = 0;
 }
 
-Regulator::Regulator(int typ, int thr, int act, bool tsq[], bool sig[], bool seq[], int exp) : Bead()
+Gene::Gene(int typ, int thr, int act, bool tsq[], bool sig[], bool seq[], int exp) : Bead()
 {
 	int i;
 
@@ -31,31 +31,31 @@ Regulator::Regulator(int typ, int thr, int act, bool tsq[], bool sig[], bool seq
 }
 
 
-Regulator::Regulator(const Regulator &reg) : Bead(reg)
+Gene::Gene(const Gene &gene) : Bead(gene)
 {
 	int i;
 
-	duplicate = reg.duplicate;
-  type = reg.type;
-  threshold = reg.threshold;
-  activity = reg.activity;
-	for(i=0; i<typeseq_length; i++)	typeseq[i] = reg.typeseq[i];
-	for(i=0; i<signalp_length; i++) signalp[i] = reg.signalp[i];
-  for(i=0; i<sequence_length; i++) sequence[i] = reg.sequence[i];
-  expression = reg.expression;
-	express = reg.express;
+	duplicate = gene.duplicate;
+  type = gene.type;
+  threshold = gene.threshold;
+  activity = gene.activity;
+	for(i=0; i<typeseq_length; i++)	typeseq[i] = gene.typeseq[i];
+	for(i=0; i<signalp_length; i++) signalp[i] = gene.signalp[i];
+  for(i=0; i<sequence_length; i++) sequence[i] = gene.sequence[i];
+  expression = gene.expression;
+	express = gene.express;
 }
 
-Regulator::~Regulator()
+Gene::~Gene()
 {
 }
 
-Bead* Regulator::Clone() const
+Bead* Gene::Clone() const
 {
-  return new Regulator(*this);
+  return new Gene(*this);
 }
 
-void Regulator::RandomRegulator()
+void Gene::RandomGene()
 {
 	int i;
 
@@ -70,7 +70,7 @@ void Regulator::RandomRegulator()
 	express = 0;
 }
 
-string Regulator::Show(bool terminal, bool type_only) const
+string Gene::Show(bool terminal, bool type_only) const
 {
 	int i;
 	string Content, color_prefix, color_suffix;

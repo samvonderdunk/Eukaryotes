@@ -3,16 +3,16 @@
 
 #include "Header.hh"
 #include "Bead.hh"
-#include "Regulator.hh"
+#include "Gene.hh"
 #include "Bsite.hh"
 #include "House.hh"
 
 class Genome {
  public:
-  std::list<Bead*>* 					BeadList;
-	std::array<Regulator*,5>		RegTypeList;
+  std::list<Bead*>* 		BeadList;
+	std::array<Gene*,5>		RegTypeList;
 
-  int g_length, gnr_regulators, gnr_bsites, gnr_houses;
+  int g_length, gnr_genes, gnr_bsites, gnr_houses;
   int fork_position, terminus_position;	//position of the replication fork and the terminus, where it stops.
   bool is_mutated;
 	bool is_symbiont;
@@ -25,7 +25,7 @@ class Genome {
 
 	void UpdateGeneExpression(list<Bead*>* ExpressedGenes);
 	void NativeExpression(list<Bead*>* ExpressedGenes);
-	i_bead RegulatorCompetition(i_bead i_bsite, list<Bead*>* ExpressedGenes);
+	i_bead GeneCompetition(i_bead i_bsite, list<Bead*>* ExpressedGenes);
 
 	void ReplicateStep(double resource);
 
@@ -37,7 +37,7 @@ class Genome {
 	int CountTypeAbundance(int type);
 
 	//Mutation functions.
-	i_bead MutateRegulator(i_bead it, int* pdel_length, double muf);
+	i_bead MutateGene(i_bead it, int* pdel_length, double muf);
 	i_bead MutateBsite(i_bead it, int* pdel_length, double muf);
 	i_bead MutateHouse(i_bead it, int* pdel_length, double muf);
 
@@ -50,7 +50,7 @@ class Genome {
 	i_bead DuplicateBsite(i_bead it);
 	i_bead DuplicateHouse(i_bead it);
 
-	i_bead InventRegulator();
+	i_bead InventGene();
 	void InventBsite();
 	void InventHouse();
 
@@ -84,7 +84,7 @@ inline int Genome::WhatBead(Bead* bead) const
 {
 	if ( typeid(*bead) == typeid(House) )						return HOUSE;
 	else if( typeid(*bead) == typeid(Bsite) )				return BSITE;
-	else if( typeid(*bead) == typeid(Regulator) )		return REGULATOR;
+	else if( typeid(*bead) == typeid(Gene) )		return REGULATOR;
 	else
 	{
 		cerr << "Bead type error.\n" << endl;

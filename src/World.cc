@@ -3,7 +3,7 @@
 #include "Cell.hh"
 #include "Organelle.hh"
 #include "Genome.hh"
-#include "Regulator.hh"
+#include "Gene.hh"
 #include "Bsite.hh"
 #include "House.hh"
 #include "Bead.hh"

@@ -37,7 +37,7 @@ void Organelle::UpdateState()
 {
 	int readout[5] = {0, 0, 0, 0, 0};	//States of the five cell-cycle regulators.
 	i_bead it, it2;
-	Regulator* reg, *reg2;
+	Gene* gene, *reg2;
 	int i;
 
 	int eval_state = Stage, it_cntr;
@@ -51,13 +51,13 @@ void Organelle::UpdateState()
 	{
 		if (G->WhatBead(*it)==REGULATOR)
 		{
-			reg = dynamic_cast<Regulator*>(*it);
+			gene = dynamic_cast<Gene*>(*it);
 			if (it_cntr < nr_native_expressed || independent_regtypes)	//Native genes from the organelle itself; just look at the type.
-			//For now, under independent reg types, we assume no complication in the definition of regulatory type between compartments; something assigned to type 1 in the host, will also be counted as type 1 in the symbiont.
+			//For now, under independent gene types, we assume no complication in the definition of regulatory type between compartments; something assigned to type 1 in the host, will also be counted as type 1 in the symbiont.
 			{
-				if (reg->type < 6)
+				if (gene->type < 6)
 				{
-					readout[reg->type-1] += reg->expression;	//In case expression can ever be something beside 0 and 1 (otherwise you could just do ++).
+					readout[gene->type-1] += gene->expression;	//In case expression can ever be something beside 0 and 1 (otherwise you could just do ++).
 				}
 			}
 			else	//Leaked/transported genes from other organelles; see if they match one of the 5 key regulator types in the current organelle; if not, not interesting for the state of the cell (i.e. do nothing). If you don't want to involve foreign expression in organelle state, exclude this entire part.
@@ -66,9 +66,9 @@ void Organelle::UpdateState()
 				{
 					for (i=0; i<5; i++)
 					{
-						if (   G->BindingAffinity(reg->sequence, G->RegTypeList[i]->sequence) + abs(reg->activity - G->RegTypeList[i]->activity) <= regtype_hdist   )
+						if (   G->BindingAffinity(gene->sequence, G->RegTypeList[i]->sequence) + abs(gene->activity - G->RegTypeList[i]->activity) <= regtype_hdist   )
 						{
-							readout[i] += reg->expression;
+							readout[i] += gene->expression;
 						}
 						break;	//We assume that only 1 gene type will be matched. This means that when two type definitions come to close by mutation, only the lower gene type will be scored, probably preventing types from coming to close. NEW: actually check out PotentialTypeChange() to see that the type defs can never come within the regtype_hdist.
 					}
@@ -80,12 +80,12 @@ void Organelle::UpdateState()
 					{
 						if (G->WhatBead(*it2)==REGULATOR)
 						{
-							reg2 = dynamic_cast<Regulator*>(*it2);
-							if ( G->BindingAffinity(reg->sequence, reg2->sequence) == 0   &&   reg->activity == reg2->activity )
+							reg2 = dynamic_cast<Gene*>(*it2);
+							if ( G->BindingAffinity(gene->sequence, reg2->sequence) == 0   &&   gene->activity == reg2->activity )
 							{
 								if (reg2->type < 6)
 								{
-									readout[reg2->type-1] += reg->expression;	//Add the expression of this type to the native type that it resembles.
+									readout[reg2->type-1] += gene->expression;	//Add the expression of this type to the native type that it resembles.
 								}
 								break;	//We have found a matching gene, and possibly also read its expression (if type 1-5), so we don't have to search any further in the genome.
 							}

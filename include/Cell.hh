@@ -19,7 +19,7 @@ class Cell{
 		~Cell();
 
 		void UpdateOrganelles();
-		void RegulatorTransport();	//Including leakage & all transport at this point.
+		void GeneTransport();	//Including leakage & all transport at this point.
 
 		void DNATransferToHost();
 		void DNATransfertoSymbiont(Organelle* Symbiont);

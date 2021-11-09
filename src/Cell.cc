@@ -41,7 +41,7 @@ void Cell::UpdateOrganelles()
 	}
 
 
-	RegulatorTransport();	//Move around expression products.
+	GeneTransport();	//Move around expression products.
 
 	if (!(host_growth == 1 && Host->Stage == 4))	//If waiting is free (option 1), host stays in M 'forever'.
 	{
@@ -60,11 +60,11 @@ void Cell::UpdateOrganelles()
 	}
 }
 
-void Cell::RegulatorTransport()
+void Cell::GeneTransport()
 {
 	i_bead it, it2;
 	int s, it_cntr;
-	Regulator* reg;
+	Gene* gene;
 
 	for (s=0; s<nr_symbionts; s++)
 	{
@@ -72,8 +72,8 @@ void Cell::RegulatorTransport()
 		it = Symbionts->at(s)->ExpressedGenes->begin();
 		while (it != Symbionts->at(s)->ExpressedGenes->end())
 		{
-			reg = dynamic_cast<Regulator*>(*it);
-			if (perfect_transport && reg->signalp[0] == false)
+			gene = dynamic_cast<Gene*>(*it);
+			if (perfect_transport && gene->signalp[0] == false)
 			{
 				it2 = it;
 				it--;
@@ -92,8 +92,8 @@ void Cell::RegulatorTransport()
 		it_cntr = 0;
 		while (it_cntr < Host->nr_native_expressed)
 		{
-			reg = dynamic_cast<Regulator*>(*it);
-			if (perfect_transport && reg->signalp[0] == true)
+			gene = dynamic_cast<Gene*>(*it);
+			if (perfect_transport && gene->signalp[0] == true)
 			{
 				if (s == nr_symbionts-1)	//Only erase the expressed gene from the host if we get to the last symbiont (already transported to all other symbionts).
 				{
@@ -241,7 +241,7 @@ Cell::i_bead Cell::TransferGene(i_bead it, Organelle* Source, Organelle* Target,
 				ii = Source->G->BeadList->erase(ii);
 				Source->G->g_length--;
 				Source->G->terminus_position--;
-				if (wb==REGULATOR)	Source->G->gnr_regulators--;
+				if (wb==REGULATOR)	Source->G->gnr_genes--;
 				if (wb==BSITE)			Source->G->gnr_bsites--;
 			}
 			else
@@ -265,7 +265,7 @@ Cell::i_bead Cell::TransferGene(i_bead it, Organelle* Source, Organelle* Target,
 
 	//Increment the number of beads and the number of genes.
 	Target->G->g_length+=copy_length;
-	Target->G->gnr_regulators++;
+	Target->G->gnr_genes++;
 	Target->G->gnr_bsites+=copy_length-1;	//The length of the whole transferred piece except for the gene (i.e. you will always transfer 1 gene with x bsites and nothing else).
 	Target->G->is_mutated = true;
 	Target->mutant = true;
