@@ -131,31 +131,27 @@ void Cell::DNATransferToHost()
 			it = Symbionts->at(s)->G->BeadList->begin();
 			while (it != Symbionts->at(s)->G->BeadList->end())
 			{
-				switch ( Symbionts->at(s)->G->WhatBead(*it) )
+				if ( (*it)->kind == HOUSE || (*it)->kind == BSITE )
 				{
-					case REGULATOR:
-						uu = uniform();
-						if (Symbionts->at(s)->Stage >= 2)
-						{
-							if (uu < regulator_transfer_mu_StoH)				it = TransferGene(it, Symbionts->at(s), Host, false, false);
-							else if (uu < 2*regulator_transfer_mu_StoH)	it = TransferGene(it, Symbionts->at(s), Host, true, false);
-							else	it++;
-						}
-						else
-						{
-							if (uu < regulator_transfer_mu_StoH)				it = TransferGene(it, Symbionts->at(s), Host, false, true);
-							else if (uu < 2*regulator_transfer_mu_StoH)	it = TransferGene(it, Symbionts->at(s), Host, true, true);
-							else	it++;
-						}
-						break;
-					case BSITE:
-						if (uniform() < bsite_transfer_mu_StoH) TransferBead(it, Host);
-						it++;
-						break;
-					case HOUSE:
-						if (uniform() < house_transfer_mu_StoH)	TransferBead(it, Host);
-						it++;
-						break;
+					if ( uniform() < mu_transfer_StoH[(*it)->kind] )	TransferBead(it, Host);
+					it++;
+					break;
+				}
+				else if ( (*it)->kind == REGULATOR || (*it)->kind == EFFECTOR )
+				{
+					uu = uniform();
+					if (Symbionts->at(s)->Stage >= 2)
+					{
+						if (uu < mu_transfer_StoH[(*it)->kind])					it = TransferGene(it, Symbionts->at(s), Host, false, false);
+						else if (uu < 2*mu_transfer_StoH[(*it)->kind])	it = TransferGene(it, Symbionts->at(s), Host, true, false);
+						else	it++;
+					}
+					else
+					{
+						if (uu < mu_transfer_StoH[(*it)->kind])					it = TransferGene(it, Symbionts->at(s), Host, false, true);
+						else if (uu < 2*mu_transfer_StoH[(*it)->kind])	it = TransferGene(it, Symbionts->at(s), Host, true, true);
+						else	it++;
+					}
 				}
 			}
 		}
@@ -168,31 +164,25 @@ void Cell::DNATransfertoSymbiont(Organelle* Symbiont)
 	i_bead it = Host->G->BeadList->begin();
 	while( it != Host->G->BeadList->end() )
 	{
-		switch ( Host->G->WhatBead(*it) )
+		if ( (*it)->kind == HOUSE || (*it)->kind == BSITE )
 		{
-			case REGULATOR:
-				uu = uniform();
-				if (Host->Stage >= 2)
-				{
-					if (uu < regulator_transfer_mu_HtoS) 				it = TransferGene(it, Host, Symbiont, false, false);
-					else if (uu < 2*regulator_transfer_mu_HtoS)	it = TransferGene(it, Host, Symbiont, true, false);
-					else	it++;
-				}
-				else
-				{
-					if (uu < regulator_transfer_mu_HtoS)				it = TransferGene(it, Host, Symbiont, false, true);
-					else if (uu < 2*regulator_transfer_mu_HtoS)	it = TransferGene(it, Host, Symbiont, true, true);
-					else	it++;
-				}
-				break;
-			case BSITE:
-				if (uniform() < bsite_transfer_mu_HtoS)	TransferBead(it, Symbiont);
-				it++;
-				break;
-			case HOUSE:
-				if (uniform() < house_transfer_mu_HtoS)	TransferBead(it, Symbiont);
-				it++;
-				break;
+			if (uniform() < mu_transfer_HtoS[(*it)->kind])	TransferBead(it, Symbiont);
+		}
+		else if ( (*it)->kind == REGULATOR || (*it)->kind == EFFECTOR )
+		{
+			uu = uniform();
+			if (Host->Stage >= 2)
+			{
+				if (uu < mu_transfer_HtoS[(*it)->kind]) 				it = TransferGene(it, Host, Symbiont, false, false);
+				else if (uu < 2*mu_transfer_HtoS[(*it)->kind])	it = TransferGene(it, Host, Symbiont, true, false);
+				else	it++;
+			}
+			else
+			{
+				if (uu < mu_transfer_HtoS[(*it)->kind])					it = TransferGene(it, Host, Symbiont, false, true);
+				else if (uu < 2*mu_transfer_HtoS[(*it)->kind])	it = TransferGene(it, Host, Symbiont, true, true);
+				else	it++;
+			}
 		}
 	}
 }
@@ -200,7 +190,7 @@ void Cell::DNATransfertoSymbiont(Organelle* Symbiont)
 
 Cell::i_bead Cell::TransferGene(i_bead it, Organelle* Source, Organelle* Target, bool include_distal, bool cut_and_paste)
 {
-	int copy_length, wb;
+	int copy_length;
 	i_bead insertsite, first, last, ii;
 	list<Bead*> BeadListTemp;	//Create a new temporary genome list.
 
@@ -216,7 +206,7 @@ Cell::i_bead Cell::TransferGene(i_bead it, Organelle* Source, Organelle* Target,
 		ii = BeadListTemp.begin();	//Don't transfer the household genes, because these will result in immediate fitness penalties.
 		while (ii != BeadListTemp.end())
 		{
-			if (Source->G->WhatBead(*ii)==HOUSE)
+			if ((*ii)->kind == HOUSE)
 			{
 				delete (*ii);
 				ii = BeadListTemp.erase(ii);
@@ -234,15 +224,15 @@ Cell::i_bead Cell::TransferGene(i_bead it, Organelle* Source, Organelle* Target,
 		ii = first;
 		while (ii != last)
 		{
-			wb = Source->G->WhatBead(*ii);
-			if (wb!=HOUSE)	//Houses are never transferred, also not with include_distal.
+			if ((*ii)->kind != HOUSE)	//Houses are never transferred, also not with include_distal.
 			{
 				delete (*ii);
 				ii = Source->G->BeadList->erase(ii);
 				Source->G->g_length--;
 				Source->G->terminus_position--;
-				if (wb==REGULATOR)	Source->G->gnr_genes--;
-				if (wb==BSITE)			Source->G->gnr_bsites--;
+				if ((*ii)->kind == BSITE)						Source->G->gnr_bsites--;
+				else if ((*ii)->kind == REGULATOR)	Source->G->gnr_regulators--;
+				else if ((*ii)->kind == EFFECTOR)		Source->G->gnr_effectors--;
 			}
 			else
 			{
@@ -265,15 +255,14 @@ Cell::i_bead Cell::TransferGene(i_bead it, Organelle* Source, Organelle* Target,
 
 	//Increment the number of beads and the number of genes.
 	Target->G->g_length+=copy_length;
-	Target->G->gnr_genes++;
+	if ((*insertsite)->kind == REGULATOR)			Target->G->gnr_regulators++;
+	else if((*insertsite)->kind == EFFECTOR)	Target->G->gnr_effectors++;
 	Target->G->gnr_bsites+=copy_length-1;	//The length of the whole transferred piece except for the gene (i.e. you will always transfer 1 gene with x bsites and nothing else).
 	Target->G->is_mutated = true;
 	Target->mutant = true;
 	Target->G->terminus_position = Target->G->g_length;
 	return last;
 }
-
-
 
 void Cell::TransferBead(i_bead it, Organelle* Target)
 {
@@ -282,7 +271,7 @@ void Cell::TransferBead(i_bead it, Organelle* Target)
 	Target->G->BeadList->insert(insertsite, bead);
 	Target->G->g_length++;
 	Target->G->terminus_position = Target->G->g_length;
-	switch ( Target->G->WhatBead(bead) )
+	switch ( bead->kind )
 	{
 		case BSITE:
 			Target->G->gnr_bsites++;

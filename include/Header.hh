@@ -30,9 +30,11 @@ using namespace std;
 // #include "/home/sam/Programmes/nvwa-1.1/nvwa/debug_new.h"
 
 #define toDigit(c) (c-'0')  // Converts char to digit
-#define REGULATOR 0
+
+#define HOUSE 0
 #define BSITE 1
-#define HOUSE 2
+#define REGULATOR 2
+#define EFFECTOR 3
 
 const int max_input_files=20;
 
@@ -51,12 +53,12 @@ const int NR_max = 100;
 const int NC_max = 100;	//Gradient is over columns.
 
 //Main settings
-const int relative_replication = -1;	// -1 to turn off. If we're doing relative replication (i.e. not -1), how many nutrients are considered to be needed for replication of the entire genome. This removes selection against genome size by scaling replication length with genome length.
+const int relative_replication = -1;	// -1 to turn off. If we're doing relative replication (i.e. not -1), how many nutrients are considered to be needed for replication of the entire genome. This removes selection against genome size by scaling replication length with a given genome length.
 const bool gene_replication = false;	//Only genes take time to replicate.
 const bool moran_symbionts = false;	// If true, hosts evolve with constant symbiont numbers (i.e. Moran process), at the level that they are initialised.
 const bool safe_symbiont_distribution = false;	//If true, it means that daughter cell can end up with no less than 1 symbiont (if initial division says 0, then copy one of the symbionts from the other daughter). Symbionts can still be lost by their own fault (basal death and failed division). Only makes sense without Moran process.
 const int symbiont_overgrowth = -1;	//The maximal number of symbiont spots. If value is set to -1, there is no max. and no overgrowth (new symbionts are always appended). If value is positive, there is overgrowth (symbiont division always carries a probability to overgrow a colleague, and this probability equals 1 when nr_symbionts==symbiont_overgrowth).
-const bool host_growth = 0;
+const int host_growth = 0;
 //Options for host growth / cell-cycle fitness criterion.
 // 0, as in Prokaryotes: hosts overgrow one another, dividing as soon as they reach M.
 // 1, hosts wait for empty sites, but waiting is free (expression unimportant once they reach M).
@@ -65,12 +67,12 @@ const bool perfect_transport = true;	//Genes with a 0 in their signalp, are alwa
 const bool independent_regtypes = false;	//Independent mutation of gene types, a break in the evolutionary dynamics with respect to Prokaryotes. In E. viridis I, we do perfect_transport w/o independent_regtypes; in E. viridis II, we do both.
 const bool regtypes_by_regulation = true;	//Each organelle carries its own gene type definition that can mutate, and which is used to check the type of incoming expressed genes.
 const bool nutshare_evolve = false;	//Host can evolve how much nutrients it claims from the environment, passing on the remaining fraction to its symbionts (equally divided among these). Each host has an identical claim on environmental nutrients, i.e. independent of how many symbionts it has. This corresponds to nutrient competition 4.
-
-//Geney type mutations.
-const int regtype_hdist = 0;	//Maximal hamming distance to still be called this particular gene type. When this value is set to 0, we have the same case as in Prokaryotes.
+const int seq_hdist = 0;	//Maximal hamming distance to still be called this particular gene type. When this value is set to 0, we have the same case as in Prokaryotes.
+const int typeseq_hdist = 0;	//Maximal hamming distance to predefined type sequences further below. Used to define effectors (if used) or regulators from their typeseq (if this is the chosen option; otherwise the above hdist is used).
+const bool functional_effectors = true;	//Use effectors to define cell-cycle stage. You can leave the definition of regulators (i.e. regtypes_by_regulation and independent_regtypes) as it is, but the types 1-5 lose their meaning.
 
 //Genome parameters
-const int nr_household_genes =			50;
+const int nr_household_genes =			26;
 const double leakage_to_host =			0.00;
 const double leakage_to_symbiont =	0.00;
 
@@ -128,28 +130,19 @@ const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
 
 const double symbiont_mu_factor =					1.;	//Symbiont mutation rates multiplied by this factor (except the rates that are already specified for symbiont and host separately, like transfer mutations). This factor can also be set to "-1" (no symbiont mutations, normal host mutations), or "-2" (no host mutations, normal symbiont mutations).
 
-const double regulator_threshold_mu = 		0.0005/3;
-const double regulator_activity_mu = 			0.0005/3;
-const double regulator_sequence_mu = 			0.0001/3;
-const double regulator_signalp_mu =				0.00001;
+//All mutation rates uphold the order that defines the bead types (HOUSE, BSITE, REGULATOR, EFFECTOR). Not everything is even applicable to all types, but this makes it neater I think.
+const double mu_duplication[4] =		{0.00010/3, 0.00050/3, 0.00050/3, 0.00050/3};
+const double mu_deletion[4] =				{0.00010/3, 0.00050/3, 0.00050/3, 0.00050/3};
+const double mu_shuffle[4] =				{0.00050/3, 0.00050/3, 0.00050/3, 0.00050/3};
+const double mu_invention[4] =			{0.00000/1, 0.00500/3, 0.00050/3, 0.00050/3};
+const double mu_threshold[4] =			{0.00050/3, 0.00050/3, 0.00050/3, 0.00050/3};
+const double mu_signalp[4] =				{0.00001/1, 0.00001/1, 0.00001/1, 0.00001/1};
+const double mu_typeseq[4] =				{0.00001/1, 0.00001/1, 0.00001/1, 0.00001/1};
+const double mu_sequence[4] =				{0.00010/3, 0.00010/3, 0.00010/3, 0.00010/3};
+const double mu_activity[4] =				{0.00050/3, 0.00050/3, 0.00050/3, 0.00050/3};
 
-const double bsite_sequence_mu = 					0.0001/3;
-const double bsite_activity_mu = 					0.0005/3;
-
-const double regulator_duplication_mu = 	0.0005/3;
-const double regulator_deletion_mu = 			0.0005/3;
-const double regulator_innovation_mu = 		0.0005/3;
-const double regulator_shuffle_mu = 			0.0005/3;
-
-const double bsite_duplication_mu = 			0.0005/3;
-const double bsite_deletion_mu = 					0.0005/3;
-const double bsite_innovation_mu = 				0.005/3;
-const double bsite_shuffle_mu = 					0.0005/3;
-
-const double house_duplication_mu = 			0.0001/3;
-const double house_deletion_mu = 					0.0001/3;
-const double house_innovation_mu = 				0.0;
-const double house_shuffle_mu = 					0.0005/3;
+const double mu_transfer_StoH[4] =	{0.00001/1, 0.00001/1, 0.00001/1, 0.00001/1};
+const double mu_transfer_HtoS[4] =	{0.00001/1, 0.00001/1, 0.00001/1, 0.00001/1};
 
 //Transfer mutations.
 const double regulator_transfer_mu_HtoS = 0.00001;
@@ -159,15 +152,23 @@ const double bsite_transfer_mu_StoH = 		0.00001;
 const double house_transfer_mu_HtoS = 		0.00001;
 const double house_transfer_mu_StoH = 		0.00001;
 
-//Type mutations only active when perfect_transport == true.
-const double regulator_typeseq_mu =				0.00001;
-const bool regtype[5][typeseq_length] =
+//Typeseq definitions. Used to define Regulators if independent_regtypes == True; Always used to define Effector types (i.e. only the first four applicable).
+const bool typeseq_defs[5][typeseq_length] =
 {
 	true, false, true, false, true, false, true, false, true, false,
 	false, false, true, true, false, false, true, true, false, false,
 	false, false, false, true, true, true, false, false, false, true,
 	true, true, true, true, false, false, false, false, true, true,
 	false, false, false, false, false, true, true, true, true, true
+};
+
+//The current definition of the stages.
+const bool StageTargets[4][5] = {
+  true, false, false, true, true,       // 1 0 0 1 1    G1
+  false, false, true, false, true,      // 0 0 1 0 1    S
+  false, true, false, false, false,     // 0 1 0 0 0    G2
+  true, false, false, false, false,     // 1 0 0 0 0    M
+                                        // 1-CtrA 2-GcrA 3-DnaA 4-CcrM 5-SciP
 };
 
 //Variables defined in World.cc
@@ -221,13 +222,5 @@ inline int uniform_shuffle (int i)
 	return (int)(RAND_MAX*uniform()) % i;
 }
 
-//The current definition of the stages.
-const bool StageTargets[4][5] = {
-  true, false, false, true, true,       // 1 0 0 1 1    G1
-  false, false, true, false, true,      // 0 0 1 0 1    S
-  false, true, false, false, false,     // 0 1 0 0 0    G2
-  true, false, false, false, false,     // 1 0 0 0 0    M
-                                        // 1-CtrA 2-GcrA 3-DnaA 4-CcrM 5-SciP
-};
 
 #endif

@@ -35,9 +35,10 @@ Organelle::~Organelle()
 
 void Organelle::UpdateState()
 {
-	int readout[5] = {0, 0, 0, 0, 0};	//States of the five cell-cycle regulators.
+	int readout[5] = {0, 0, 0, 0, 0};	//States of the five cell-cycle regulators. Overloaded with the states of effector genes if they are functional.
 	i_bead it, it2;
-	Gene* gene, *reg2;
+	Gene* gene;
+	Regulator* reg, * reg2;
 	int i;
 
 	int eval_state = Stage, it_cntr;
@@ -49,44 +50,38 @@ void Organelle::UpdateState()
 	it_cntr = 0;
 	while (it != ExpressedGenes->end())
 	{
-		if (G->WhatBead(*it)==REGULATOR)
+		if ( ((*it)->kind==REGULATOR && !functional_effectors) || ((*it)->kind==EFFECTOR && functional_effectors) )
 		{
 			gene = dynamic_cast<Gene*>(*it);
-			if (it_cntr < nr_native_expressed || independent_regtypes)	//Native genes from the organelle itself; just look at the type.
-			//For now, under independent gene types, we assume no complication in the definition of regulatory type between compartments; something assigned to type 1 in the host, will also be counted as type 1 in the symbiont.
+			if (it_cntr < nr_native_expressed || independent_regtypes || functional_effectors)	//Native genes from the organelle itself; just look at the type.
 			{
-				if (gene->type < 6)
-				{
-					readout[gene->type-1] += gene->expression;	//In case expression can ever be something beside 0 and 1 (otherwise you could just do ++).
-				}
+				if (gene->type < 6)			readout[gene->type-1] += gene->expression;
 			}
-			else	//Leaked/transported genes from other organelles; see if they match one of the 5 key regulator types in the current organelle; if not, not interesting for the state of the cell (i.e. do nothing). If you don't want to involve foreign expression in organelle state, exclude this entire part.
+			else	//Foreign genes. If we are doing regtypes_by_regulation, check whether the foreign gene matches the definition of one of the regulatory types of the current organelle. Else, there is a more primitive procedure that checks if the foreign gene matches any of the currently present regulatory genes in the current organelle.
 			{
+				reg = dynamic_cast<Regulator*>(gene);	//No effectors beyond this point.
 				if (regtypes_by_regulation)
 				{
 					for (i=0; i<5; i++)
 					{
-						if (   G->BindingAffinity(gene->sequence, G->RegTypeList[i]->sequence) + abs(gene->activity - G->RegTypeList[i]->activity) <= regtype_hdist   )
+						if (   reg->BindingAffinity(reg->sequence, G->RegTypeList[i]->sequence) + abs(reg->activity - G->RegTypeList[i]->activity) <= seq_hdist   )
 						{
-							readout[i] += gene->expression;
+							readout[i] += reg->expression;
 						}
 						break;	//We assume that only 1 gene type will be matched. This means that when two type definitions come to close by mutation, only the lower gene type will be scored, probably preventing types from coming to close. NEW: actually check out PotentialTypeChange() to see that the type defs can never come within the regtype_hdist.
 					}
 				}
-				else	//Primitive carry-over of Prokaryotes: check if you resemble one of the other genes currently in the genome that you end up in. This is primitive, because you could never fully replace a gene type, only function like already existing gene types.
+				else
 				{
 					it2 = G->BeadList->begin();
 					while (it2 != G->BeadList->end())
 					{
-						if (G->WhatBead(*it2)==REGULATOR)
+						if ((*it2)->kind==REGULATOR)
 						{
-							reg2 = dynamic_cast<Gene*>(*it2);
-							if ( G->BindingAffinity(gene->sequence, reg2->sequence) == 0   &&   gene->activity == reg2->activity )
+							reg2 = dynamic_cast<Regulator*>(*it2);
+							if ( reg->BindingAffinity(reg->sequence, reg2->sequence) == 0   &&   reg->activity == reg2->activity )
 							{
-								if (reg2->type < 6)
-								{
-									readout[reg2->type-1] += gene->expression;	//Add the expression of this type to the native type that it resembles.
-								}
+								if (reg2->type < 6)			readout[reg2->type-1] += reg->expression;	//Add the expression of this type to the native type that it resembles.
 								break;	//We have found a matching gene, and possibly also read its expression (if type 1-5), so we don't have to search any further in the genome.
 							}
 						}
@@ -109,9 +104,24 @@ int Organelle::EvaluateState(int eval_state, int* readout)
 {
 	int i, match=0;
 
-	for (i=0;i<5;i++)
+	for (i=0; i<5; i++)
 	{
-		if ((readout[i]>0) == StageTargets[eval_state][i])	match++;
+		if (functional_effectors)	//Evaluate using effectors.
+		{
+			if (i == eval_state)
+			{
+				if (readout[i]>0)		match+=2;	//So that we still get a total match of 5 if you have the correct effector expression.
+			}
+			else if (i<4)	//There are only 4 effector types (1 for each stage).
+			{
+				if (readout[i]==0)	match++;
+			}
+		}
+
+		else	//Evaluate using regulatory genes.
+		{
+			if ((readout[i]>0) == StageTargets[eval_state][i])	match++;
+		}
 	}
 
 	return match;
@@ -125,7 +135,7 @@ void Organelle::Mitosis(Organelle* parent, unsigned long long id_count)
 	parent->Stage = 0;
 	parent->privilige = false;
 
-	if (house_duplication_mu > 0.0 || house_deletion_mu > 0.0)	fitness = 1. - abs(nr_household_genes - G->gnr_houses) / (float)10;
+	if (mu_duplication[HOUSE] > 0.0 || mu_deletion[HOUSE] > 0.0)	fitness = 1. - abs(nr_household_genes - G->gnr_houses) / (float)10;
 
 	time_of_appearance = Time;
 	fossil_id = id_count;

@@ -6,7 +6,8 @@ Genome::Genome()
 	BeadList = new list<Bead*>();
 	RegTypeList = {NULL, NULL, NULL, NULL, NULL};
 	g_length=0;
-	gnr_genes=0;
+	gnr_regulators=0;
+	gnr_effectors=0;
 	gnr_bsites=0;
 	gnr_houses=0;
 	fork_position=0;
@@ -41,19 +42,19 @@ Genome::~Genome()
 
 void Genome::UpdateGeneExpression(list<Bead*>* ExpressedGenes)
 {
-	i_bead it, i_gene;
-	int wb, it_cntr;
+	i_bead it, i_reg;
+	int it_cntr;
 	double cum_effects = 0.;
-	Gene* gene;
 	Bsite* bs;
+	Gene* gene;
+	Regulator* reg;
 
 	//Determine regulatory dynamics and put result into the express variable of each gene (Gene or otherwise...).
 	it = BeadList->begin();
 	it_cntr = 0;
 	while (it != BeadList->end())
 	{
-		wb = WhatBead(*it);
-		if (wb==REGULATOR)
+		if ((*it)->kind==REGULATOR || (*it)->kind==EFFECTOR)
 		{
 			gene = dynamic_cast<Gene*>(*it);
 
@@ -61,14 +62,14 @@ void Genome::UpdateGeneExpression(list<Bead*>* ExpressedGenes)
 			gene->express = max(min((int)cum_effects+1,1),0);	//For the +1, see explanation of the gene threshold in Gene.hh
 			cum_effects = 0.;
 		}
-		else if (wb==BSITE)
+		else if ((*it)->kind==BSITE)
 		{
-			i_gene = GeneCompetition(it, ExpressedGenes);
-			if (i_gene != BeadList->end())
+			i_reg = RegulatorCompetition(it, ExpressedGenes);
+			if (i_reg != BeadList->end())
 			{
-				gene = dynamic_cast<Gene*>(*i_gene);
+				reg = dynamic_cast<Regulator*>(*i_reg);
 				bs = dynamic_cast<Bsite*>(*it);
-				cum_effects += bs->activity * gene->activity;
+				cum_effects += bs->activity * reg->activity;
 			}
 		}
 		it++;
@@ -80,7 +81,7 @@ void Genome::UpdateGeneExpression(list<Bead*>* ExpressedGenes)
 	it = BeadList->begin();
 	while (it != BeadList->end())
 	{
-		if (WhatBead(*it)==REGULATOR)
+		if ((*it)->kind==REGULATOR || (*it)->kind==EFFECTOR)
 		{
 			gene = dynamic_cast<Gene*>(*it);
 			gene->expression = gene->express;
@@ -98,7 +99,7 @@ void Genome::NativeExpression(list<Bead*>* ExpressedGenes)
 	it = BeadList->begin();
 	while (it != BeadList->end())
 	{
-		if (WhatBead(*it)==REGULATOR)
+		if ((*it)->kind==REGULATOR || (*it)->kind==EFFECTOR)
 		{
 			//See similar potential issue in UpdateExpression() and in BindingAffinity().
 			Gene* gene = dynamic_cast<Gene*>(*it);
@@ -110,7 +111,7 @@ void Genome::NativeExpression(list<Bead*>* ExpressedGenes)
 
 
 
-Genome::i_bead Genome::GeneCompetition(i_bead i_bsite, list<Bead*>* ExpressedGenes)
+Genome::i_bead Genome::RegulatorCompetition(i_bead i_bsite, list<Bead*>* ExpressedGenes)
 {
 	//Optimise this, many possibilities:
 	//	--> inline functions.
@@ -119,7 +120,7 @@ Genome::i_bead Genome::GeneCompetition(i_bead i_bsite, list<Bead*>* ExpressedGen
 	//	--> obtain binding affinity from some stored variable or look-up in hash-table?
 	//	--> sort the affinities before rolling the die to shorten the second part.
 	Bsite* bsite = dynamic_cast<Bsite*>(*i_bsite);
-	Gene* gene;
+	Regulator* reg;
 	i_bead it;
 	double affinity, p_bind, z_partition = 1.;
 
@@ -127,9 +128,12 @@ Genome::i_bead Genome::GeneCompetition(i_bead i_bsite, list<Bead*>* ExpressedGen
 	it = ExpressedGenes->begin();
 	while (it != ExpressedGenes->end())
 	{
-		gene = dynamic_cast<Gene*>(*it);
-		affinity = (double)BindingAffinity(bsite->sequence, gene->sequence);
-		z_partition += gene->expression * k_zero * exp(affinity * epsilon);
+		if ((*it)->kind == REGULATOR)
+		{
+			reg = dynamic_cast<Regulator*>(*it);
+			affinity = (double)reg->BindingAffinity(bsite->sequence, reg->sequence);
+			z_partition += reg->expression * k_zero * exp(affinity * epsilon);
+		}
 		it++;
 	}
 
@@ -141,13 +145,16 @@ Genome::i_bead Genome::GeneCompetition(i_bead i_bsite, list<Bead*>* ExpressedGen
 	it = ExpressedGenes->begin();
 	while (it != ExpressedGenes->end())
 	{
-		gene = dynamic_cast<Gene*>(*it);
-		affinity = (double)BindingAffinity(bsite->sequence, gene->sequence);
-		p_bind = ( gene->expression * k_zero * exp(affinity * epsilon) ) / z_partition;
-		die_roll -= p_bind;
-		if (die_roll <= 0.)
+		if ((*it)->kind == REGULATOR)
 		{
-			return it;
+			reg = dynamic_cast<Regulator*>(*it);
+			affinity = (double)reg->BindingAffinity(bsite->sequence, reg->sequence);
+			p_bind = ( reg->expression * k_zero * exp(affinity * epsilon) ) / z_partition;
+			die_roll -= p_bind;
+			if (die_roll <= 0.)
+			{
+				return it;
+			}
 		}
 		it++;
 	}
@@ -162,7 +169,7 @@ void Genome::ReplicateStep(double resource)
 {
 	i_bead it, start, end;
 	Bead* bead;
-	int gene_length = 0, repl_remaining_steps, wb;
+	int gene_length = 0, repl_remaining_steps;
 	double res_int, res_fract, fract_repl_remaining;
 
 	if (relative_replication > 0)	//Modify resource to represent relative replication. Still, the fractional part of the resulting (normalised) resource is seen as a probability.
@@ -184,8 +191,8 @@ void Genome::ReplicateStep(double resource)
 	//This loop sets "end".
 	while ((distance(BeadList->begin(),end) < terminus_position) && repl_remaining_steps > 0)	//The maximal position of end is defined by pos_anti_ori - 1 (pointing to the last bead of the parental genome). pos_anti_ori holds the number of genes in the parental genome, so if your distance to the first bead is pos_anti_ori, you are actually one past the last bead of the parental genome. The first replication step, this will point to NULL, but in consecutive steps it will point to a child bead; we want to point to an end point that does not change, hence the last bead of the parental genome.
 	{
-		if(WhatBead(*end)==REGULATOR)	repl_remaining_steps--;	//Genes for sure count for the repl_step_size.
-		else if(!gene_replication)	repl_remaining_steps--;	//TFBSs count if replicate_entire_genes is set to false.
+		if((*it)->kind==REGULATOR || (*it)->kind==EFFECTOR)	repl_remaining_steps--;	//Genes for sure count for the repl_step_size.
+		else if(!gene_replication)				repl_remaining_steps--;	//TFBSs count if replicate_entire_genes is set to false.
 		gene_length++;
 		end++;
 	}
@@ -197,20 +204,22 @@ void Genome::ReplicateStep(double resource)
 	while (it != BeadList->end())
 	{
 		//Copy bead.
-		wb = WhatBead(*it);
 		bead=(*it)->Clone();
 		(*BeadList).push_back(bead);
 		g_length++;
-		switch (wb)
+		switch ((*it)->kind)
 		{
-			case REGULATOR:
-				gnr_genes++;
+			case HOUSE:
+				gnr_houses++;
 				break;
 			case BSITE:
 				gnr_bsites++;
 				break;
-			case HOUSE:
-				gnr_houses++;
+			case REGULATOR:
+				gnr_regulators++;
+				break;
+			case EFFECTOR:
+				gnr_effectors++;
 				break;
 		}
 
@@ -249,7 +258,7 @@ void Genome::SplitGenome(Genome* parentG)	//Used to split a genome upon division
 
 	BeadList->splice(BeadList->begin(), *parentG->BeadList, i_split, parentG->BeadList->end());
 
-	for(i=0; i<5; i++)		RegTypeList[i] = new Gene(*parentG->RegTypeList[i]);
+	for(i=0; i<5; i++)		RegTypeList[i] = new Regulator(*parentG->RegTypeList[i]);
 
 	DevelopChildrenGenomes(parentG);
 }
@@ -263,16 +272,19 @@ void Genome::AbortChildGenome()
 
 	while (it != BeadList->end())
 	{
-		switch ( WhatBead(*it) )
+		switch ( (*it)->kind )
 		{
-			case REGULATOR:
-				gnr_genes--;
+			case HOUSE:
+				gnr_houses--;
 				break;
 			case BSITE:
 				gnr_bsites--;
 				break;
-			case HOUSE:
-				gnr_houses--;
+			case REGULATOR:
+				gnr_regulators--;
+				break;
+			case EFFECTOR:
+				gnr_effectors--;
 				break;
 		}
 		g_length--;
@@ -293,7 +305,7 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 {
 	i_bead it;
 	vector<bool>* MutationList;
-	int wb, del_length, dup_length, index, g_length_before_mut;
+	int del_length, dup_length, index, g_length_before_mut;
 	int* pdup_length, * pdel_length;
 	double muf;
 
@@ -308,16 +320,19 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 	it = BeadList->begin();
 	while (it != BeadList->end())
 	{
-		switch ( WhatBead(*it) )
+		switch ( (*it)->kind )
 		{
-			case REGULATOR:
-				parentG->gnr_genes--;
+			case HOUSE:
+				parentG->gnr_houses--;
 				break;
 			case BSITE:
 				parentG->gnr_bsites--;
 				break;
-			case HOUSE:
-				parentG->gnr_houses--;
+			case REGULATOR:
+				parentG->gnr_regulators--;
+				break;
+			case EFFECTOR:
+				parentG->gnr_effectors--;
 				break;
 		}
 		parentG->g_length--;
@@ -326,9 +341,10 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 
 	parentG->fork_position = 0;
 	//Copy gene numbers, mutations happen next.
-	gnr_genes = parentG->gnr_genes;
-	gnr_bsites = parentG->gnr_bsites;
 	gnr_houses = parentG->gnr_houses;
+	gnr_bsites = parentG->gnr_bsites;
+	gnr_regulators = parentG->gnr_regulators;
+	gnr_effectors = parentG->gnr_effectors;
 
 	if (mutations_on)	//START mutations.
 	{
@@ -338,26 +354,13 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 		pdel_length = &del_length;
 		index = 0;
 
-		MutationList = new vector<bool>(g_length, false);
 		//Mutate beads and set gnr_genes.
+		MutationList = new vector<bool>(g_length, false);
 		it = BeadList->begin();
 		while (it != BeadList->end())
 		{
-			switch ( WhatBead(*it) )
-			{
-				case REGULATOR:
-					MutationList->at(index) = true;
-			 		it = MutateGene(it, pdel_length, muf);
-					break;
-				case BSITE:
-					MutationList->at(index) = true;
-					it = MutateBsite(it, pdel_length, muf);
-					break;
-				case HOUSE:
-					MutationList->at(index) = true;
-					it = MutateHouse(it, pdel_length, muf);
-					break;
-			}
+			MutationList->at(index) = true;
+			it = Mutation(it, pdel_length, muf);
 			index++;
 		}
 
@@ -372,29 +375,12 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 		MutationList = NULL;
 
 		//Look for duplicated genes and tfbs's, which we will actually duplicate here.
-		//g_length is updated inside functions, gnr_genes etc. are updated here on the outside; except gnr_bsites inside DuplicateGene.
 		it = BeadList->begin();
 		while (it != BeadList->end())
 		{
 			if ((*it)->duplicate)
 			{
-				switch ( WhatBead(*it) )
-				{
-					case REGULATOR:
-						it=DuplicateGene(it, pdup_length);;
-						gnr_genes++;
-						break;
-					case BSITE:
-						it=DuplicateBsite(it);
-						gnr_bsites++;
-						(*pdup_length)++;
-						break;
-					case HOUSE:
-						it=DuplicateHouse(it);
-						gnr_houses++;
-						(*pdup_length)++;
-						break;
-				}
+				it = Duplication(it, pdup_length);
 			}
 			else	it++;
 		}
@@ -407,43 +393,27 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 			it++;
 		}
 
-		//Innovations.
-		//Note that g_length is updated in DuplicateGene() and DeleteGene() so that any position along the genome is allowed for the novel bead. Here all counters are also updated within the functions.
-		if(uniform() < regulator_innovation_mu*muf)
-		{
-			it = InventGene();
-			if (independent_regtypes)		DetermineRegType(it);
-			else												PotentialTypeChange(it);
-			(*pdup_length)++;
-		}
-		if(uniform() < bsite_innovation_mu*muf)
-		{
-			InventBsite();
-			(*pdup_length)++;
-		}
-		if(uniform() < house_innovation_mu*muf)
-		{
-			InventHouse();
-			(*pdup_length)++;
-		}
-
 		//Shuffling mutations.
 		it = BeadList->begin();
 		while(it != BeadList->end())
 		{
-			wb = WhatBead(*it);
-			if(wb==REGULATOR && uniform() < regulator_shuffle_mu*muf)	it=ShuffleGene(it);
-			else if(wb==BSITE && uniform() < bsite_shuffle_mu*muf)		it=ShuffleBead(it);
-			else if(wb==HOUSE && uniform() < house_shuffle_mu*muf)		it=ShuffleBead(it);
+			if((*it)->kind==HOUSE && uniform() < mu_shuffle[HOUSE] * muf)	it = Shuffle(it);
+			else if((*it)->kind==BSITE && uniform() < mu_shuffle[BSITE] * muf)	it = Shuffle(it);
+			else if((*it)->kind==REGULATOR && uniform() < mu_shuffle[REGULATOR] * muf)	it = Shuffle(it);
+			else if((*it)->kind==EFFECTOR && uniform() < mu_shuffle[EFFECTOR] * muf)	it = Shuffle(it);
 			else	it++;
 		}
+
+		//Innovations.
+		Inventions(pdup_length);
+
 
 	}	//END of mutations.
 
 	if(mutations_on)
 	{
 		assert(g_length == g_length_before_mut + (*pdup_length) - (*pdel_length));
-		assert(g_length == gnr_genes + gnr_bsites + gnr_houses);
+		assert(g_length == gnr_houses + gnr_bsites + gnr_regulators + gnr_effectors);
 		assert((size_t)g_length == BeadList->size());
 	}
 
@@ -452,43 +422,16 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 }
 
 
-
-void Genome::DetermineRegType(i_bead it)
-{
-	int i;
-	bool type_change = false;
-	Gene* gene;
-
-	gene = dynamic_cast<Gene*>(*it);
-
-	for (i=1; i<=5; i++)
-	{
-		if (BindingAffinity(gene->typeseq, regtype[i-1], typeseq_length) <= typeseq_length - 2)
-		{
-			gene->type = i;
-			type_change = true;
-			break;
-		}
-	}
-
-	if (gene->type == 0 || ((gene->type >= 1 && gene->type <= 5) && !type_change))
-	{
-		gene->type = 6+(int)(uniform()*45);	//Type invention gets random type. Also for divergence from type 1-5, a new random type will be defined. In all other cases (type 1-5 to type 1-5, or type >6 to type >6), you don't have to do anything.
-	}
-}
-
-
-
-void Genome::PotentialTypeChange(i_bead it)
+void Genome::PotentialTypeChange(i_bead it)	//Meant purely for regulatory genes
 {
 	i_bead it2;
-	Gene* gene, *reg2;
+	Regulator* reg, *reg2;
 	list<int> UsedTypes;
 	list<int>::iterator ix;
 	int type_abundance, x, i;
 
-	gene = dynamic_cast<Gene*>(*it);
-	type_abundance = CountTypeAbundance(gene->type);
+	reg = dynamic_cast<Regulator*>(*it);
+	type_abundance = CountTypeAbundance(reg->type);
 
 	//Check convergence to an existing type.
 	// it2 = BeadList->begin();	//The other genes in the genome
@@ -512,23 +455,23 @@ void Genome::PotentialTypeChange(i_bead it)
 	//Check for convergence to types 1-5, as they are defined before the start of mutations and redefined as we go on mutating.
 	for (i=0; i<5; i++)
 	{
-		if ( BindingAffinity(gene->sequence, RegTypeList[i]->sequence) + abs(gene->activity-RegTypeList[i]->activity) <= regtype_hdist )
+		if ( reg->BindingAffinity(reg->sequence, RegTypeList[i]->sequence) + abs(reg->activity-RegTypeList[i]->activity) <= seq_hdist )
 		{
-			gene->type = i+1;
+			reg->type = i+1;
 			return;
 		}
 	}
 
 	//If there is at least one more copy of the gene, assign a new unique type to the gene, 6 at minimum.
-	if(type_abundance > 1 || gene->type==0)	//We haven't been able to convert it to an existing type, so let's define it as a new type.
+	if(type_abundance > 1 || reg->type==0)	//We haven't been able to convert it to an existing type, so let's define it as a new type.
 	{
 		//Check which gene types we already have, if you want gene types >5 to be at least evolutionarily meaningful.
 		it2 = BeadList->begin();
 		while (it2 != BeadList->end())
 		{
-			if( WhatBead(*it2)==REGULATOR)
+			if( (*it2)->kind==REGULATOR)
 			{
-				reg2 = dynamic_cast<Gene*>(*it2);
+				reg2 = dynamic_cast<Regulator*>(*it2);
 				UsedTypes.push_back(reg2->type);
 			}
 			it2++;
@@ -540,14 +483,14 @@ void Genome::PotentialTypeChange(i_bead it)
 			x++;
 			ix = find(UsedTypes.begin(), UsedTypes.end(), x);
 		}
-		gene->type = x;
+		reg->type = x;
 	}
 
 	//If there exists only copy of this type, then type is not changed, but the type definition has to be updated (i.e. replaced).
-	else if(gene->type < 6)	//We are only concerned with the defs of types 1-5.
+	else if(reg->type < 6)	//We are only concerned with the defs of types 1-5.
 	{
-		delete RegTypeList[gene->type-1];
-		RegTypeList[gene->type-1] = new Gene(*gene);
+		delete RegTypeList[reg->type-1];
+		RegTypeList[reg->type-1] = new Regulator(*reg);
 	}
 
 }
@@ -555,16 +498,16 @@ void Genome::PotentialTypeChange(i_bead it)
 int Genome::CountTypeAbundance(int type)
 {
 	i_bead it;
-	Gene* gene;
+	Regulator* reg;
 	int count_type = 0;
 
 	it = BeadList->begin();
 	while (it != BeadList->end())
 	{
-		if (WhatBead(*it)==REGULATOR)
+		if ((*it)->kind==REGULATOR)
 		{
-			gene = dynamic_cast<Gene*>(*it);
-			if (gene->type == type)	count_type++;
+			reg = dynamic_cast<Regulator*>(*it);
+			if (reg->type == type)	count_type++;
 		}
 		it++;
 	}
@@ -581,123 +524,30 @@ int Genome::CountTypeAbundance(int type)
 ###########################################################################
 */
 
-Genome::i_bead Genome::MutateGene(i_bead it, int* pdel_length, double muf)
+
+Genome::i_bead Genome::Mutation(i_bead it, int* pdel_length, double muf)
 {
-	Gene* gene;
-	gene = dynamic_cast<Gene*>(*it);
-	bool potential_type_change = false;
-	int i;
+	is_mutated = false;
 
 	double uu = uniform();
-	if(uu < regulator_duplication_mu*muf)
-	{
-		(*it)->duplicate = true;	//Mark for duplication during divison.
-		is_mutated = true;
-		it++;
-	}
-
-	else if(uu < (regulator_deletion_mu+regulator_duplication_mu)*muf)
-	{
-		it = DeleteGene(it, pdel_length);
-		gnr_genes--;
-		is_mutated = true;
-	}
-
-	else
-	{
-		if (uniform() < regulator_threshold_mu*muf)	//Parameters mutate independently.
-		{
-			gene->threshold = ChangeParameter(gene->threshold);
-			is_mutated = true;
-		}
-
-		if (uniform() < regulator_activity_mu*muf)
-		{
-			gene->activity = ChangeParameter(gene->activity);
-			potential_type_change = true;
-			is_mutated = true;
-		}
-
-		if (independent_regtypes)
-		{
-			for(i=0; i<typeseq_length; i++)
-			{
-				if (uniform() < regulator_typeseq_mu*muf)
-				{
-					if (gene->typeseq[i] == false)			gene->typeseq[i] = true;
-					else if(gene->typeseq[i] == true)	gene->typeseq[i] = false;
-					DetermineRegType(it);
-					is_mutated = true;
-				}
-			}
-		}
-
-		for(i=0; i<signalp_length; i++)
-		{
-			if(uniform() < regulator_signalp_mu*muf)
-			{
-				if (gene->signalp[i] == false)			gene->signalp[i] = true;
-				else if (gene->signalp[i] == true)	gene->signalp[i] = false;
-				is_mutated = true;
-			}
-		}
-
-		for(i=0; i<sequence_length; i++)
-		{
-			if(uniform() < regulator_sequence_mu*muf)
-			{
-				if (gene->sequence[i] == false)			gene->sequence[i] = true;
-				else if (gene->sequence[i] == true)	gene->sequence[i] = false;
-				potential_type_change = true;
-				is_mutated = true;
-			}
-		}
-
-		if (potential_type_change && !independent_regtypes){
-			PotentialTypeChange(it);	//Check type change, activity or sequence has been mutated.
-		}
-		it++;
-	}
-
-	return it;
-}
-
-Genome::i_bead Genome::MutateBsite(i_bead it, int* pdel_length, double muf)
-{
-	Bsite* bsite;
-	bsite = dynamic_cast<Bsite*>(*it);
-	int i;
-
-	double uu = uniform();
-	if(uu < bsite_duplication_mu*muf)
+	if (uu < mu_duplication[(*it)->kind] * muf)			//Duplication.
 	{
 		(*it)->duplicate = true;
 		is_mutated = true;
 		it++;
 	}
 
-	else if(uu < (bsite_duplication_mu+bsite_deletion_mu)*muf)
+	else if (uu < mu_deletion[(*it)->kind] * muf)		//Deletion.
 	{
-		it = DeleteBead(it);
-		gnr_bsites--;
-		(*pdel_length)++;
+		it = Deletion(it, pdel_length);
 		is_mutated = true;
 	}
 
-	else
+	else																						//Property mutations.
 	{
-		for (i=0; i<sequence_length; i++)
+		if ( (*it)->Mutate(muf) )
 		{
-			if(uniform() < bsite_sequence_mu*muf)
-			{
-				if (bsite->sequence[i] == false) bsite->sequence[i] = true;
-				else if (bsite->sequence[i] == true) bsite->sequence[i] = false;
-				is_mutated = true;
-			}
-		}
-		if(uniform() < bsite_activity_mu*muf)
-		{
-			bsite->activity = ChangeParameter(bsite->activity);
+			if (!independent_regtypes)	PotentialTypeChange(it);	//Check type change, maybe activity or sequence has been mutated.
 			is_mutated = true;
 		}
 		it++;
@@ -705,63 +555,43 @@ Genome::i_bead Genome::MutateBsite(i_bead it, int* pdel_length, double muf)
 	return it;
 }
 
-Genome::i_bead Genome::MutateHouse(i_bead it, int* pdel_length, double muf)
-{
-	double uu = uniform();
-
-	if(uu < house_duplication_mu*muf)
-	{
-		(*it)->duplicate = true;
-		is_mutated = true;
-		it++;
-	}
-	else if(uu < (house_duplication_mu+house_deletion_mu)*muf)
-	{
-		it = DeleteBead(it);
-		gnr_houses--;
-		(*pdel_length)++;
-		is_mutated = true;
-	}
-	else	it++;
-
-	return it;
-}
-
-int Genome::ChangeParameter(int value)
-{
-	int new_value = value;
-
-	if (uniform()>0.8)
-	{
-		new_value = (uniform()>0.5) ? new_value+1 : new_value-1;
-	}
-	else
-	{
-		while (new_value == value)
-		{
-			new_value = (int)(uniform()*(2*WeightRange+1) - WeightRange);
-		}
-	}
-
-	return new_value;
-}
-
-Genome::i_bead Genome::DeleteGene(i_bead it, int* pdel_length)
+Genome::i_bead Genome::Deletion(i_bead it, int* pdel_length)
 {
 	i_bead first, last, it2;
 	int del_length;
 
-	last=it;	//gene position
-	last++;	//one further than the gene position
-	first=FindFirstBsiteInFrontOfGene(it);	//first tfbs in front of gene
+	//Define the segment to be deleted.
+	last = it;
+	last++;			//Move last to one bead beyond the focal bead.
 
-	//Decrement the number of beads and the number of genes.
-	del_length = distance(first, last);
-	g_length -= del_length;
-	gnr_bsites -= del_length-1;
+	switch ( (*it)->kind )
+	{
+		case HOUSE:
+			first = it;
+			gnr_houses--;
+			break;
+		case BSITE:
+			first = it;
+			gnr_bsites--;
+			break;
+		case REGULATOR:
+			first = FindFirstBsiteInFrontOfGene(it);
+			gnr_regulators--;
+			break;
+		case EFFECTOR:
+			first = FindFirstBsiteInFrontOfGene(it);
+			gnr_effectors--;
+			break;
+	}
+
+	//Adjust genome counters.
+	del_length = distance(first, last);		//Store it in a variable so that we don't have to call the function multiple times.
 	(*pdel_length) += del_length;
+	g_length -= del_length;
+	gnr_bsites -= del_length-1;		//If multiple beads are deleted, our focal bead (it) is a regulator or effector, and any surplus beads must be its binding sites.
 
-	it2=first;
+	//Delete the selected genome segment.
+	it2=first;	//Erase all the beads selected for the deletion (potentially multiple if focal bead was a regulator or effector).
 	while( it2 != last )
 	{
 		delete *it2;
@@ -771,16 +601,7 @@ Genome::i_bead Genome::DeleteGene(i_bead it, int* pdel_length)
 	return it;
 }
 
-Genome::i_bead Genome::DeleteBead(i_bead it)
-{
-	delete (*it);
-	it=(*BeadList).erase(it);
-
-	g_length--;
-	return it;
-}
-
-Genome::i_bead Genome::DuplicateGene(i_bead it, int* pdup_length)
+Genome::i_bead Genome::Duplication(i_bead it, int* pdup_length)
 {
 	int copy_length;
 	i_bead insertsite, first, last;
@@ -788,118 +609,148 @@ Genome::i_bead Genome::DuplicateGene(i_bead it, int* pdup_length)
 
 	(*it)->duplicate = false;	//Remove the duplication flag.
 
-	//Copy the gene with its upstream tfbs's to a temporary chromosome.
+	//Define the segment to be duplicated.
 	last = it;
-	last++;   //One further than the gene position (the one not to be part of the dupl).
-	first = FindFirstBsiteInFrontOfGene(it);	//First tfbs in front of gene.
+	last++;
+
+	switch ( (*it)->kind )	//Whether we select a single bead or a chunk, and where we insert the single bead or chunk depends on the kind of bead.
+	{
+		case HOUSE:
+			first = it;
+			insertsite = FindRandomPosition(true);
+			gnr_houses++;
+			break;
+		case BSITE:
+			first = it;
+			insertsite = FindRandomPosition(true);
+			gnr_bsites++;
+			break;
+		case REGULATOR:
+			first = FindFirstBsiteInFrontOfGene(it);
+			insertsite = FindRandomGenePosition(true,true);	//Find position to insert gene (may be the end of the genome).
+			insertsite = FindFirstBsiteInFrontOfGene(insertsite);	//Find first tfbs in front of this gene.
+			gnr_regulators++;
+			break;
+		case EFFECTOR:
+			first = FindFirstBsiteInFrontOfGene(it);
+			insertsite = FindRandomGenePosition(true,true);
+			insertsite = FindFirstBsiteInFrontOfGene(insertsite);
+			gnr_effectors++;
+			break;
+	}
+
+	//Adjust genome counters.
 	copy_length = distance(first, last);
-	CopyPartOfGenomeToTemplate(first, last, &BeadListTemp); //Makes a 'chromosome' with only this gene (and its tfbs) on it.
-
-	//Splice the temporary chromosome into the full genome.
-	insertsite = FindRandomGenePosition(true,true);			//Find position to insert gene (may be the end of the genome).
-	insertsite = FindFirstBsiteInFrontOfGene(insertsite);	//Find first tfbs in front of this gene.
-	BeadList->splice(insertsite, BeadListTemp);	//Splice temporary list into chromosome.
-
-	//Increment the number of beads and the number of genes.
 	g_length += copy_length;
 	gnr_bsites += copy_length-1;
 	(*pdup_length) += copy_length;
 
+	//Duplicate the selected genome segment.
+	CopyPartOfGenomeToTemplate(first, last, &BeadListTemp); //Makes a new piece of DNA with the duplicated beads on it.
+	BeadList->splice(insertsite, BeadListTemp);	//Splice temporary list into chromosome.
 	it = last;	//Make sure ii points to one position further than just duplicated gene.
 	return it;
 }
 
-Genome::i_bead Genome::DuplicateBsite(i_bead it)
+void Genome::Inventions(int* pdup_length)
 {
-	i_bead tt, upstream;
-	Bsite* bsite = dynamic_cast<Bsite*>(*it);
-
-	bsite->duplicate = false;
-	Bsite* bsite_new = new Bsite(*bsite);
-
-	tt = FindRandomPosition(true);
-	tt = (*BeadList).insert(tt, bsite_new);	//Insert tfbs-copy to the left of a random position in the genome (tt).
-
-	g_length++;
-	it++;
-	return it;
-}
-
-Genome::i_bead Genome::DuplicateHouse(i_bead it)
-{
-	i_bead tt, upstream;
-
-	(*it)->duplicate = false;
-	House* house_new = new House();
-
-	tt = FindRandomPosition(true);	//Including the position beyond the last current bead.
-	tt = (*BeadList).insert(tt, house_new);	//Insert tfbs-copy to the left of a random position in the genome (tt).
-
-	g_length++;
-	it++;
-	return it;
-}
-
-Genome::i_bead Genome::InventGene()
-{
-	Gene* gene;
-	i_bead insertsite;
-
-	gene = new Gene();
-	gene->RandomGene();
-
-	insertsite=FindRandomGenePosition(true,true);
-	insertsite=FindFirstBsiteInFrontOfGene(insertsite);
-	insertsite=BeadList->insert(insertsite, gene);
-
-	g_length++;
-	gnr_genes++;
-	is_mutated = true;
-	return insertsite;
-}
-
-void Genome::InventBsite()
-{
-	Bsite* bsite;
-	i_bead insertsite;
-
-	bsite = new Bsite();
-	bsite->RandomBsite();
-
-	insertsite = FindRandomPosition(true);
-	BeadList->insert(insertsite, bsite);
-
-	g_length++;
-	gnr_bsites++;
-	is_mutated = true;
-}
-
-void Genome::InventHouse()
-{
+	i_bead focus, insertsite;
+	int k;
+	double uu;
 	House* house;
-	i_bead insertsite;
+	Bsite* bsite;
+	Regulator* reg;
+	Effector* eff;
 
-	house = new House();
-	insertsite = FindRandomPosition(true);
-	BeadList->insert(insertsite, house);
+	for (k=0; k<4; k++)
+	{
+		uu = uniform();
 
-	g_length++;
-	gnr_houses++;
-	is_mutated = true;
+		if (k == HOUSE && uu < mu_invention[HOUSE])
+		{
+			house = new House();
+			house->Randomize();
+
+			insertsite = FindRandomPosition(true);
+			insertsite = BeadList->insert(insertsite, house);
+
+			gnr_houses++;
+			(*pdup_length)++;
+		}
+		else if (k == BSITE && uu < mu_invention[BSITE])
+		{
+			bsite = new Bsite();
+			bsite->Randomize();
+
+			insertsite = FindRandomPosition(true);
+			insertsite = BeadList->insert(insertsite, bsite);
+
+			gnr_bsites++;
+			(*pdup_length)++;
+		}
+		else if (k == REGULATOR && uu < mu_invention[REGULATOR])
+		{
+			reg = new Regulator();
+			reg->Randomize();
+
+			insertsite = FindRandomGenePosition(true,true);
+			insertsite = FindFirstBsiteInFrontOfGene(insertsite);
+			insertsite = BeadList->insert(insertsite, reg);
+
+			if (independent_regtypes)		reg->DefineTypeFromSeq();
+			else												PotentialTypeChange(insertsite);
+
+			gnr_regulators++;
+			(*pdup_length)++;
+		}
+		else if (k == EFFECTOR && uu < mu_invention[EFFECTOR])
+		{
+			eff = new Effector();
+			eff->Randomize();
+
+			insertsite = FindRandomGenePosition(true,true);
+			insertsite = FindFirstBsiteInFrontOfGene(insertsite);
+			insertsite = BeadList->insert(insertsite, eff);
+
+			eff->DefineTypeFromSeq();
+
+			gnr_effectors++;
+			(*pdup_length)++;
+		}
+	}
 }
 
-Genome::i_bead Genome::ShuffleGene(i_bead it)
+Genome::i_bead Genome::Shuffle(i_bead it)
 {
 	i_bead insertsite, first, last;
 
+	//Define the segment to be shuffled.
 	last = it;
-	last++;   //One further than the gene position (the one not to be part of the dupl).
-	first=FindFirstBsiteInFrontOfGene(it);	//First tfbs in front of gene.
+	last++;
 
-	//Splice the temporary chromosome into the full genome.
-	insertsite=FindRandomGenePosition(true,true);			//Find position to insert gene (may be end of genome).
-	insertsite=FindFirstBsiteInFrontOfGene(insertsite);	//Find first tfbs in front of this gene.
+	switch ( (*it)->kind )
+	{
+		case HOUSE:
+			first = it;
+			insertsite = FindRandomPosition(true);
+			break;
+		case BSITE:
+			first = it;
+			insertsite = FindRandomPosition(true);
+			break;
+		case REGULATOR:
+			first = FindFirstBsiteInFrontOfGene(it);
+			insertsite = FindRandomGenePosition(true,true);	//Find position to insert gene (may be the end of the genome).
+			insertsite = FindFirstBsiteInFrontOfGene(insertsite);	//Find first tfbs in front of this gene.
+			break;
+		case EFFECTOR:
+			first = FindFirstBsiteInFrontOfGene(it);
+			insertsite = FindRandomGenePosition(true,true);
+			insertsite = FindFirstBsiteInFrontOfGene(insertsite);
+			break;
+	}
 
+	//Shuffle the selected genome segment.
 	if ( (distance(BeadList->begin(), insertsite) >= distance(BeadList->begin(), first))   &&   (distance(BeadList->begin(), insertsite) < distance(BeadList->begin(), last)) )	//We are attempting to splice to same location, so don't do it, does not count as mutation. Although distance is a time-costly operation in UpdateGeneExpression, we probably do not bother with mutations.
 	{
 		it++;
@@ -913,29 +764,14 @@ Genome::i_bead Genome::ShuffleGene(i_bead it)
 	}
 }
 
-Genome::i_bead Genome::ShuffleBead(i_bead it)
-{
-	i_bead tt, nit;
-
-	is_mutated = true;
-	nit = it;
-	nit++;
-	tt = FindRandomPosition(true);
-	BeadList->splice(tt, *BeadList, it);	//When we don't splice a whole range, the above problem for ShuffleGene should not be relevant.
-
-	return nit;
-}
-
 Genome::i_bead Genome::FindFirstBsiteInFrontOfGene(i_bead it, bool ignore_houses) const
 {
-	int wb;
 	ri_bead rit(it);	//BEHIND in this case means an element to the left in the list (i.e if ii points to the 6th element, rii(ii) will make rii point to the 5th element). The function .base() as used below will make rii.base() point to the 6th element again.
 
 	ri_bead rit2 = (*BeadList).rend();//search should be bounded
 	while(rit != rit2)//begin not yet reached
 	{
-		wb = WhatBead(*rit);
-		if(wb==BSITE || (wb==HOUSE && ignore_houses))	rit++;
+		if((*it)->kind==BSITE || ((*it)->kind==HOUSE && ignore_houses))	rit++;
 		else	rit2 = rit;
 	}
 	return rit2.base();
@@ -947,23 +783,21 @@ Genome::i_bead Genome::FindRandomGenePosition(bool include_houses, bool include_
 	std::list<i_bead>::iterator ipos;
 	i_bead it, it2;
 	int randpos, add_houses=0, end=0;
-	int wb;
 
 	if(include_houses)	add_houses=gnr_houses;
 	if(include_end)	end=1;
 
-	if(gnr_genes+add_houses==0)	return (*BeadList).end();
+	if(gnr_regulators+gnr_effectors+add_houses==0)	return (*BeadList).end();
 	else
 	{
 		it=(*BeadList).begin();
 		while(it != (*BeadList).end())
 		{
-			wb = WhatBead(*it);
-			if(wb==REGULATOR || (wb==HOUSE && include_houses))	pos.push_back(it);
+			if((*it)->kind==REGULATOR || ((*it)->kind==HOUSE && include_houses))	pos.push_back(it);
 			it++;
 		}
 		pos.push_back(it);
-		randpos=(int)(uniform()*(gnr_genes+add_houses+end));	//If you found the first gene, randpos will be 0 (no need to advance to another gene); if you find the last gene, randpos will be gnr_genes-1 which is enough to reach the gnr_genes'th gene.
+		randpos=(int)(uniform()*(gnr_regulators+gnr_effectors+add_houses+end));	//If you found the first gene, randpos will be 0 (no need to advance to another gene); if you find the last gene, randpos will be gnr_genes-1 which is enough to reach the gnr_genes'th gene.
 		it2 = (*boost::next(pos.begin(),randpos));	//Possibly try advance(ii, randpos) instead.
 		return it2;
 	}
@@ -1003,12 +837,12 @@ void Genome::CloneGenome(const Genome* ImageG)
 	int i;
 
 	CopyPartOfGenome(ImageG->BeadList->begin(),ImageG->BeadList->end());
-	for (i=0; i<5; i++)	RegTypeList[i] = new Gene(*ImageG->RegTypeList[i]);
+	for (i=0; i<5; i++)	RegTypeList[i] = new Regulator(*ImageG->RegTypeList[i]);
 
 	g_length = ImageG->g_length;
-	gnr_genes = ImageG->gnr_genes;
-	gnr_bsites = ImageG->gnr_bsites;
 	gnr_houses = ImageG->gnr_houses;
+	gnr_bsites = ImageG->gnr_bsites;
+	gnr_regulators = ImageG->gnr_regulators;
 	fork_position = ImageG->fork_position;
 	terminus_position = ImageG->terminus_position;
 	is_mutated = ImageG->is_mutated;
@@ -1037,9 +871,10 @@ void Genome::ReadGenome(string genome)
 	char* bead, *buffer;
 	int success, type, threshold, activity;
 	bool typeseq[typeseq_length], signalp[signalp_length], sequence[sequence_length];
-	Gene* gene;
 	House* house;
 	Bsite* bsite;
+	Regulator* reg;
+	Effector* eff;
 
 	bead = strtok((char*)genome.c_str(),".");
 	while (bead != NULL)
@@ -1056,9 +891,25 @@ void Genome::ReadGenome(string genome)
 			delete [] buffer;
 			buffer = NULL;
 
-			gene = new Gene(type, threshold, activity, typeseq, signalp, sequence, 0);
-			(*BeadList).push_back(gene);
-			gnr_genes++;
+			reg = new Regulator(type, threshold, activity, typeseq, signalp, sequence, 0);
+			(*BeadList).push_back(reg);
+			gnr_regulators++;
+			g_length++;
+		}
+		else if (bead[1] == 'E')
+		{
+			buffer = new char[typeseq_length+signalp_length+2];
+			success = sscanf(bead, "(E%d:%d:%s)", &type, &threshold, buffer);
+			if(success != 3) cerr << "Could not read effector gene. Input seems corrupt. \n" << endl;
+
+			ReadBuffer(buffer, typeseq, 'X', ':');
+			ReadBuffer(buffer, signalp, ':', ')');
+			delete [] buffer;
+			buffer = NULL;
+
+			eff = new Effector(type, threshold, typeseq, signalp, 0);
+			(*BeadList).push_back(eff);
+			gnr_effectors++;
 			g_length++;
 		}
 		else if(bead[1] == 'H')
@@ -1101,9 +952,9 @@ void Genome::ReadExpression(string expression)
 	data = expression.substr(1,expression.size()-2);	//Strip accolades or square brackets.
 
 	it = BeadList->begin();
-	for(i=0; i<gnr_genes; i++)
+	for(i=0; i<gnr_regulators+gnr_effectors; i++)
 	{
-		while (it != BeadList->end() && WhatBead(*it) != REGULATOR) it++;
+		while (it != BeadList->end() && ((*it)->kind != REGULATOR && (*it)->kind != EFFECTOR)) it++;
 
 		if ((size_t) i > data.length())
 		{
@@ -1136,7 +987,7 @@ void Genome::ReadDefinition(string definition)
 		for (j=0; j<typeseq_length; j++)	typeseq[j] = false;
 		for (j=0; j<signalp_length; j++)	signalp[j] = false;
 
-		RegTypeList[type-1] = new Gene(type, 0, activity, typeseq, signalp, sequence, 0);
+		RegTypeList[type-1] = new Regulator(type, 0, activity, typeseq, signalp, sequence, 0);
 
 		bead = strtok(NULL, ";");
 	}
@@ -1168,9 +1019,6 @@ string Genome::Show(list<Bead*>* chromosome, bool terminal, bool only_parent)
 {
 	string GenomeContent="";
 	i_bead it, end;
-	Gene* gene;
-	Bsite* bsite;
-	House* house;
 
 	if(chromosome == NULL) chromosome = this->BeadList;
 	it = chromosome->begin();
@@ -1184,23 +1032,7 @@ string Genome::Show(list<Bead*>* chromosome, bool terminal, bool only_parent)
 	while(it != end)
 	{
 		if(it != chromosome->begin()) GenomeContent += ".";
-
-		switch (WhatBead(*it))
-		{
-			case REGULATOR:
-				gene=dynamic_cast<Gene*>(*it);
-				GenomeContent += gene->Show(terminal, false);
-				break;
-			case BSITE:
-				bsite=dynamic_cast<Bsite*>(*it);
-				GenomeContent += bsite->Show(terminal);
-				break;
-			case HOUSE:
-				house=dynamic_cast<House*>(*it);
-				GenomeContent += house->Show(terminal);
-				break;
-		}
-
+		GenomeContent += (*it)->Show(terminal);
 		it++;
 	}
 	return GenomeContent;
@@ -1223,7 +1055,7 @@ string Genome::ShowExpression(list<Bead*>* chromosome, bool only_parent)
 
 	while (it != end)
 	{
-		if (WhatBead(*it)==REGULATOR)
+		if ((*it)->kind==REGULATOR || (*it)->kind==EFFECTOR)
 		{
 			std::stringstream ss;
 			gene = dynamic_cast<Gene*>(*it);

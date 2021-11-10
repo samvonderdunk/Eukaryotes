@@ -9,12 +9,16 @@
 class House : public Bead {
 	public:
 
-		House();
-		~House();
-		explicit House(const House &house);
+		using Bead::Bead;	//All the same constructors as Bead class.
+		House();	//Only this is slightly changed compared to the Bead con/destructors, bc we want to tell use the Bead constructor that sets kind to HOUSE.
+		// House();
+		// ~House();
+		// explicit House(const House &house);
 		virtual Bead* Clone() const;
+		void Randomize();
 
-		string Show(bool terminal) const;
+		bool Mutate(double mut_factor);
+		string Show(bool terminal, bool type_only=false) const;
 
 };
 

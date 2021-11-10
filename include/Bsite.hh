@@ -17,9 +17,10 @@ class Bsite : public Bead {
 		virtual ~Bsite();
 
 		virtual Bead* Clone() const;
-		void RandomBsite();
+		void Randomize();
 
-		string Show(bool terminal) const;
+		bool Mutate(double mut_factor);
+		string Show(bool terminal, bool type_only=false) const;
 };
 
 #endif
