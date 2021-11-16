@@ -99,6 +99,7 @@ void Cell::RegulatorTransport()
 				{
 					it2 = it;
 					it--;
+					it_cntr--;	//Important, bug in the first attempt of M. commu V.
 					Symbionts->at(s)->ExpressedGenes->splice(Symbionts->at(s)->ExpressedGenes->end(), *Host->ExpressedGenes, it2);
 					Host->nr_native_expressed--;	//I think this will be fine (although it defines the while-loop), because the iterator takes a step back.
 				}
