@@ -31,7 +31,7 @@ class Population
 
 		void UpdatePopulation();
 
-		void CloneSymbiont(int source_i, int source_j, int s, int target_i, int target_j);
+		void CloneSymbiont(int source_i, int source_j, int s, Cell* NewCell);
 		void WellMix();
 		bool CheckLineage(int i, int j);
 		void LogLineage(int i, int j);

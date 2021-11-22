@@ -65,6 +65,7 @@ const bool perfect_transport = true;	//Genes with a 0 in their signalp, are alwa
 const bool independent_regtypes = false;	//Independent mutation of gene types, a break in the evolutionary dynamics with respect to Prokaryotes. In E. viridis I, we do perfect_transport w/o independent_regtypes; in E. viridis II, we do both.
 const bool regtypes_by_regulation = true;	//Each organelle carries its own gene type definition that can mutate, and which is used to check the type of incoming expressed genes.
 const bool nutshare_evolve = false;	//Host can evolve how much nutrients it claims from the environment, passing on the remaining fraction to its symbionts (equally divided among these). Each host has an identical claim on environmental nutrients, i.e. independent of how many symbionts it has. This corresponds to nutrient competition 4.
+const bool empty_division_killing = true;	//Hosts first divide, potentially killing a neighbour, before realising that the new cell does not get symbionts and dies right away.
 
 //Regulatory type mutations.
 const int regtype_hdist = 0;	//Maximal hamming distance to still be called this particular gene type. When this value is set to 0, we have the same case as in Prokaryotes.
