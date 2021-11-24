@@ -12,7 +12,6 @@
 dsfmt_t dsfmt;
 int Time;
 int seed = time(0);	//Unless changed at command line.
-unsigned long long seed_draws = 0;	//May be obsolete in the future, but still needed for old backups (before 23/07/2021).
 
 string folder = "/linuxhome/tmp/sam/Eukaryotes/";
 string genome_files[max_input_files] = {"", "", "", "", "", "", "", "", "", ""};

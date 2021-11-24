@@ -171,7 +171,6 @@ const bool StageTargets[4][5] = {
 //Variables defined in World.cc
 extern int Time;
 extern int seed;
-extern unsigned long long seed_draws;
 extern string folder;
 extern int NR;
 extern int NC;
@@ -208,16 +207,8 @@ extern int nutrient_competition;
 extern int strain_competition;
 
 extern dsfmt_t dsfmt;
-inline double uniform()
-{
-  seed_draws ++;
-  return dsfmt_genrand_close_open(&dsfmt);
-}
-
-inline int uniform_shuffle (int i)
-{
-	return (int)(RAND_MAX*uniform()) % i;
-}
+inline double uniform() { return dsfmt_genrand_close_open(&dsfmt); }
+inline int uniform_shuffle (int i) { return (int)(RAND_MAX*uniform()) % i; }
 
 
 #endif

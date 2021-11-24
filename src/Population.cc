@@ -724,8 +724,8 @@ void Population::ReadBackupFile()
 	char* data_element, *number;
 	string::iterator sit;
 	Genome::i_bead it;
-	int r, c, s, begin_data, end_data, success, stage, pfork, pterm, nr, nc, count_lines = 0, nn = 0, idx_primary, idx_secondary, init_seed;
-	unsigned long long org_id, anc_id, sdraws, illu;
+	int r, c, s, begin_data, end_data, success, stage, pfork, pterm, nr, nc, count_lines = 0, nn = 0, idx_primary, idx_secondary;
+	unsigned long long org_id, anc_id;
 	char temp_is_mutant[20], temp_priv[20];
 	double fit, nutcl;
 	size_t pos;
@@ -758,28 +758,6 @@ void Population::ReadBackupFile()
 			{
 				cerr << "NR and NC of backup did not match parameter settings.\n" << endl;
 				exit(1);
-			}
-		}
-
-		else if(line.substr(0,12)=="Initial seed")		//Old backup files where we have to do random draws from the initial seed to match the backup data.
-		{
-			data_element = (char*)line.c_str();
-
-			success = sscanf(data_element, "Initial seed:%d\tSeed draws:%llu", &init_seed, &sdraws);
-			if (success != 2)
-			{
-				cerr << "Failed to read seed and draws from an old backup.\n" << endl;
-				exit(1);
-			}
-			else
-			{
-				cout << "Drawing " << sdraws << " random numbers to match old backup." << endl;;
-				dsfmt_init_gen_rand(&dsfmt, init_seed);	//Used to seed uniform().
-				srand(init_seed);												//Used to seed random_shuffle(...).
-				for (illu=0; illu<sdraws; illu++)
-				{
-					uniform();
-				}
 			}
 		}
 
