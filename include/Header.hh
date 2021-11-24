@@ -67,6 +67,7 @@ const bool perfect_transport = true;	//Genes with a 0 in their signalp, are alwa
 const bool nutshare_evolve = false;	//Host can evolve how much nutrients it claims from the environment, passing on the remaining fraction to its symbionts (equally divided among these). Each host has an identical claim on environmental nutrients, i.e. independent of how many symbionts it has. This corresponds to nutrient competition 4.
 const int seq_hdist = 0;	//Maximal hamming distance to still be called this particular gene type. When this value is set to 0, we have the same case as in Prokaryotes.
 const int eff_hdist = 0;	//Maximal hamming distance for defining effectors.
+const bool empty_division_killing = true;	//Hosts first divide, potentially killing a neighbour, before realising that the new cell does not get symbionts and dies right away.
 
 //Genome parameters
 const int nr_household_genes =			26;
