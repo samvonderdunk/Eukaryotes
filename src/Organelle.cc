@@ -9,7 +9,7 @@ Organelle::Organelle()
 	G = NULL;
 	G = new Genome();
 	ExpressedGenes = NULL;
-	ExpressedGenes = new list<Bead*>();
+	ExpressedGenes = new list<Gene*>();
 	nr_native_expressed = 0;
 
 	alive = false;
@@ -37,7 +37,6 @@ void Organelle::UpdateState()
 {
 	int readout[5] = {0, 0, 0, 0, 0};	//States of the five cell-cycle regulators. Overloaded with the states of effector genes if they are functional.
 	i_bead it, it2;
-	Gene* gene;
 	Regulator* reg, * reg2;
 	int i;
 
@@ -50,43 +49,22 @@ void Organelle::UpdateState()
 	it_cntr = 0;
 	while (it != ExpressedGenes->end())
 	{
-		if ( ((*it)->kind==REGULATOR && !functional_effectors) || ((*it)->kind==EFFECTOR && functional_effectors) )
+		if ( (*it)->kind==REGULATOR )
 		{
-			gene = dynamic_cast<Gene*>(*it);
-			if (it_cntr < nr_native_expressed || independent_regtypes || functional_effectors)	//Native genes from the organelle itself; just look at the type.
+			reg = dynamic_cast<Regulator*>(*it);
+			if (it_cntr < nr_native_expressed)	//Native genes from the organelle itself; just look at the type.
 			{
-				if (gene->type < 6)			readout[gene->type-1] += gene->expression;
+				if (reg->type < 6)			readout[reg->type-1] += reg->expression;
 			}
-			else	//Foreign genes. If we are doing regtypes_by_regulation, check whether the foreign gene matches the definition of one of the regulatory types of the current organelle. Else, there is a more primitive procedure that checks if the foreign gene matches any of the currently present regulatory genes in the current organelle.
+			else	//Foreign genes.
 			{
-				reg = dynamic_cast<Regulator*>(gene);	//No effectors beyond this point.
-				if (regtypes_by_regulation)
+				for (i=0; i<5; i++)
 				{
-					for (i=0; i<5; i++)
+					if (   reg->BindingAffinity(reg->sequence, G->RegTypeList[i]->sequence) + abs(reg->activity - G->RegTypeList[i]->activity) <= seq_hdist   )
 					{
-						if (   reg->BindingAffinity(reg->sequence, G->RegTypeList[i]->sequence) + abs(reg->activity - G->RegTypeList[i]->activity) <= seq_hdist   )
-						{
-							readout[i] += reg->expression;
-						}
-						break;	//We assume that only 1 gene type will be matched. This means that when two type definitions come to close by mutation, only the lower gene type will be scored, probably preventing types from coming to close. NEW: actually check out PotentialTypeChange() to see that the type defs can never come within the regtype_hdist.
+						readout[i] += reg->expression;
 					}
-				}
-				else
-				{
-					it2 = G->BeadList->begin();
-					while (it2 != G->BeadList->end())
-					{
-						if ((*it2)->kind==REGULATOR)
-						{
-							reg2 = dynamic_cast<Regulator*>(*it2);
-							if ( reg->BindingAffinity(reg->sequence, reg2->sequence) == 0   &&   reg->activity == reg2->activity )
-							{
-								if (reg2->type < 6)			readout[reg2->type-1] += reg->expression;	//Add the expression of this type to the native type that it resembles.
-								break;	//We have found a matching gene, and possibly also read its expression (if type 1-5), so we don't have to search any further in the genome.
-							}
-						}
-						it2++;
-					}
+					break;	//We assume that only 1 gene type will be matched. This means that when two type definitions come to close by mutation, only the lower gene type will be scored, probably preventing types from coming to close. NEW: actually check out PotentialTypeChange() to see that the type defs can never come within the regtype_hdist.
 				}
 			}
 		}
@@ -106,22 +84,7 @@ int Organelle::EvaluateState(int eval_state, int* readout)
 
 	for (i=0; i<5; i++)
 	{
-		if (functional_effectors)	//Evaluate using effectors.
-		{
-			if (i == eval_state)
-			{
-				if (readout[i]>0)		match+=2;	//So that we still get a total match of 5 if you have the correct effector expression.
-			}
-			else if (i<4)	//There are only 4 effector types (1 for each stage).
-			{
-				if (readout[i]==0)	match++;
-			}
-		}
-
-		else	//Evaluate using regulatory genes.
-		{
-			if ((readout[i]>0) == StageTargets[eval_state][i])	match++;
-		}
+		if ((readout[i]>0) == StageTargets[eval_state][i])	match++;
 	}
 
 	return match;

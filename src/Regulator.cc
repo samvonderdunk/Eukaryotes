@@ -5,16 +5,16 @@ Regulator::Regulator() : Gene(REGULATOR)
 	int i;
 
   activity = 0;
-  for(i=0; i<sequence_length; i++) sequence[i] = false;
+  for(i=0; i<regulator_length; i++) sequence[i] = false;
 
 }
 
-Regulator::Regulator(int typ, int thr, int act, bool tsq[], bool sig[], bool seq[], int exp) : Gene(REGULATOR, typ, thr, tsq, sig, exp)
+Regulator::Regulator(int typ, int thr, int act, bool sig[], bool seq[], int exp) : Gene(REGULATOR, typ, thr, sig, exp)
 {
 	int i;
 
 	activity = act;
-	for(i=0; i<sequence_length; i++) sequence[i] = seq[i];
+	for(i=0; i<regulator_length; i++) sequence[i] = seq[i];
 
 }
 
@@ -24,7 +24,7 @@ Regulator::Regulator(const Regulator &reg) : Gene(reg)
 	int i;
 
   activity = reg.activity;
-  for(i=0; i<sequence_length; i++) sequence[i] = reg.sequence[i];
+  for(i=0; i<regulator_length; i++) sequence[i] = reg.sequence[i];
 
 }
 
@@ -45,7 +45,7 @@ void Regulator::Randomize()
 
 	Gene::Randomize();
   activity = (int)(uniform()*(2*WeightRange+1) - WeightRange);
-  for (i=0; i<sequence_length; i++)	sequence[i] = (uniform()>0.5) ? true : false;
+  for (i=0; i<regulator_length; i++)	sequence[i] = (uniform()>0.5) ? true : false;
 
 }
 
@@ -55,16 +55,7 @@ bool Regulator::Mutate(double mut_factor)
 
 	Gene::Mutate(mut_factor);	//Mutate signalp and threshold
 	if ( MutateParameter(&activity, mu_activity[REGULATOR]*mut_factor) )										is_mutated = true;
-	if ( MutateBitstring(sequence, sequence_length, mu_sequence[REGULATOR]*mut_factor) )		is_mutated = true;
-
-	if (independent_regtypes)
-	{
-		if ( MutateBitstring(typeseq, typeseq_length, mu_typeseq[REGULATOR]*mut_factor) )
-		{
-			is_mutated = true;
-			DefineTypeFromSeq();	//Check if we have to change the type.
-		}
-	}
+	if ( MutateBitstring(sequence, regulator_length, mu_sequence[REGULATOR]*mut_factor) )		is_mutated = true;
 
 	return is_mutated;
 }
@@ -92,12 +83,10 @@ string Regulator::Show(bool terminal, bool type_only) const
 	ss << activity << ":";
 	if (!type_only)
 	{
-		for(i=0; i<typeseq_length; i++)	ss << typeseq[i];
-		ss << ":";
 		for(i=0; i<signalp_length; i++)	ss << signalp[i];
 		ss << ":";
 	}
-	for(i=0; i<sequence_length; i++)	ss << sequence[i];
+	for(i=0; i<regulator_length; i++)	ss << sequence[i];
 	ss << color_suffix << ")";
 
 	Content = ss.str();

@@ -10,10 +10,10 @@
 class Regulator : public Gene {
 	public:
 		int activity;
-		bool sequence[sequence_length];
+		bool sequence[regulator_length];
 
 		Regulator();
-		Regulator(int typ, int thr, int act, bool tsq[], bool sig[], bool seq[], int exp);
+		Regulator(int typ, int thr, int act, bool sig[], bool seq[], int exp);
 		explicit Regulator(const Regulator &reg);
 		virtual ~Regulator();
 

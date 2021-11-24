@@ -44,9 +44,9 @@ const string init_anctrace_file="";
 const string init_lineage_file="";
 
 //Bead variables
-const int typeseq_length =	10;
-const int signalp_length =	1;	//As long as I am not using it, make it small.
-const int sequence_length =	20;
+const int signalp_length =		1;	//As long as I am not using it, make it small.
+const int regulator_length =	20;
+const int effector_length =		10;
 
 //Grid size and host size, setting the dimensions of the model.
 const int NR_max = 100;
@@ -64,12 +64,9 @@ const int host_growth = 0;
 // 1, hosts wait for empty sites, but waiting is free (expression unimportant once they reach M).
 // 2, hosts wait for empty sites, but need to actively maintain M expression (i.e. making the whole cell-cycle more complex again). This option may be implemented later...
 const bool perfect_transport = true;	//Genes with a 0 in their signalp, are always moved to the host; genes with a 1 in their signalp always get targetted to the symbionts. Moving here means that they do not stick around in the compartment where they are created.
-const bool independent_regtypes = false;	//Independent mutation of gene types, a break in the evolutionary dynamics with respect to Prokaryotes. In E. viridis I, we do perfect_transport w/o independent_regtypes; in E. viridis II, we do both.
-const bool regtypes_by_regulation = true;	//Each organelle carries its own gene type definition that can mutate, and which is used to check the type of incoming expressed genes.
 const bool nutshare_evolve = false;	//Host can evolve how much nutrients it claims from the environment, passing on the remaining fraction to its symbionts (equally divided among these). Each host has an identical claim on environmental nutrients, i.e. independent of how many symbionts it has. This corresponds to nutrient competition 4.
 const int seq_hdist = 0;	//Maximal hamming distance to still be called this particular gene type. When this value is set to 0, we have the same case as in Prokaryotes.
-const int typeseq_hdist = 0;	//Maximal hamming distance to predefined type sequences further below. Used to define effectors (if used) or regulators from their typeseq (if this is the chosen option; otherwise the above hdist is used).
-const bool functional_effectors = true;	//Use effectors to define cell-cycle stage. You can leave the definition of regulators (i.e. regtypes_by_regulation and independent_regtypes) as it is, but the types 1-5 lose their meaning.
+const int eff_hdist = 0;	//Maximal hamming distance for defining effectors.
 
 //Genome parameters
 const int nr_household_genes =			26;
@@ -152,8 +149,8 @@ const double bsite_transfer_mu_StoH = 		0.00001;
 const double house_transfer_mu_HtoS = 		0.00001;
 const double house_transfer_mu_StoH = 		0.00001;
 
-//Typeseq definitions. Used to define Regulators if independent_regtypes == True; Always used to define Effector types (i.e. only the first four applicable).
-const bool typeseq_defs[5][typeseq_length] =
+//Effector definitions. Previously used to make hard-coded regulatory types.
+const bool effector_types[5][effector_length] =
 {
 	true, false, true, false, true, false, true, false, true, false,
 	false, false, true, true, false, false, true, true, false, false,

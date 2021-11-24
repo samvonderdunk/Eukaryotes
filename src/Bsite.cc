@@ -5,7 +5,7 @@ Bsite::Bsite() : Bead(BSITE)
 	int i;
 
   activity = 0;
-  for(i=0; i<sequence_length; i++) sequence[i] = 0;
+  for(i=0; i<regulator_length; i++) sequence[i] = 0;
 }
 
 Bsite::Bsite(int act, bool seq[]) : Bead(BSITE)
@@ -13,7 +13,7 @@ Bsite::Bsite(int act, bool seq[]) : Bead(BSITE)
 	int i;
 
   activity = act;
-  for(i=0; i<sequence_length; i++) sequence[i] = seq[i];
+  for(i=0; i<regulator_length; i++) sequence[i] = seq[i];
 }
 
 Bsite::Bsite(const Bsite &bsite) : Bead(bsite)
@@ -21,7 +21,7 @@ Bsite::Bsite(const Bsite &bsite) : Bead(bsite)
 	int i;
 
   activity = bsite.activity;
-  for(i=0; i<sequence_length; i++) sequence[i] = bsite.sequence[i];
+  for(i=0; i<regulator_length; i++) sequence[i] = bsite.sequence[i];
 }
 
 Bsite::~Bsite()
@@ -39,7 +39,7 @@ void Bsite::Randomize()
 
 	cout << "Bsite randomize" << endl;
   activity = (uniform()>0.5) ? -1 : 1;
-  for (i=0; i<sequence_length; i++)	sequence[i] = (uniform()>0.5) ? true : false;
+  for (i=0; i<regulator_length; i++)	sequence[i] = (uniform()>0.5) ? true : false;
 }
 
 bool Bsite::Mutate(double mut_factor)
@@ -47,7 +47,7 @@ bool Bsite::Mutate(double mut_factor)
 	bool is_mutated = false;
 
 	if ( MutateParameter(&activity, mu_activity[BSITE]*mut_factor) )										is_mutated = true;
-	if ( MutateBitstring(sequence, sequence_length, mu_sequence[BSITE]*mut_factor) )	is_mutated = true;
+	if ( MutateBitstring(sequence, regulator_length, mu_sequence[BSITE]*mut_factor) )	is_mutated = true;
 
 	return is_mutated;
 }
@@ -69,7 +69,7 @@ string Bsite::Show(bool terminal, bool type_only) const
 	}
 
 	ss << "(" << color_prefix << activity << ":";
-	for(i=0; i<sequence_length; i++)	ss << sequence[i];
+	for(i=0; i<regulator_length; i++)	ss << sequence[i];
 	ss << color_suffix << ")";
 	Content = ss.str();
 	ss.clear();

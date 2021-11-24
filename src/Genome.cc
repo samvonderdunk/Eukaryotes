@@ -547,7 +547,7 @@ Genome::i_bead Genome::Mutation(i_bead it, int* pdel_length, double muf)
 	{
 		if ( (*it)->Mutate(muf) )
 		{
-			if (!independent_regtypes)	PotentialTypeChange(it);	//Check type change, maybe activity or sequence has been mutated.
+			PotentialTypeChange(it);	//Check type change, maybe activity or sequence has been mutated.
 			is_mutated = true;
 		}
 		it++;
@@ -696,9 +696,7 @@ void Genome::Inventions(int* pdup_length)
 			insertsite = FindRandomGenePosition(true,true);
 			insertsite = FindFirstBsiteInFrontOfGene(insertsite);
 			insertsite = BeadList->insert(insertsite, reg);
-
-			if (independent_regtypes)		reg->DefineTypeFromSeq();
-			else												PotentialTypeChange(insertsite);
+			PotentialTypeChange(insertsite);
 
 			gnr_regulators++;
 			(*pdup_length)++;
@@ -870,7 +868,7 @@ void Genome::ReadGenome(string genome)
 
 	char* bead, *buffer;
 	int success, type, threshold, activity;
-	bool typeseq[typeseq_length], signalp[signalp_length], sequence[sequence_length];
+	bool signalp[signalp_length], Rsequence[regulator_length], Esequence[effector_length];
 	House* house;
 	Bsite* bsite;
 	Regulator* reg;
@@ -881,33 +879,32 @@ void Genome::ReadGenome(string genome)
 	{
 		if(bead[1] == 'R')
 		{
-			buffer = new char[typeseq_length+signalp_length+sequence_length+2];
+			buffer = new char[signalp_length+regulator_length+2];
 			success = sscanf(bead, "(R%d:%d:%d:%s)", &type, &threshold, &activity, buffer);
 			if(success != 4) cerr << "Could not read regulatory gene. Input seems corrupt. \n" << endl;
 
-			ReadBuffer(buffer, typeseq, 'X', ':');
-			ReadBuffer(buffer, signalp, ':', ':', 1, 2);
-			ReadBuffer(buffer, sequence, ':', ')', 2);
+			ReadBuffer(buffer, signalp, 'X', ':');
+			ReadBuffer(buffer, Rsequence, ':', ')');
 			delete [] buffer;
 			buffer = NULL;
 
-			reg = new Regulator(type, threshold, activity, typeseq, signalp, sequence, 0);
+			reg = new Regulator(type, threshold, activity, signalp, Rsequence, 0);
 			(*BeadList).push_back(reg);
 			gnr_regulators++;
 			g_length++;
 		}
 		else if (bead[1] == 'E')
 		{
-			buffer = new char[typeseq_length+signalp_length+2];
+			buffer = new char[signalp_length+effector_length+2];
 			success = sscanf(bead, "(E%d:%d:%s)", &type, &threshold, buffer);
 			if(success != 3) cerr << "Could not read effector gene. Input seems corrupt. \n" << endl;
 
-			ReadBuffer(buffer, typeseq, 'X', ':');
-			ReadBuffer(buffer, signalp, ':', ')');
+			ReadBuffer(buffer, signalp, 'X', ':');
+			ReadBuffer(buffer, Esequence, ':', ')');
 			delete [] buffer;
 			buffer = NULL;
 
-			eff = new Effector(type, threshold, typeseq, signalp, 0);
+			eff = new Effector(type, threshold, signalp, Esequence, 0);
 			(*BeadList).push_back(eff);
 			gnr_effectors++;
 			g_length++;
@@ -921,15 +918,15 @@ void Genome::ReadGenome(string genome)
 		}
 		else
 		{
-			buffer = new char[sequence_length+2];
+			buffer = new char[regulator_length+2];
 			success = sscanf(bead, "(%d:%s)", &activity, buffer);
 			if(success != 2) cerr << "Could not read binding site. Input seems corrupt. \n" << endl;
 
-			ReadBuffer(buffer, sequence, 'X', ')');
+			ReadBuffer(buffer, Rsequence, 'X', ')');
 			delete [] buffer;
 			buffer = NULL;
 
-			bsite = new Bsite(activity, sequence);
+			bsite = new Bsite(activity, Rsequence);
 			(*BeadList).push_back(bsite);
 			gnr_bsites++;
 			g_length++;
@@ -972,12 +969,12 @@ void Genome::ReadDefinition(string definition)
 {
 	char* bead, *buffer;
 	int j, success, activity, type;
-	bool sequence[sequence_length], typeseq[typeseq_length], signalp[signalp_length];
+	bool sequence[regulator_length], typeseq[typeseq_length], signalp[signalp_length];
 
 	bead = strtok((char*)definition.c_str(),";");
 	while (bead != NULL)
 	{
-		buffer = new char[sequence_length+2];
+		buffer = new char[regulator_length+2];
 		success = sscanf(bead, "(R%d:%d:%s)", &type, &activity, buffer);
 		if(success != 3) cerr << "Could not read regulatory type definitions. Input seems corrupt. \n" << endl;
 		ReadBuffer(buffer, sequence, 'X', ')');

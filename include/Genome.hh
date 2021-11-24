@@ -57,7 +57,7 @@ class Genome {
 	void ReadBuffer(string buffer, bool* array, char start_sign, char stop_sign, int ith_start_sign = 1, int ith_stop_sign = 1);
 
 	// int WhatBead(Bead* bead) const;
-	// int BindingAffinity(const bool* sequenceA, const bool* sequenceB, int seqlen = sequence_length) const;
+	// int BindingAffinity(const bool* sequenceA, const bool* sequenceB, int seqlen = regulator_length) const;
 
 	string Show(list<Bead*>* chromosome, bool terminal, bool only_parent);
 	string ShowExpression(list<Bead*>* chromosome, bool only_parent);

@@ -9,7 +9,7 @@
 class Bsite : public Bead {
 	public:
 	 	int activity;
-		bool sequence[sequence_length];
+		bool sequence[regulator_length];
 
 		Bsite();
 		Bsite(int act, bool seq[]);

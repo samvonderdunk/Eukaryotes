@@ -19,7 +19,7 @@ class Bead {
 		virtual void Randomize()=0;
 		bool MutateParameter(int* value, double mu);
 		bool MutateBitstring(bool* bitstring, int bitstring_length, double mu);
-		int BindingAffinity(const bool* sequenceA, const bool* sequenceB, int seqlen = sequence_length) const;
+		int BindingAffinity(const bool* sequenceA, const bool* sequenceB, int seqlen = regulator_length) const;
 
 		virtual string Show(bool terminal, bool type_only=false) const=0;
 
