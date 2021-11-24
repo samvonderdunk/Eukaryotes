@@ -195,7 +195,7 @@ void Population::UpdatePopulation()
 	for(i=0; i<NR; i++)	for(j=0; j<NC; j++)	CollectNutrientsFromSite(i,j);
 
 	if(Time%TimeTerminalOutput==0)																						ShowGeneralProgress();
-	if(Time%TimeSaveGrid==0 || (invasion_complete>0 && Time>=invasion_complete+add_finish_time-1))
+	if(Time%TimeSaveGrid==0 || (invasion_complete>0 && Time>=invasion_complete+add_finish_time-10))
 	{
 		OutputGrid(false);
 	}
