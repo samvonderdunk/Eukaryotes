@@ -9,7 +9,7 @@ Organelle::Organelle()
 	G = NULL;
 	G = new Genome();
 	ExpressedGenes = NULL;
-	ExpressedGenes = new list<Gene*>();
+	ExpressedGenes = new list<Bead*>();
 	nr_native_expressed = 0;
 
 	alive = false;
@@ -37,7 +37,7 @@ void Organelle::UpdateState()
 {
 	int readout[5] = {0, 0, 0, 0, 0};	//States of the five cell-cycle regulators. Overloaded with the states of effector genes if they are functional.
 	i_bead it, it2;
-	Regulator* reg, * reg2;
+	Regulator* reg;
 	int i;
 
 	int eval_state = Stage, it_cntr;
@@ -98,7 +98,7 @@ void Organelle::Mitosis(Organelle* parent, unsigned long long id_count)
 	parent->Stage = 0;
 	parent->privilige = false;
 
-	if (mu_duplication[HOUSE] > 0.0 || mu_deletion[HOUSE] > 0.0)	fitness = 1. - abs(nr_household_genes - G->gnr_houses) / (float)10;
+	if (mu_duplication[HOUSE] > 0.0 || mu_deletion[HOUSE] > 0.0)	fitness = 1. - abs(nr_household_genes - G->gnr[HOUSE]) / (float)10;
 
 	time_of_appearance = Time;
 	fossil_id = id_count;
@@ -143,7 +143,7 @@ void Organelle::InitialiseOrganelle(string genome, string expression, string def
 	G->ReadExpression(expression);
 	G->ReadDefinition(definition);
 
-	fitness = 1. - abs(nr_household_genes - G->gnr_houses) / (float)10;
+	fitness = 1. - abs(nr_household_genes - G->gnr[HOUSE]) / (float)10;
 	nutrient_claim = init_nutrient_claim;
 
 	cout << G->Show(NULL, true, false) << endl;	//This should just do the Show() function.

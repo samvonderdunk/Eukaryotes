@@ -12,12 +12,16 @@ class Effector : public Gene {
 
 		bool sequence[effector_length];
 
-		using Gene::Gene;	//Using the constructors and destructors of Gene class. All other functions of Gene class can be used by any Effector object anyway.
 		Effector();	//Still make a default constructor that tells the Gene (and Bead) constructors which kind of bead we are creating.
 		Effector(int typ, int thr, bool sig[], bool seq[], int exp);
+		explicit Effector(const Effector &eff);
+		virtual ~Effector();
+
+		virtual Bead* Clone() const;
 
 		void DefineTypeFromSeq();
 		bool Mutate(double mut_factor);
+		string Show(bool terminal, bool type_only=false) const;
 
 };
 

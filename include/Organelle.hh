@@ -8,7 +8,7 @@ class Organelle{
 	public:
 		int Stage;
 		bool privilige;
-		std::list<Gene*>* ExpressedGenes;
+		std::list<Bead*>* ExpressedGenes;
 		int nr_native_expressed;
 		Genome* G;
 		double fitness;

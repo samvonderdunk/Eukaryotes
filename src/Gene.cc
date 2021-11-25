@@ -50,16 +50,9 @@ Gene::~Gene()
 {
 }
 
-Bead* Gene::Clone() const
-{
-  return new Gene(*this);
-}
-
 void Gene::Randomize()
 {
 	int i;
-
-	cout << "Gene randomize" << endl;
 
 	type = 0;
   threshold = (int)(uniform()*(2*WeightRange+1) - WeightRange);	//Value between -WeightRange and +WeightRange (incl. borders).
@@ -76,36 +69,4 @@ bool Gene::Mutate(double mut_factor)
 	if ( MutateBitstring(signalp, signalp_length, mu_signalp[kind]*mut_factor) )		is_mutated = true;
 
 	return is_mutated;
-}
-
-string Gene::Show(bool terminal, bool type_only) const
-{
-	int i;
-	string Content, color_prefix, color_suffix;
-	std::stringstream ss;
-
-	if (terminal)
-	{
-		color_prefix = "\033[94m";
-		color_suffix = "\033[0m";
-	}
-	else
-	{
-		color_prefix = "";
-		color_suffix = "";
-	}
-
-	ss << "(" << color_prefix << "R" << type << ":";
-	if (!type_only) ss << threshold << ":";
-	if (!type_only)
-	{
-		for(i=0; i<signalp_length; i++)	ss << signalp[i];
-		ss << ":";
-	}
-	ss << color_suffix << ")";
-
-	Content = ss.str();
-	ss.clear();
-
-	return Content;
 }

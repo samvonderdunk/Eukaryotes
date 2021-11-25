@@ -19,12 +19,11 @@ class Gene : public Bead {
 		explicit Gene(const Gene &gene);
 		virtual ~Gene();
 
-		virtual Bead* Clone() const;
+		virtual Bead* Clone() const=0;
 		void Randomize();
 
 		bool Mutate(double mut_factor);
-		string Show(bool terminal, bool type_only=false) const;
-
+		virtual string Show(bool terminal, bool type_only=false) const=0;
 };
 
 #endif

@@ -122,7 +122,7 @@ void Cell::GeneTransport()
 void Cell::DNATransferToHost()
 {
 	i_bead it, insertsite;
-	int s;
+	int s, k;
 	double uu;
 
 	for (s=0; s<nr_symbionts; s++)
@@ -132,7 +132,7 @@ void Cell::DNATransferToHost()
 			it = Symbionts->at(s)->G->BeadList->begin();
 			while (it != Symbionts->at(s)->G->BeadList->end())
 			{
-				if ( (*it)->kind == HOUSE || (*it)->kind == BSITE )
+				if ( (*it)->kind == HOUSE || (*it)->kind == BSITE )	//Let's simply always do copy-paste.
 				{
 					if ( uniform() < mu_transfer_StoH[(*it)->kind] )	TransferBead(it, Host);
 					it++;
@@ -155,19 +155,28 @@ void Cell::DNATransferToHost()
 					}
 				}
 			}
+
+			for (k=0; k<4; k++)
+			{
+				assert(Symbionts->at(s)->G->gnr[k] == Symbionts->at(s)->G->CountBeads(k));
+				assert(Host->G->gnr[k] == Host->G->CountBeads(k));
+			}
 		}
 	}
 }
 
 void Cell::DNATransfertoSymbiont(Organelle* Symbiont)
 {
+	int k;
 	double uu;
+
 	i_bead it = Host->G->BeadList->begin();
 	while( it != Host->G->BeadList->end() )
 	{
 		if ( (*it)->kind == HOUSE || (*it)->kind == BSITE )
 		{
 			if (uniform() < mu_transfer_HtoS[(*it)->kind])	TransferBead(it, Symbiont);
+			it++;
 		}
 		else if ( (*it)->kind == REGULATOR || (*it)->kind == EFFECTOR )
 		{
@@ -185,6 +194,12 @@ void Cell::DNATransfertoSymbiont(Organelle* Symbiont)
 				else	it++;
 			}
 		}
+	}
+
+	for (k=0; k<4; k++)
+	{
+		assert(Host->G->gnr[k] == Host->G->CountBeads(k));
+		assert(Symbiont->G->gnr[k] == Symbiont->G->CountBeads(k));
 	}
 }
 
@@ -227,13 +242,13 @@ Cell::i_bead Cell::TransferGene(i_bead it, Organelle* Source, Organelle* Target,
 		{
 			if ((*ii)->kind != HOUSE)	//Houses are never transferred, also not with include_distal.
 			{
-				delete (*ii);
-				ii = Source->G->BeadList->erase(ii);
 				Source->G->g_length--;
 				Source->G->terminus_position--;
-				if ((*ii)->kind == BSITE)						Source->G->gnr_bsites--;
-				else if ((*ii)->kind == REGULATOR)	Source->G->gnr_regulators--;
-				else if ((*ii)->kind == EFFECTOR)		Source->G->gnr_effectors--;
+				if ((*ii)->kind == BSITE)						Source->G->gnr[BSITE]--;
+				else if ((*ii)->kind == REGULATOR)	Source->G->gnr[REGULATOR]--;
+				else if ((*ii)->kind == EFFECTOR)		Source->G->gnr[EFFECTOR]--;
+				delete (*ii);
+				ii = Source->G->BeadList->erase(ii);
 			}
 			else
 			{
@@ -252,13 +267,13 @@ Cell::i_bead Cell::TransferGene(i_bead it, Organelle* Source, Organelle* Target,
 	Target->G->BeadList->splice(insertsite, BeadListTemp);	//Splice temporary list into chromosome.
 
 	insertsite--;	//Go to the just inserted gene.
-	Target->G->PotentialTypeChange(insertsite);	//Gene type will be redetermined based on the new genomic context (i.e. using the RegTypeList of the Target).
+	if ((*insertsite)->kind == REGULATOR)	Target->G->PotentialTypeChange(insertsite);	//Regulator will be redefined based on the new genomic context, using the new organelle's RegTypeList.
 
 	//Increment the number of beads and the number of genes.
 	Target->G->g_length+=copy_length;
-	if ((*insertsite)->kind == REGULATOR)			Target->G->gnr_regulators++;
-	else if((*insertsite)->kind == EFFECTOR)	Target->G->gnr_effectors++;
-	Target->G->gnr_bsites+=copy_length-1;	//The length of the whole transferred piece except for the gene (i.e. you will always transfer 1 gene with x bsites and nothing else).
+	if ((*insertsite)->kind == REGULATOR)			Target->G->gnr[REGULATOR]++;
+	else if((*insertsite)->kind == EFFECTOR)	Target->G->gnr[EFFECTOR]++;
+	Target->G->gnr[BSITE]+=copy_length-1;	//The length of the whole transferred piece except for the gene (i.e. you will always transfer 1 gene with x bsites and nothing else).
 	Target->G->is_mutated = true;
 	Target->mutant = true;
 	Target->G->terminus_position = Target->G->g_length;
@@ -275,10 +290,10 @@ void Cell::TransferBead(i_bead it, Organelle* Target)
 	switch ( bead->kind )
 	{
 		case BSITE:
-			Target->G->gnr_bsites++;
+			Target->G->gnr[BSITE]++;
 			break;
 		case HOUSE:
-			Target->G->gnr_houses++;
+			Target->G->gnr[HOUSE]++;
 			break;
 	}
 	Target->G->is_mutated = true;

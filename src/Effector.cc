@@ -6,10 +6,26 @@ Effector::Effector() : Gene(EFFECTOR)
 	for(i=0; i<effector_length; i++) sequence[i] = false;
 }
 
-Effector::Effector(int typ, int thr, bool sig[], bool seq[], int exp) : Gene(REGULATOR, typ, thr, sig, exp)
+Effector::Effector(int typ, int thr, bool sig[], bool seq[], int exp) : Gene(EFFECTOR, typ, thr, sig, exp)
 {
 	int i;
 	for(i=0; i<effector_length; i++) sequence[i] = seq[i];
+}
+
+Effector::Effector(const Effector &eff) : Gene(eff)
+{
+	int i;
+
+  for(i=0; i<effector_length; i++) sequence[i] = eff.sequence[i];
+}
+
+Effector::~Effector()
+{
+}
+
+Bead* Effector::Clone() const
+{
+  return new Effector(*this);
 }
 
 bool Effector::Mutate(double mut_factor)
@@ -45,4 +61,37 @@ void Effector::DefineTypeFromSeq()
 	{
 		type = 6+(int)(uniform()*45);	//Type invention gets random type. Also for divergence from type 1-5, a new random type will be defined. In all other cases (type 1-5 to type 1-5, or type >6 to type >6), you don't have to do anything.
 	}
+}
+
+string Effector::Show(bool terminal, bool type_only) const
+{
+	int i;
+	string Content, color_prefix, color_suffix;
+	std::stringstream ss;
+
+	if (terminal)
+	{
+		color_prefix = "\033[93m";
+		color_suffix = "\033[0m";
+	}
+	else
+	{
+		color_prefix = "";
+		color_suffix = "";
+	}
+
+	ss << "(" << color_prefix << "E" << type << ":";
+	if (!type_only) ss << threshold << ":";
+	if (!type_only)
+	{
+		for(i=0; i<signalp_length; i++)	ss << signalp[i];
+		ss << ":";
+	}
+	for(i=0; i<effector_length; i++)	ss << sequence[i];
+	ss << color_suffix << ")";
+
+	Content = ss.str();
+	ss.clear();
+
+	return Content;
 }

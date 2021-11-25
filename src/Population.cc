@@ -187,7 +187,6 @@ void Population::UpdatePopulation()
 	int u, i, j, s, pick_s;
 	Organelle* SymbiontCopy;
 	Cell* NewCell;
-	Organelle* NewHost;
 
 	if (well_mixing)	WellMix();	//Well-mixing (before determining nutrient levels).
 
@@ -216,8 +215,6 @@ void Population::UpdatePopulation()
 			random_shuffle(Space[i][j]->Symbionts->begin(), Space[i][j]->Symbionts->end(), uniform_shuffle);
 
 			if (log_lineage)	LogLineage(i,j);
-
-
 
 			/* Basal death */
 			if (uniform() < death_rate_host)

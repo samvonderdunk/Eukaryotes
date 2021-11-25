@@ -15,7 +15,6 @@ Regulator::Regulator(int typ, int thr, int act, bool sig[], bool seq[], int exp)
 
 	activity = act;
 	for(i=0; i<regulator_length; i++) sequence[i] = seq[i];
-
 }
 
 
@@ -25,7 +24,6 @@ Regulator::Regulator(const Regulator &reg) : Gene(reg)
 
   activity = reg.activity;
   for(i=0; i<regulator_length; i++) sequence[i] = reg.sequence[i];
-
 }
 
 Regulator::~Regulator()
@@ -40,8 +38,6 @@ Bead* Regulator::Clone() const
 void Regulator::Randomize()
 {
 	int i;
-
-	cout << "Regulator randomize" << endl;
 
 	Gene::Randomize();
   activity = (int)(uniform()*(2*WeightRange+1) - WeightRange);

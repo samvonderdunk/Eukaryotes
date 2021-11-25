@@ -63,18 +63,18 @@ const int host_growth = 0;
 // 0, as in Prokaryotes: hosts overgrow one another, dividing as soon as they reach M.
 // 1, hosts wait for empty sites, but waiting is free (expression unimportant once they reach M).
 // 2, hosts wait for empty sites, but need to actively maintain M expression (i.e. making the whole cell-cycle more complex again). This option may be implemented later...
-const bool perfect_transport = true;	//Genes with a 0 in their signalp, are always moved to the host; genes with a 1 in their signalp always get targetted to the symbionts. Moving here means that they do not stick around in the compartment where they are created.
+const bool perfect_transport = false;	//Genes with a 0 in their signalp, are always moved to the host; genes with a 1 in their signalp always get targetted to the symbionts. Moving here means that they do not stick around in the compartment where they are created.
 const bool nutshare_evolve = false;	//Host can evolve how much nutrients it claims from the environment, passing on the remaining fraction to its symbionts (equally divided among these). Each host has an identical claim on environmental nutrients, i.e. independent of how many symbionts it has. This corresponds to nutrient competition 4.
 const int seq_hdist = 0;	//Maximal hamming distance to still be called this particular gene type. When this value is set to 0, we have the same case as in Prokaryotes.
 const int eff_hdist = 0;	//Maximal hamming distance for defining effectors.
 const bool empty_division_killing = true;	//Hosts first divide, potentially killing a neighbour, before realising that the new cell does not get symbionts and dies right away.
 
 //Genome parameters
-const int nr_household_genes =			26;
+const int nr_household_genes =			50;
 const double leakage_to_host =			0.00;
 const double leakage_to_symbiont =	0.00;
 
-//Geney parameters
+//Regulation parameters
 const double k_zero =		0.0000001;
 const double epsilon =	1.00;
 
@@ -132,23 +132,14 @@ const double symbiont_mu_factor =					1.;	//Symbiont mutation rates multiplied b
 const double mu_duplication[4] =		{0.00010/3, 0.00050/3, 0.00050/3, 0.00050/3};
 const double mu_deletion[4] =				{0.00010/3, 0.00050/3, 0.00050/3, 0.00050/3};
 const double mu_shuffle[4] =				{0.00050/3, 0.00050/3, 0.00050/3, 0.00050/3};
-const double mu_invention[4] =			{0.00000/1, 0.00500/3, 0.00050/3, 0.00050/3};
+const double mu_invention[4] =			{0.00000/3, 0.00500/3, 0.00050/3, 0.00050/3};
 const double mu_threshold[4] =			{0.00050/3, 0.00050/3, 0.00050/3, 0.00050/3};
-const double mu_signalp[4] =				{0.00001/1, 0.00001/1, 0.00001/1, 0.00001/1};
-const double mu_typeseq[4] =				{0.00001/1, 0.00001/1, 0.00001/1, 0.00001/1};
+const double mu_signalp[4] =				{0.00001*0, 0.00001*0, 0.00001*0, 0.00001*0};
 const double mu_sequence[4] =				{0.00010/3, 0.00010/3, 0.00010/3, 0.00010/3};
 const double mu_activity[4] =				{0.00050/3, 0.00050/3, 0.00050/3, 0.00050/3};
 
-const double mu_transfer_StoH[4] =	{0.00001/1, 0.00001/1, 0.00001/1, 0.00001/1};
-const double mu_transfer_HtoS[4] =	{0.00001/1, 0.00001/1, 0.00001/1, 0.00001/1};
-
-//Transfer mutations.
-const double regulator_transfer_mu_HtoS = 0.00001;
-const double regulator_transfer_mu_StoH = 0.00001;
-const double bsite_transfer_mu_HtoS = 		0.00001;
-const double bsite_transfer_mu_StoH = 		0.00001;
-const double house_transfer_mu_HtoS = 		0.00001;
-const double house_transfer_mu_StoH = 		0.00001;
+const double mu_transfer_StoH[4] =	{0.00001*0, 0.00001*0, 0.00001*0, 0.00001*0};
+const double mu_transfer_HtoS[4] =	{0.00001*0, 0.00001*0, 0.00001*0, 0.00001*0};
 
 //Effector definitions. Previously used to make hard-coded regulatory types.
 const bool effector_types[5][effector_length] =
