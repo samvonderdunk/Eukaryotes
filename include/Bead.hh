@@ -17,8 +17,8 @@ class Bead {
 
 		virtual bool Mutate(int organelle)=0;	//No parameters to mutate for a plain bead, but function used by all derived classes.
 		virtual void Randomize()=0;
-		bool MutateParameter(int* value, double mu);
-		bool MutateBitstring(bool* bitstring, int bitstring_length, double mu);
+		bool MutateParameter(int* value, double m);
+		bool MutateBitstring(bool* bitstring, int bitstring_length, double m);
 		int BindingAffinity(const bool* sequenceA, const bool* sequenceB, int seqlen = regulator_length) const;
 
 		virtual string Show(bool terminal, bool type_only=false) const=0;

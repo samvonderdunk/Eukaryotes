@@ -61,7 +61,7 @@ const int host_growth = 0;
 // 0, as in Prokaryotes: hosts overgrow one another, dividing as soon as they reach M.
 // 1, hosts wait for empty sites, but waiting is free (expression unimportant once they reach M).
 // 2, hosts wait for empty sites, but need to actively maintain M expression (i.e. making the whole cell-cycle more complex again). This option may be implemented later...
-const bool perfect_transport = false;	//Genes with a 0 in their signalp, are always moved to the host; genes with a 1 in their signalp always get targetted to the symbionts. Moving here means that they do not stick around in the compartment where they are created.
+const bool perfect_transport = true;	//Genes with a 0 in their signalp, are always moved to the host; genes with a 1 in their signalp always get targetted to the symbionts. Moving here means that they do not stick around in the compartment where they are created.
 const bool nutshare_evolve = false;	//Host can evolve how much nutrients it claims from the environment, passing on the remaining fraction to its symbionts (equally divided among these). Each host has an identical claim on environmental nutrients, i.e. independent of how many symbionts it has. This corresponds to nutrient competition 4.
 const int seq_hdist = 0;	//Maximal hamming distance to still be called this particular gene type. When this value is set to 0, we have the same case as in Prokaryotes.
 const int eff_hdist = 0;	//Maximal hamming distance for defining effectors.
@@ -125,7 +125,7 @@ const double nutrient_claim_mu_delta =		0.05;
 const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
 
 //Mutation rates are specified like this:
-// mu[DUPLICATION][HOST][BSITE]
+// mu[HOST][DUPLICATION][BSITE]
 // mut[HOST][EFFECTOR] specifies the transfer mutation rate FROM HOST (to symbiont) for effectors.
 
 #define DUPLICATION 0
@@ -137,7 +137,7 @@ const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
 #define SEQUENCE 6
 #define ACTIVITY 7
 
-extern double mu[8][2][4];
+extern double mu[2][8][4];
 extern double muT[2][4];
 
 //Effector definitions. Previously used to make hard-coded regulatory types.

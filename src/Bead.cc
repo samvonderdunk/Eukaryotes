@@ -22,12 +22,12 @@ Bead::Bead(const Bead &b)
 	duplicate = b.duplicate;
 }
 
-bool Bead::MutateParameter(int* value, double mu)
+bool Bead::MutateParameter(int* value, double m)
 {
 	int old_value = (*value);
 	bool is_mutated = false;
 
-	if (uniform() < mu)
+	if (uniform() < m)
 	{
 		if (uniform() < 0.8)	*value = (uniform()>0.5) ? (*value)+1 : (*value)-1;
 		else									*value = (int)(uniform()*(2*WeightRange+1) - WeightRange);
@@ -37,14 +37,14 @@ bool Bead::MutateParameter(int* value, double mu)
 	return is_mutated;
 }
 
-bool Bead::MutateBitstring(bool* bitstring, int bitstring_length, double mu)
+bool Bead::MutateBitstring(bool* bitstring, int bitstring_length, double m)
 {
 	int i;
 	bool is_mutated = false;
 
 	for(i=0; i<bitstring_length; i++)
 	{
-		if(uniform() < mu)
+		if(uniform() < m)
 		{
 			if (bitstring[i] == false)			bitstring[i] = true;
 			else if (bitstring[i] == true)	bitstring[i] = false;

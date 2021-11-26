@@ -48,7 +48,7 @@ double nutrient_abundance = default_nutrient_abundance;
 int nutrient_competition = default_nutrient_competition;
 int strain_competition = default_strain_competition;
 
-double mu[8][2][4] = {0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,};
+double mu[2][8][4] = {0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,};
 double muT[2][4] = {0., 0., 0., 0., 0., 0., 0., 0.};
 
 void Setup(int argc, char** argv);
@@ -463,7 +463,7 @@ void SetMutationRates()
 		data = (char*)line.c_str();
 		if (count_lines < 8)
 		{
-			success = sscanf(data, "#%s\t%lf %lf %lf %lf %lf %lf %lf %lf", buffer, &mu[count_lines][0][0], &mu[count_lines][0][1], &mu[count_lines][0][2], &mu[count_lines][0][3], &mu[count_lines][1][0], &mu[count_lines][1][1], &mu[count_lines][1][2], &mu[count_lines][1][3]);
+			success = sscanf(data, "#%s\t%lf %lf %lf %lf %lf %lf %lf %lf", buffer, &mu[0][count_lines][0], &mu[0][count_lines][1], &mu[0][count_lines][2], &mu[0][count_lines][3], &mu[1][count_lines][0], &mu[1][count_lines][1], &mu[1][count_lines][2], &mu[1][count_lines][3]);
 		}
 		else if (count_lines == 8)
 		{

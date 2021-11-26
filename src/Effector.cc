@@ -33,7 +33,7 @@ bool Effector::Mutate(int organelle)
 	bool is_mutated = false;
 
 	Gene::Mutate(organelle);	//Mutate signalp and threshold
-	if ( MutateBitstring(sequence, effector_length, mu[SEQUENCE][organelle][EFFECTOR]) )
+	if ( MutateBitstring(sequence, effector_length, mu[organelle][SEQUENCE][EFFECTOR]) )
 	{
 		is_mutated = true;
 		DefineTypeFromSeq();		//Check if we have to change the type.

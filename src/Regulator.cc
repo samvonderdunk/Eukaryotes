@@ -50,8 +50,8 @@ bool Regulator::Mutate(int organelle)
 	bool is_mutated = false;
 
 	Gene::Mutate(organelle);	//Mutate signalp and threshold
-	if ( MutateParameter(&activity, mu[ACTIVITY][organelle][REGULATOR]) )										is_mutated = true;
-	if ( MutateBitstring(sequence, regulator_length, mu[SEQUENCE][organelle][REGULATOR]) )		is_mutated = true;
+	if ( MutateParameter(&activity, mu[organelle][ACTIVITY][REGULATOR]) )										is_mutated = true;
+	if ( MutateBitstring(sequence, regulator_length, mu[organelle][SEQUENCE][REGULATOR]) )	is_mutated = true;
 
 	return is_mutated;
 }

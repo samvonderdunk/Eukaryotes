@@ -392,10 +392,7 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 		it = BeadList->begin();
 		while(it != BeadList->end())
 		{
-			if((*it)->kind==HOUSE && uniform() < mu[SHUFFLE][organelle][HOUSE])	it = Shuffle(it);
-			else if((*it)->kind==BSITE && uniform() < mu[SHUFFLE][organelle][BSITE])	it = Shuffle(it);
-			else if((*it)->kind==REGULATOR && uniform() < mu[SHUFFLE][organelle][REGULATOR])	it = Shuffle(it);
-			else if((*it)->kind==EFFECTOR && uniform() < mu[SHUFFLE][organelle][EFFECTOR])	it = Shuffle(it);
+			if (uniform() < mu[organelle][SHUFFLE][(*it)->kind])	it = Shuffle(it);
 			else	it++;
 		}
 
@@ -500,14 +497,14 @@ Genome::i_bead Genome::Mutation(i_bead it, int* pdel_length)
 	is_mutated = false;
 
 	double uu = uniform();
-	if (uu < mu[DUPLICATION][organelle][(*it)->kind])			//Duplication.
+	if (uu < mu[organelle][DUPLICATION][(*it)->kind])			//Duplication.
 	{
 		(*it)->duplicate = true;
 		is_mutated = true;
 		it++;
 	}
 
-	else if (uu < mu[DELETION][organelle][(*it)->kind])		//Deletion.
+	else if (uu < mu[organelle][DELETION][(*it)->kind])		//Deletion.
 	{
 		it = Deletion(it, pdel_length);
 		is_mutated = true;
@@ -636,7 +633,7 @@ void Genome::Inventions(int* pdup_length)
 	{
 		uu = uniform();
 
-		if (k == HOUSE && uu < mu[INVENTION][organelle][HOUSE])
+		if (k == HOUSE && uu < mu[organelle][INVENTION][HOUSE])
 		{
 			house = new House();
 			house->Randomize();
@@ -648,7 +645,7 @@ void Genome::Inventions(int* pdup_length)
 			g_length++;
 			(*pdup_length)++;
 		}
-		else if (k == BSITE && uu < mu[INVENTION][organelle][BSITE])
+		else if (k == BSITE && uu < mu[organelle][INVENTION][BSITE])
 		{
 			bsite = new Bsite();
 			bsite->Randomize();
@@ -660,7 +657,7 @@ void Genome::Inventions(int* pdup_length)
 			g_length++;
 			(*pdup_length)++;
 		}
-		else if (k == REGULATOR && uu < mu[INVENTION][organelle][REGULATOR])
+		else if (k == REGULATOR && uu < mu[organelle][INVENTION][REGULATOR])
 		{
 			reg = new Regulator();
 			reg->Randomize();
@@ -674,7 +671,7 @@ void Genome::Inventions(int* pdup_length)
 			g_length++;
 			(*pdup_length)++;
 		}
-		else if (k == EFFECTOR && uu < mu[INVENTION][organelle][EFFECTOR])
+		else if (k == EFFECTOR && uu < mu[organelle][INVENTION][EFFECTOR])
 		{
 			eff = new Effector();
 			eff->Randomize();
