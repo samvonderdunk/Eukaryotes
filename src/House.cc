@@ -25,7 +25,7 @@ void House::Randomize()
 	cout << "House randomize" << endl;
 }
 
-bool House::Mutate(double mut_factor)	//Maybe don't need to define this? See what works for Randomize().
+bool House::Mutate(int organelle)	//Maybe don't need to define this? See what works for Randomize().
 {
 	return false;	//Nothing to mutate for now.
 }

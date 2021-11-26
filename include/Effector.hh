@@ -20,7 +20,7 @@ class Effector : public Gene {
 		virtual Bead* Clone() const;
 
 		void DefineTypeFromSeq();
-		bool Mutate(double mut_factor);
+		bool Mutate(int organelle);
 		string Show(bool terminal, bool type_only=false) const;
 
 };

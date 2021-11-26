@@ -45,13 +45,13 @@ void Regulator::Randomize()
 
 }
 
-bool Regulator::Mutate(double mut_factor)
+bool Regulator::Mutate(int organelle)
 {
 	bool is_mutated = false;
 
-	Gene::Mutate(mut_factor);	//Mutate signalp and threshold
-	if ( MutateParameter(&activity, mu_activity[REGULATOR]*mut_factor) )										is_mutated = true;
-	if ( MutateBitstring(sequence, regulator_length, mu_sequence[REGULATOR]*mut_factor) )		is_mutated = true;
+	Gene::Mutate(organelle);	//Mutate signalp and threshold
+	if ( MutateParameter(&activity, mu[ACTIVITY][organelle][REGULATOR]) )										is_mutated = true;
+	if ( MutateBitstring(sequence, regulator_length, mu[SEQUENCE][organelle][REGULATOR]) )		is_mutated = true;
 
 	return is_mutated;
 }

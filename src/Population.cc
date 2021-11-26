@@ -926,7 +926,7 @@ void Population::ReadBackupFile()
 				}
 				else
 				{
-					O->G->is_symbiont = true;
+					O->G->organelle = SYMBIONT;
 					Space[r][c]->Symbionts->push_back(O);
 					Space[r][c]->nr_symbionts++;
 				}

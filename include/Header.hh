@@ -31,17 +31,15 @@ using namespace std;
 
 #define toDigit(c) (c-'0')  // Converts char to digit
 
+#define HOST 0
+#define SYMBIONT 0
+
 #define HOUSE 0
 #define BSITE 1
 #define REGULATOR 2
 #define EFFECTOR 3
 
 const int max_input_files=20;
-
-//Input files.
-const string init_backup_file="";
-const string init_anctrace_file="";
-const string init_lineage_file="";
 
 //Bead variables
 const int signalp_length =		1;	//As long as I am not using it, make it small.
@@ -126,20 +124,21 @@ const double nutrient_claim_mu_delta =		0.05;
 
 const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
 
-const double symbiont_mu_factor =					1.;	//Symbiont mutation rates multiplied by this factor (except the rates that are already specified for symbiont and host separately, like transfer mutations). This factor can also be set to "-1" (no symbiont mutations, normal host mutations), or "-2" (no host mutations, normal symbiont mutations).
+//Mutation rates are specified like this:
+// mu[DUPLICATION][HOST][BSITE]
+// mut[HOST][EFFECTOR] specifies the transfer mutation rate FROM HOST (to symbiont) for effectors.
 
-//All mutation rates uphold the order that defines the bead types (HOUSE, BSITE, REGULATOR, EFFECTOR). Not everything is even applicable to all types, but this makes it neater I think.
-const double mu_duplication[4] =		{0.00010/3, 0.00050/3, 0.00050/3, 0.00050/3};
-const double mu_deletion[4] =				{0.00010/3, 0.00050/3, 0.00050/3, 0.00050/3};
-const double mu_shuffle[4] =				{0.00050/3, 0.00050/3, 0.00050/3, 0.00050/3};
-const double mu_invention[4] =			{0.00000/3, 0.00500/3, 0.00050/3, 0.00050/3};
-const double mu_threshold[4] =			{0.00050/3, 0.00050/3, 0.00050/3, 0.00050/3};
-const double mu_signalp[4] =				{0.00001*0, 0.00001*0, 0.00001*0, 0.00001*0};
-const double mu_sequence[4] =				{0.00010/3, 0.00010/3, 0.00010/3, 0.00010/3};
-const double mu_activity[4] =				{0.00050/3, 0.00050/3, 0.00050/3, 0.00050/3};
+#define DUPLICATION 0
+#define DELETION 1
+#define SHUFFLE 2
+#define INVENTION 3
+#define THRESHOLD 4
+#define SIGNALP 5
+#define SEQUENCE 6
+#define ACTIVITY 7
 
-const double mu_transfer_StoH[4] =	{0.00001*0, 0.00001*0, 0.00001*0, 0.00001*0};
-const double mu_transfer_HtoS[4] =	{0.00001*0, 0.00001*0, 0.00001*0, 0.00001*0};
+extern double mu[8][2][4];
+extern double muT[2][4];
 
 //Effector definitions. Previously used to make hard-coded regulatory types.
 const bool effector_types[5][effector_length] =
@@ -171,6 +170,7 @@ extern int NCfull;
 extern string genome_files[max_input_files];
 extern string expression_files[max_input_files];
 extern string definition_files[max_input_files];
+extern string mutation_file;
 extern string backup_file;
 extern string anctrace_file;
 extern string lineage_file;

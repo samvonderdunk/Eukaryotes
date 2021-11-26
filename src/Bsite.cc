@@ -41,12 +41,12 @@ void Bsite::Randomize()
   for (i=0; i<regulator_length; i++)	sequence[i] = (uniform()>0.5) ? true : false;
 }
 
-bool Bsite::Mutate(double mut_factor)
+bool Bsite::Mutate(int organelle)
 {
 	bool is_mutated = false;
 
-	if ( MutateParameter(&activity, mu_activity[BSITE]*mut_factor) )										is_mutated = true;
-	if ( MutateBitstring(sequence, regulator_length, mu_sequence[BSITE]*mut_factor) )		is_mutated = true;
+	if ( MutateParameter(&activity, mu[ACTIVITY][organelle][BSITE]) )											is_mutated = true;
+	if ( MutateBitstring(sequence, regulator_length, mu[SEQUENCE][organelle][BSITE]) )		is_mutated = true;
 
 	return is_mutated;
 }

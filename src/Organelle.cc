@@ -92,13 +92,13 @@ int Organelle::EvaluateState(int eval_state, int* readout)
 
 void Organelle::Mitosis(Organelle* parent, unsigned long long id_count)
 {
-	G->is_symbiont = parent->G->is_symbiont;
+	G->organelle = parent->G->organelle;
 	G->SplitGenome(parent->G);
 
 	parent->Stage = 0;
 	parent->privilige = false;
 
-	if (mu_duplication[HOUSE] > 0.0 || mu_deletion[HOUSE] > 0.0)	fitness = 1. - abs(nr_household_genes - G->gnr[HOUSE]) / (float)10;
+	fitness = 1. - abs(nr_household_genes - G->gnr[HOUSE]) / (float)10;	//There are so many mutation rates to check that it probably is faster to just calculate the fitness always.
 
 	time_of_appearance = Time;
 	fossil_id = id_count;

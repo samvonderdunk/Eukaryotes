@@ -17,7 +17,7 @@ class Genome {
   int g_length, gnr[4];
   int fork_position, terminus_position;	//position of the replication fork and the terminus, where it stops.
   bool is_mutated;
-	bool is_symbiont;
+	int organelle;
 
 	typedef std::list<Bead*>::iterator i_bead;
 	typedef std::list<Bead*>::reverse_iterator ri_bead;
@@ -38,7 +38,7 @@ class Genome {
 	int CountTypeAbundance(int type);
 
 	//Mutation functions.
-	i_bead Mutation(i_bead it, int* pdel_length, double muf);
+	i_bead Mutation(i_bead it, int* pdel_length);
 	i_bead Deletion(i_bead it, int* pdel_length);
 	i_bead Duplication(i_bead it, int* pdup_length);
 	void Inventions(int* pdup_length);

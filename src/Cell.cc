@@ -134,7 +134,7 @@ void Cell::DNATransferToHost()
 			{
 				if ( (*it)->kind == HOUSE || (*it)->kind == BSITE )	//Let's simply always do copy-paste.
 				{
-					if ( uniform() < mu_transfer_StoH[(*it)->kind] )	TransferBead(it, Host);
+					if ( uniform() < muT[SYMBIONT][(*it)->kind] )	TransferBead(it, Host);
 					it++;
 					break;
 				}
@@ -143,14 +143,14 @@ void Cell::DNATransferToHost()
 					uu = uniform();
 					if (Symbionts->at(s)->Stage >= 2)
 					{
-						if (uu < mu_transfer_StoH[(*it)->kind])					it = TransferGene(it, Symbionts->at(s), Host, false, false);
-						else if (uu < 2*mu_transfer_StoH[(*it)->kind])	it = TransferGene(it, Symbionts->at(s), Host, true, false);
+						if (uu < muT[SYMBIONT][(*it)->kind])					it = TransferGene(it, Symbionts->at(s), Host, false, false);
+						else if (uu < 2*muT[SYMBIONT][(*it)->kind])		it = TransferGene(it, Symbionts->at(s), Host, true, false);
 						else	it++;
 					}
 					else
 					{
-						if (uu < mu_transfer_StoH[(*it)->kind])					it = TransferGene(it, Symbionts->at(s), Host, false, true);
-						else if (uu < 2*mu_transfer_StoH[(*it)->kind])	it = TransferGene(it, Symbionts->at(s), Host, true, true);
+						if (uu < muT[SYMBIONT][(*it)->kind])					it = TransferGene(it, Symbionts->at(s), Host, false, true);
+						else if (uu < 2*muT[SYMBIONT][(*it)->kind])		it = TransferGene(it, Symbionts->at(s), Host, true, true);
 						else	it++;
 					}
 				}
@@ -175,7 +175,7 @@ void Cell::DNATransfertoSymbiont(Organelle* Symbiont)
 	{
 		if ( (*it)->kind == HOUSE || (*it)->kind == BSITE )
 		{
-			if (uniform() < mu_transfer_HtoS[(*it)->kind])	TransferBead(it, Symbiont);
+			if (uniform() < muT[HOST][(*it)->kind])	TransferBead(it, Symbiont);
 			it++;
 		}
 		else if ( (*it)->kind == REGULATOR || (*it)->kind == EFFECTOR )
@@ -183,14 +183,14 @@ void Cell::DNATransfertoSymbiont(Organelle* Symbiont)
 			uu = uniform();
 			if (Host->Stage >= 2)
 			{
-				if (uu < mu_transfer_HtoS[(*it)->kind]) 				it = TransferGene(it, Host, Symbiont, false, false);
-				else if (uu < 2*mu_transfer_HtoS[(*it)->kind])	it = TransferGene(it, Host, Symbiont, true, false);
+				if (uu < muT[HOST][(*it)->kind]) 					it = TransferGene(it, Host, Symbiont, false, false);
+				else if (uu < 2*muT[HOST][(*it)->kind])		it = TransferGene(it, Host, Symbiont, true, false);
 				else	it++;
 			}
 			else
 			{
-				if (uu < mu_transfer_HtoS[(*it)->kind])					it = TransferGene(it, Host, Symbiont, false, true);
-				else if (uu < 2*mu_transfer_HtoS[(*it)->kind])	it = TransferGene(it, Host, Symbiont, true, true);
+				if (uu < muT[HOST][(*it)->kind])					it = TransferGene(it, Host, Symbiont, false, true);
+				else if (uu < 2*muT[HOST][(*it)->kind])		it = TransferGene(it, Host, Symbiont, true, true);
 				else	it++;
 			}
 		}
@@ -343,7 +343,7 @@ void Cell::InitialiseCell(int input_nr)
 		{
 			Symbiont = new Organelle();
 			Symbiont->InitialiseOrganelle(genome, expression, definition);
-			Symbiont->G->is_symbiont = true;
+			Symbiont->G->organelle = SYMBIONT;
 			Symbionts->push_back(Symbiont);
 			nr_symbionts++;
 		}

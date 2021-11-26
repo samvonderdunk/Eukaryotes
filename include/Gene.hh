@@ -22,7 +22,7 @@ class Gene : public Bead {
 		virtual Bead* Clone() const=0;
 		void Randomize();
 
-		bool Mutate(double mut_factor);
+		bool Mutate(int organelle);
 		virtual string Show(bool terminal, bool type_only=false) const=0;
 };
 

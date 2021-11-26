@@ -13,7 +13,7 @@ Genome::Genome()
 	fork_position=0;
 	terminus_position=0;
 	is_mutated=false;
-	is_symbiont=false;
+	organelle=0;
 }
 
 Genome::~Genome()
@@ -307,11 +307,6 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 	vector<bool>* MutationList;
 	int k, del_length, dup_length, index, g_length_before_mut;
 	int* pdup_length, * pdel_length;
-	double muf;
-
-	if (symbiont_mu_factor == -1)				muf = (is_symbiont?0.:1.);	//No mutations for symbionts.
-	else if(symbiont_mu_factor == -2)		muf = (is_symbiont?1.:0.);	//No mutations for hosts.
-	else																muf = (is_symbiont?symbiont_mu_factor:1.);	//Symbionts can get higher mutation rates.
 
 	g_length = BeadList->size();
 	g_length_before_mut = g_length;
@@ -360,7 +355,7 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 		while (it != BeadList->end())
 		{
 			MutationList->at(index) = true;
-			it = Mutation(it, pdel_length, muf);
+			it = Mutation(it, pdel_length);
 			index++;
 		}
 
@@ -397,10 +392,10 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 		it = BeadList->begin();
 		while(it != BeadList->end())
 		{
-			if((*it)->kind==HOUSE && uniform() < mu_shuffle[HOUSE] * muf)	it = Shuffle(it);
-			else if((*it)->kind==BSITE && uniform() < mu_shuffle[BSITE] * muf)	it = Shuffle(it);
-			else if((*it)->kind==REGULATOR && uniform() < mu_shuffle[REGULATOR] * muf)	it = Shuffle(it);
-			else if((*it)->kind==EFFECTOR && uniform() < mu_shuffle[EFFECTOR] * muf)	it = Shuffle(it);
+			if((*it)->kind==HOUSE && uniform() < mu[SHUFFLE][organelle][HOUSE])	it = Shuffle(it);
+			else if((*it)->kind==BSITE && uniform() < mu[SHUFFLE][organelle][BSITE])	it = Shuffle(it);
+			else if((*it)->kind==REGULATOR && uniform() < mu[SHUFFLE][organelle][REGULATOR])	it = Shuffle(it);
+			else if((*it)->kind==EFFECTOR && uniform() < mu[SHUFFLE][organelle][EFFECTOR])	it = Shuffle(it);
 			else	it++;
 		}
 
@@ -500,19 +495,19 @@ int Genome::CountTypeAbundance(int type)
 */
 
 
-Genome::i_bead Genome::Mutation(i_bead it, int* pdel_length, double muf)
+Genome::i_bead Genome::Mutation(i_bead it, int* pdel_length)
 {
 	is_mutated = false;
 
 	double uu = uniform();
-	if (uu < mu_duplication[(*it)->kind] * muf)			//Duplication.
+	if (uu < mu[DUPLICATION][organelle][(*it)->kind])			//Duplication.
 	{
 		(*it)->duplicate = true;
 		is_mutated = true;
 		it++;
 	}
 
-	else if (uu < mu_deletion[(*it)->kind] * muf)		//Deletion.
+	else if (uu < mu[DELETION][organelle][(*it)->kind])		//Deletion.
 	{
 		it = Deletion(it, pdel_length);
 		is_mutated = true;
@@ -520,7 +515,7 @@ Genome::i_bead Genome::Mutation(i_bead it, int* pdel_length, double muf)
 
 	else																						//Property mutations.
 	{
-		if ( (*it)->Mutate(muf) )
+		if ( (*it)->Mutate(organelle) )
 		{
 			if ( (*it)->kind == REGULATOR )	PotentialTypeChange(it);	//Check type change, maybe activity or sequence has been mutated.	Note that for effectors, the type change is immediately checked by the Mutate function, as it does not need to know other variables of the Genome (for regulatory types, we do need those).
 			is_mutated = true;
@@ -641,7 +636,7 @@ void Genome::Inventions(int* pdup_length)
 	{
 		uu = uniform();
 
-		if (k == HOUSE && uu < mu_invention[HOUSE])
+		if (k == HOUSE && uu < mu[INVENTION][organelle][HOUSE])
 		{
 			house = new House();
 			house->Randomize();
@@ -653,7 +648,7 @@ void Genome::Inventions(int* pdup_length)
 			g_length++;
 			(*pdup_length)++;
 		}
-		else if (k == BSITE && uu < mu_invention[BSITE])
+		else if (k == BSITE && uu < mu[INVENTION][organelle][BSITE])
 		{
 			bsite = new Bsite();
 			bsite->Randomize();
@@ -665,7 +660,7 @@ void Genome::Inventions(int* pdup_length)
 			g_length++;
 			(*pdup_length)++;
 		}
-		else if (k == REGULATOR && uu < mu_invention[REGULATOR])
+		else if (k == REGULATOR && uu < mu[INVENTION][organelle][REGULATOR])
 		{
 			reg = new Regulator();
 			reg->Randomize();
@@ -679,7 +674,7 @@ void Genome::Inventions(int* pdup_length)
 			g_length++;
 			(*pdup_length)++;
 		}
-		else if (k == EFFECTOR && uu < mu_invention[EFFECTOR])
+		else if (k == EFFECTOR && uu < mu[INVENTION][organelle][EFFECTOR])
 		{
 			eff = new Effector();
 			eff->Randomize();
@@ -839,7 +834,7 @@ void Genome::CloneGenome(const Genome* ImageG)
 	fork_position = ImageG->fork_position;
 	terminus_position = ImageG->terminus_position;
 	is_mutated = ImageG->is_mutated;
-	is_symbiont = ImageG->is_symbiont;
+	organelle = ImageG->organelle;
 }
 
 
