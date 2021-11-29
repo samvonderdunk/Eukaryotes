@@ -463,11 +463,11 @@ void SetMutationRates()
 		data = (char*)line.c_str();
 		if (count_lines < 8)
 		{
-			success = sscanf(data, "#%s\t%lf %lf %lf %lf %lf %lf %lf %lf", buffer, &mu[0][count_lines][0], &mu[0][count_lines][1], &mu[0][count_lines][2], &mu[0][count_lines][3], &mu[1][count_lines][0], &mu[1][count_lines][1], &mu[1][count_lines][2], &mu[1][count_lines][3]);
+			success = sscanf(data, "#%s\t%lf %lf %lf %lf %lf %lf %lf %lf", buffer, &mu[HOST][count_lines][HOUSE], &mu[HOST][count_lines][BSITE], &mu[HOST][count_lines][REGULATOR], &mu[HOST][count_lines][EFFECTOR], &mu[SYMBIONT][count_lines][HOUSE], &mu[SYMBIONT][count_lines][BSITE], &mu[SYMBIONT][count_lines][REGULATOR], &mu[SYMBIONT][count_lines][EFFECTOR]);
 		}
 		else if (count_lines == 8)
 		{
-			success = sscanf(data, "#%s\t%lf %lf %lf %lf %lf %lf %lf %lf", buffer, &muT[0][0], &muT[0][1], &muT[0][2], &muT[0][3], &muT[1][0], &muT[1][1], &muT[1][2], &muT[1][3]);
+			success = sscanf(data, "#%s\t%lf %lf %lf %lf %lf %lf %lf %lf", buffer, &muT[HOST][HOUSE], &muT[HOST][BSITE], &muT[HOST][REGULATOR], &muT[HOST][EFFECTOR], &muT[SYMBIONT][HOUSE], &muT[SYMBIONT][BSITE], &muT[SYMBIONT][REGULATOR], &muT[SYMBIONT][EFFECTOR]);
 		}
 
 		if(success != 9)

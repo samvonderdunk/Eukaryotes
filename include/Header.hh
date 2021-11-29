@@ -32,7 +32,7 @@ using namespace std;
 #define toDigit(c) (c-'0')  // Converts char to digit
 
 #define HOST 0
-#define SYMBIONT 0
+#define SYMBIONT 1
 
 #define HOUSE 0
 #define BSITE 1
