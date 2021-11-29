@@ -56,10 +56,11 @@ void SetMutationRates();
 
 int main(int argc, char** argv) {
 
+	int i, j, k, q;
 	/* ############## Setup ############## */
 	printf("\n\033[93m### Setup ###\033[0m\n");
 	Population* P;
-	for(int q=0; q<argc; q++)	printf("%s ", argv[q]);
+	for(q=0; q<argc; q++)	printf("%s ", argv[q]);
 	Setup(argc, argv);
 	SetMutationRates();
 	dsfmt_init_gen_rand(&dsfmt, seed);	//Used to seed uniform().
@@ -92,6 +93,25 @@ int main(int argc, char** argv) {
 		printf("\033[93m### Simulation ###\033[0m\n");
 		for(Time=TimeZero; Time<SimTime+1; Time++){	//We do one extra step, because output is generated at the beginning of a step, such that time=0 is the field as it is initialised.
 			if (invasion_experiment && Time>equilibration_time) NC = NCfull;
+
+			//Periods of high mutation.
+			if ( mutation_epochs && Time!=TimeZero && Time%(high_mu_period+high_mu_interval)==0 )	//Finished an interval and a high mutation period. So going into the next interval (low mutation).
+			{
+				for (i=0; i<2; i++) for (k=0; k<4; k++)
+				{
+					for (j=0; j<8; j++)	mu[i][j][k] /= high_mu_factor;	//Divide all mu's by high_mu_factor.
+					muT[i][k] /= high_mu_factor;
+				}
+			}
+			else if ( mutation_epochs && Time%(high_mu_period+high_mu_interval)==high_mu_interval )	//Finished an interval, going into the next high mutation period.
+			{
+				for (i=0; i<2; i++) for (k=0; k<4; k++)
+				{
+					for (j=0; j<8; j++)	mu[i][j][k] *= high_mu_factor;	//Multiply all mu's by high_mu_factor.
+					muT[i][k] *= high_mu_factor;
+				}
+			}
+
 			P->UpdatePopulation();		//Main next-state function, updating the population.
 			if (invasion_complete>0 && (Time==invasion_complete+add_finish_time)) break;
 		}
