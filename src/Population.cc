@@ -414,13 +414,13 @@ void Population::UpdatePopulation()
 
 			if (Space[i][j]->Host->Stage == 2   &&   Space[i][j]->Host->privilige)
 			{
-				Space[i][j]->Host->Replicate(nutrients.first);
+				Space[i][j]->Host->Replicate(Space[i][j]->Host->nutrient_claim * nutrients.first);
 			}
 			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
 				if ( Space[i][j]->Symbionts->at(s)->Stage == 2   &&   Space[i][j]->Symbionts->at(s)->privilige)
 				{
-					Space[i][j]->Symbionts->at(s)->Replicate(nutrients.second);
+					Space[i][j]->Symbionts->at(s)->Replicate(Space[i][j]->Symbionts->at(s)->nutrient_claim * nutrients.second);
 				}
 			}
 			/* ~Replication */
@@ -509,8 +509,8 @@ Population::coords Population::PickNeighbour(int i, int j)
 
 void Population::CollectNutrientsFromSite(int i, int j)
 {
-	int ii, jj, nrow, ncol, cell_density=0, organelle_density=0;
-	double nutrient_share, starting_nuts;
+	int ii, jj, nrow, ncol, cell_density=0, organelle_density=0, s;
+	double nutrient_share, starting_nuts, claim_density=0.;
 
 	//First obtain organelle and cell density in 3x3 neighbourhood.
 	for (ii=i-1; ii<=i+1; ii++) for (jj=j-1; jj<=j+1; jj++)
@@ -538,6 +538,12 @@ void Population::CollectNutrientsFromSite(int i, int j)
 		{
 			cell_density++;
 			organelle_density += Space[nrow][ncol]->nr_symbionts + 1;		//Host always counts for one.
+
+			claim_density += Space[nrow][ncol]->Host->nutrient_claim;	//Evolvable nutrient claims.
+			for (s=0; s<Space[nrow][ncol]->nr_symbionts; s++)
+			{
+				claim_density += Space[nrow][ncol]->Symbionts->at(s)->nutrient_claim;
+			}
 		}
 	}
 
@@ -566,6 +572,7 @@ void Population::CollectNutrientsFromSite(int i, int j)
 	{
 		if (organelle_density == 0)					nutrient_share = starting_nuts;
 		else if (nutrient_competition == 2)	nutrient_share = starting_nuts / (double)organelle_density;	//Used in first smooth nutrient function.
+		else if (nutrient_competition == 6)	nutrient_share = starting_nuts / claim_density;
 		else																nutrient_share = starting_nuts / (double)cell_density;	//Used in second smooth nutrient function and in third nutshare_evolve protocol.
 
 		//Here we actually add the nutrient share to each site.
@@ -578,7 +585,7 @@ void Population::CollectNutrientsFromSite(int i, int j)
 			else if (jj >= NC)	ncol = jj - NC;
 			else								ncol = jj;
 
-			if (nutrient_competition == 2 || nutrient_competition == 4)		NutrientSpace[nrow][ncol] += nutrient_share;	//Used in first smooth nutrient function. But also when we evolve nutrient_sharing, the whole site gets the unshared total nutrients. These will be further depleted upon replication.
+			if (nutrient_competition == 2 || nutrient_competition == 4 || nutrient_competition == 6)		NutrientSpace[nrow][ncol] += nutrient_share;	//Used in first smooth nutrient function. But also when we evolve nutrient_sharing, the whole site gets the unshared total nutrients. These will be further depleted upon replication.
 			else	//Used in second nutrient function.
 			{
 				if (Space[nrow][ncol] == NULL)	NutrientSpace[nrow][ncol] += nutrient_share;

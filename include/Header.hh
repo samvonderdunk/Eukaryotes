@@ -62,7 +62,7 @@ const int host_growth = 0;
 // 1, hosts wait for empty sites, but waiting is free (expression unimportant once they reach M).
 // 2, hosts wait for empty sites, but need to actively maintain M expression (i.e. making the whole cell-cycle more complex again). This option may be implemented later...
 const bool perfect_transport = false;	//Genes with a 0 in their signalp, are always moved to the host; genes with a 1 in their signalp always get targetted to the symbionts. Moving here means that they do not stick around in the compartment where they are created.
-const bool nutshare_evolve = false;	//Host can evolve how much nutrients it claims from the environment, passing on the remaining fraction to its symbionts (equally divided among these). Each host has an identical claim on environmental nutrients, i.e. independent of how many symbionts it has. This corresponds to nutrient competition 4.
+const bool nutshare_evolve = true;	//Host can evolve how much nutrients it claims from the environment, passing on the remaining fraction to its symbionts (equally divided among these). Each host has an identical claim on environmental nutrients, i.e. independent of how many symbionts it has. This corresponds to nutrient competition 4.
 const bool mutation_epochs = false;	//Turn up mutation rate during specified time periods (see parameters below).
 const int seq_hdist = 0;	//Maximal hamming distance to still be called this particular gene type. When this value is set to 0, we have the same case as in Prokaryotes.
 const int eff_hdist = 0;	//Maximal hamming distance for defining effectors.
@@ -90,7 +90,7 @@ const int default_TimeSaveBackup =			10000;
 const double death_rate_host =								0.001;
 const double death_rate_symbiont =						0.001;
 const double default_nutrient_abundance =			30.;
-const int default_nutrient_competition =			2;
+const int default_nutrient_competition =			6;
 //Options for nutrient_competition:
 // 0, constant nutrient level, unaffected by cells.
 // 1, classic nutrient function (e.g. Paramecium tetraurelia):		n_ij = ( n_tot - (x_nei-x_i) ) / x_i
@@ -98,6 +98,7 @@ const int default_nutrient_competition =			2;
 // 3, distribute by cell, by organelle (e.g. Volvox carteri IV):	n_ij = (n_tot / c_nei) / x_i
 // 4, distribute by cell, let host claim its share and then divide among symbionts:	n_iH = (n_tot / c_nei)*claim_H and n_iS = (n_tot / c_nei)*(1 - claim_H) / (x_i - 1)
 // 5, distribute by cell, let host give a fraction nutrient_claim to each of its symbionts, itself taking whatever's left: n_iH = max(0, 1 - (x_i-1)*claim_H) * (n_tot / c_nei) and n_iS = min(1, (x_i-1)*claim_H)/(x_i-1) * (n_tot / c_nei)
+// 6, evolvable nutrient claims per organelle (defining depletion of nutrients in the environment and the nutrients claimed by each organelle of the available nutrients).
 // where n_ij is nutrients at site i for organelle j,
 //       n_tot is total nutrient_abundance (see par above), i.e. influx per site,
 //       x_nei is total number of organelles in the neighbourhood,
@@ -119,7 +120,7 @@ const int add_finish_time = 1000;
 /* MUTATION PARAMETERS */
 
 // Used by nutshare_evolve option.
-const double init_nutrient_claim =				0.1;	//If we start with 4 symbionts and 1 hosts, that means they initially share fairly.
+const double init_nutrient_claim =				1.0;	//If we start with 4 symbionts and 1 hosts, that means they initially share fairly.
 const double nutrient_claim_mu =					0.001;
 const double nutrient_claim_mu_delta =		0.05;
 
