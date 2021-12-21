@@ -432,6 +432,26 @@ void Cell::DeathOfCell()	//Called when host died or when last symbiont died, res
 	}
 }
 
+void Cell::CalculateCellFitness()
+{
+	int s;
+	double fitness, nr_houses = 0.;
+
+	nr_houses += Host->nr_houses;
+	for (s=0; s<nr_symbionts; s++)
+	{
+		nr_houses += (double)Symbionts->at(s)->nr_houses / nr_symbionts;
+	}
+
+	fitness = Host->CalculateFitness(nr_household_genes, nr_houses);
+
+	Host->fitness = fitness;
+	for (s=0; s<nr_symbionts; s++)
+	{
+		Symbionts->at(s)->fitness = fitness;
+	}
+}
+
 void Cell::SingleCellOutput(bool death_event)
 {
 	int s;

@@ -4,6 +4,7 @@ Organelle::Organelle()
 {
 	Stage=0;
 	privilige=false;
+	nr_houses=0;
 	fitness=1.;
 	nutrient_claim=1.;
 	G = NULL;
@@ -90,6 +91,20 @@ int Organelle::EvaluateState(int eval_state, int* readout)
 	return match;
 }
 
+
+double Organelle::CalculateFitness(int target_nr, double real_nr)
+{
+	if (minimum_houses)
+	{
+		return min(1., 1. - (target_nr - real_nr) / (float)10); //Hard-coded version where we only require a minimum number of household genes.
+	}
+	else
+	{
+		return 1. - abs(target_nr - real_nr) / (float)10;	//There are so many mutation rates to check that it probably is faster to just calculate the fitness always.
+	}
+}
+
+
 void Organelle::Mitosis(Organelle* parent, unsigned long long id_count)
 {
 	G->organelle = parent->G->organelle;
@@ -98,8 +113,8 @@ void Organelle::Mitosis(Organelle* parent, unsigned long long id_count)
 	parent->Stage = 0;
 	parent->privilige = false;
 
-	fitness = 1. - abs(nr_household_genes - G->gnr[HOUSE]) / (float)10;
-	// fitness = min(1., 1. - (nr_household_genes - G->gnr[HOUSE]) / (float)10);	//There are so many mutation rates to check that it probably is faster to just calculate the fitness always.
+	nr_houses = G->gnr[HOUSE];	//Determined at birth; gnr[HOUSE] will change during replication.
+	if (!cell_fitness)		fitness = CalculateFitness(nr_household_genes, G->gnr[HOUSE]);
 
 	time_of_appearance = Time;
 	fossil_id = id_count;
@@ -144,7 +159,8 @@ void Organelle::InitialiseOrganelle(string genome, string expression, string def
 	G->ReadExpression(expression);
 	G->ReadDefinition(definition);
 
-	fitness = 1. - abs(nr_household_genes - G->gnr[HOUSE]) / (float)10;
+	nr_houses = G->gnr[HOUSE];
+	if (!cell_fitness)	fitness = CalculateFitness(nr_household_genes, G->gnr[HOUSE]);
 	nutrient_claim = init_nutrient_claim;
 
 	cout << G->Show(NULL, true, false) << endl;	//This should just do the Show() function.
@@ -155,6 +171,7 @@ void Organelle::CloneOrganelle(Organelle* ImageO, unsigned long long id_count)
 	fossil_id = id_count;
 	Stage = ImageO->Stage;
 	privilige = ImageO->privilige;
+	nr_houses = ImageO->nr_houses;
 	fitness = ImageO->fitness;
 	nutrient_claim = ImageO->nutrient_claim;
 	mutant = ImageO->mutant;

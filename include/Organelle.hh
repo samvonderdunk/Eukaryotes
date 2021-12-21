@@ -11,6 +11,7 @@ class Organelle{
 		std::list<Bead*>* ExpressedGenes;
 		int nr_native_expressed;
 		Genome* G;
+		int nr_houses;
 		double fitness;
 		double nutrient_claim;
 
@@ -29,6 +30,8 @@ class Organelle{
 
 		void UpdateState();
 		int EvaluateState(int eval_state, int* readout);
+		
+		double CalculateFitness(int target_nr, double real_nr);
 
 		void Mitosis(Organelle* parent, unsigned long long id_count);
 		void Replicate(double resource);

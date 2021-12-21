@@ -200,7 +200,11 @@ void Population::UpdatePopulation()
 	}
 	if(Time%TimePruneFossils==0 && Time!=0)																		PruneFossilRecord();
 	if(Time%TimeOutputFossils==0 && Time!=0)																	FossilSpace->ExhibitFossils();
-	if(Time%TimeSaveBackup==0 && Time!=0)																			OutputGrid(true);
+	if(Time%TimeSaveBackup==0 && Time!=0)
+	{
+		for(i=0; i<NR; i++) for(j=0; j<NC; j++)	if (Space[i][j]!=NULL)	Space[i][j]->CalculateCellFitness();
+		OutputGrid(true);
+	}
 
 	for(u=0; u<NR*NC; u++) update_order[u]=u;
 	random_shuffle(&update_order[0], &update_order[NR*NC], uniform_shuffle);	//Is also set by initial_seed through srand(initial_seed), see World.cc
@@ -273,6 +277,7 @@ void Population::UpdatePopulation()
 
 			/* Division of host */
 			coords neigh = PickNeighbour(i, j);
+			Space[i][j]->CalculateCellFitness();	//Calculate cellular fitness once before using it for all simultaneous division events.
 
 			if ( Space[i][j]->Host->Stage == 4  &&  (uniform() < Space[i][j]->Host->fitness)  &&  (host_growth == 0 || (host_growth == 1 && Space[neigh.first][neigh.second] == NULL)) )	//All division criteria in this line.
 			{

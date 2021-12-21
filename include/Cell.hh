@@ -33,6 +33,7 @@ class Cell{
 		void DeathOfSymbiont(int s);
 		void DeathOfHost();
 		void DeathOfCell();
+		void CalculateCellFitness();
 		void SingleCellOutput(bool death_event);
 
 };
