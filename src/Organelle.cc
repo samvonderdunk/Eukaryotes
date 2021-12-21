@@ -98,7 +98,8 @@ void Organelle::Mitosis(Organelle* parent, unsigned long long id_count)
 	parent->Stage = 0;
 	parent->privilige = false;
 
-	fitness = 1. - abs(nr_household_genes - G->gnr[HOUSE]) / (float)10;	//There are so many mutation rates to check that it probably is faster to just calculate the fitness always.
+	fitness = 1. - abs(nr_household_genes - G->gnr[HOUSE]) / (float)10;
+	// fitness = min(1., 1. - (nr_household_genes - G->gnr[HOUSE]) / (float)10);	//There are so many mutation rates to check that it probably is faster to just calculate the fitness always.
 
 	time_of_appearance = Time;
 	fossil_id = id_count;

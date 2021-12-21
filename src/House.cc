@@ -1,16 +1,5 @@
 #include "House.hh"
 
-// House::House() : Bead()
-// {
-// }
-//
-// House::~House() {
-// }
-//
-// House::House(const House &house) : Bead(house)
-// {
-// }
-
 House::House() : Bead(HOUSE)
 {
 }

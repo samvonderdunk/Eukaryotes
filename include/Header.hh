@@ -62,7 +62,7 @@ const int host_growth = 0;
 // 1, hosts wait for empty sites, but waiting is free (expression unimportant once they reach M).
 // 2, hosts wait for empty sites, but need to actively maintain M expression (i.e. making the whole cell-cycle more complex again). This option may be implemented later...
 const bool perfect_transport = false;	//Genes with a 0 in their signalp, are always moved to the host; genes with a 1 in their signalp always get targetted to the symbionts. Moving here means that they do not stick around in the compartment where they are created.
-const bool nutshare_evolve = true;	//Host can evolve how much nutrients it claims from the environment, passing on the remaining fraction to its symbionts (equally divided among these). Each host has an identical claim on environmental nutrients, i.e. independent of how many symbionts it has. This corresponds to nutrient competition 4.
+const bool nutshare_evolve = false;	//Host can evolve how much nutrients it claims from the environment, passing on the remaining fraction to its symbionts (equally divided among these). Each host has an identical claim on environmental nutrients, i.e. independent of how many symbionts it has. This corresponds to nutrient competition 4.
 const bool mutation_epochs = false;	//Turn up mutation rate during specified time periods (see parameters below).
 const int seq_hdist = 0;	//Maximal hamming distance to still be called this particular gene type. When this value is set to 0, we have the same case as in Prokaryotes.
 const int eff_hdist = 0;	//Maximal hamming distance for defining effectors.
@@ -90,7 +90,7 @@ const int default_TimeSaveBackup =			10000;
 const double death_rate_host =								0.001;
 const double death_rate_symbiont =						0.001;
 const double default_nutrient_abundance =			30.;
-const int default_nutrient_competition =			6;
+const int default_nutrient_competition =			2;
 //Options for nutrient_competition:
 // 0, constant nutrient level, unaffected by cells.
 // 1, classic nutrient function (e.g. Paramecium tetraurelia):		n_ij = ( n_tot - (x_nei-x_i) ) / x_i
