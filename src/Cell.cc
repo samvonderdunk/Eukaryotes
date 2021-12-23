@@ -73,7 +73,7 @@ void Cell::GeneTransport()
 		while (it != Symbionts->at(s)->ExpressedGenes->end())
 		{
 			gene = dynamic_cast<Gene*>(*it);
-			if (perfect_transport && gene->signalp.test(0))
+			if (perfect_transport && !gene->signalp.test(0))
 			{
 				it2 = it;
 				it--;
