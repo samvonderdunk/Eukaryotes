@@ -2,21 +2,17 @@
 
 Effector::Effector() : Gene(EFFECTOR)
 {
-	int i;
-	for(i=0; i<effector_length; i++) sequence[i] = false;
+	sequence.reset();
 }
 
-Effector::Effector(int typ, int thr, bool sig[], bool seq[], int exp) : Gene(EFFECTOR, typ, thr, sig, exp)
+Effector::Effector(int typ, int thr, std::bitset<signalp_length>& sig, std::bitset<effector_length>& seq, int exp) : Gene(EFFECTOR, typ, thr, sig, exp)
 {
-	int i;
-	for(i=0; i<effector_length; i++) sequence[i] = seq[i];
+	sequence = seq;
 }
 
 Effector::Effector(const Effector &eff) : Gene(eff)
 {
-	int i;
-
-  for(i=0; i<effector_length; i++) sequence[i] = eff.sequence[i];
+	sequence = eff.sequence;
 }
 
 Effector::~Effector()
@@ -33,7 +29,7 @@ bool Effector::Mutate(int organelle)
 	bool is_mutated = false;
 
 	Gene::Mutate(organelle);	//Mutate signalp and threshold
-	if ( MutateBitstring(sequence, effector_length, mu[organelle][SEQUENCE][EFFECTOR]) )
+	if ( MutateBitstring(sequence, mu[organelle][SEQUENCE][EFFECTOR]) )
 	{
 		is_mutated = true;
 		DefineTypeFromSeq();		//Check if we have to change the type.
@@ -49,7 +45,7 @@ void Effector::DefineTypeFromSeq()
 
 	for (i=1; i<6; i++)
 	{
-		if (BindingAffinity(sequence, effector_types[i-1], effector_length) <= effector_length - eff_hdist)
+		if (BindingAffinity(sequence, effector_types[i-1]) <= effector_length - eff_hdist)
 		{
 			type = i;
 			found_type = true;
@@ -65,7 +61,6 @@ void Effector::DefineTypeFromSeq()
 
 string Effector::Show(bool terminal, bool type_only) const
 {
-	int i;
 	string Content, color_prefix, color_suffix;
 	std::stringstream ss;
 
@@ -84,11 +79,9 @@ string Effector::Show(bool terminal, bool type_only) const
 	if (!type_only) ss << threshold << ":";
 	if (!type_only)
 	{
-		for(i=0; i<signalp_length; i++)	ss << signalp[i];
-		ss << ":";
+		ss << signalp << ":";
 	}
-	for(i=0; i<effector_length; i++)	ss << sequence[i];
-	ss << color_suffix << ")";
+	ss << sequence << color_suffix << ")";
 
 	Content = ss.str();
 	ss.clear();

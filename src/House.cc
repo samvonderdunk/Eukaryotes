@@ -11,7 +11,6 @@ Bead* House::Clone() const
 
 void House::Randomize()
 {
-	cout << "House randomize" << endl;
 }
 
 bool House::Mutate(int organelle)	//Maybe don't need to define this? See what works for Randomize().

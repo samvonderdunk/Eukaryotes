@@ -866,10 +866,14 @@ void Genome::ReadGenome(string genome)
 	char* bead, *buffer;
 	int success, type, threshold, activity;
 	bool signalp[signalp_length], Rsequence[regulator_length], Esequence[effector_length];
+	std::bitset<regulator_length> RsequenceBITS;
+	std::bitset<effector_length> EsequenceBITS;
+	std::bitset<signalp_length> signalpBITS;
 	House* house;
 	Bsite* bsite;
 	Regulator* reg;
 	Effector* eff;
+	int i;
 
 	bead = strtok((char*)genome.c_str(),".");
 	while (bead != NULL)
@@ -882,10 +886,14 @@ void Genome::ReadGenome(string genome)
 
 			ReadBuffer(buffer, signalp, 'X', ':');
 			ReadBuffer(buffer, Rsequence, ':', ')');
+
+			for(i=0; i<signalp_length; i++)	signalpBITS[i] = (signalp[i])?1:0;
+			for(i=0; i<regulator_length; i++)	RsequenceBITS[i] = (Rsequence[i])?1:0;
+
 			delete [] buffer;
 			buffer = NULL;
 
-			reg = new Regulator(type, threshold, activity, signalp, Rsequence, 0);
+			reg = new Regulator(type, threshold, activity, signalpBITS, RsequenceBITS, 0);
 			(*BeadList).push_back(reg);
 			gnr[REGULATOR]++;
 			g_length++;
@@ -898,10 +906,14 @@ void Genome::ReadGenome(string genome)
 
 			ReadBuffer(buffer, signalp, 'X', ':');
 			ReadBuffer(buffer, Esequence, ':', ')');
+
+			for(i=0; i<signalp_length; i++)	signalpBITS[i] = (signalp[i])?1:0;
+			for(i=0; i<effector_length; i++)	EsequenceBITS[i] = (Esequence[i])?1:0;
+
 			delete [] buffer;
 			buffer = NULL;
 
-			eff = new Effector(type, threshold, signalp, Esequence, 0);
+			eff = new Effector(type, threshold, signalpBITS, EsequenceBITS, 0);
 			(*BeadList).push_back(eff);
 			gnr[EFFECTOR]++;
 			g_length++;
@@ -920,10 +932,13 @@ void Genome::ReadGenome(string genome)
 			if(success != 2) cerr << "Could not read binding site. Input seems corrupt. \n" << endl;
 
 			ReadBuffer(buffer, Rsequence, 'X', ')');
+
+			for(i=0; i<regulator_length; i++)	RsequenceBITS[i] = (Rsequence[i])?1:0;
+
 			delete [] buffer;
 			buffer = NULL;
 
-			bsite = new Bsite(activity, Rsequence);
+			bsite = new Bsite(activity, RsequenceBITS);
 			(*BeadList).push_back(bsite);
 			gnr[BSITE]++;
 			g_length++;
@@ -967,6 +982,9 @@ void Genome::ReadDefinition(string definition)
 	char* bead, *buffer;
 	int j, success, activity, type;
 	bool signalp[signalp_length], sequence[regulator_length];
+	std::bitset<signalp_length> signalpBITS;
+	std::bitset<regulator_length> sequenceBITS;
+	int i;
 
 	bead = strtok((char*)definition.c_str(),";");
 	while (bead != NULL)
@@ -975,11 +993,14 @@ void Genome::ReadDefinition(string definition)
 		success = sscanf(bead, "(R%d:%d:%s)", &type, &activity, buffer);
 		if(success != 3) cerr << "Could not read regulatory type definitions. Input seems corrupt. \n" << endl;
 		ReadBuffer(buffer, sequence, 'X', ')');
+
+		for(i=0; i<regulator_length; i++)	sequenceBITS[i] = (sequence[i])?1:0;
+
 		delete [] buffer;
 		buffer = NULL;
 
-		for (j=0; j<signalp_length; j++)	signalp[j] = false;
-		RegTypeList[type-1] = new Regulator(type, 0, activity, signalp, sequence, 0);
+		for (j=0; j<signalp_length; j++)	signalpBITS[j] = 0;
+		RegTypeList[type-1] = new Regulator(type, 0, activity, signalpBITS, sequenceBITS, 0);
 
 		bead = strtok(NULL, ";");
 	}

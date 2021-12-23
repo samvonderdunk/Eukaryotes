@@ -10,10 +10,11 @@
 class Regulator : public Gene {
 	public:
 		int activity;
-		bool sequence[regulator_length];
+		// bool sequence[regulator_length];
+		std::bitset<regulator_length> sequence;
 
 		Regulator();
-		Regulator(int typ, int thr, int act, bool sig[], bool seq[], int exp);
+		Regulator(int typ, int thr, int act, std::bitset<signalp_length>& sig, std::bitset<regulator_length>& seq, int exp);
 		explicit Regulator(const Regulator &reg);
 		virtual ~Regulator();
 

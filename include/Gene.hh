@@ -10,12 +10,13 @@ class Gene : public Bead {
 	public:
 		int type;	//Used to determine phenotypic readout from expression.
 		int threshold; //At what regulatory effect does the gene start to become expressed.
-		bool signalp[signalp_length];
+		// bool signalp[signalp_length];
+		std::bitset<signalp_length> signalp;
 		int expression;	//Current expression state.
 		int express;		//New expression state.
 
 		Gene(int k);	//Can we do without the default constructor?
-		Gene(int k, int typ, int thr, bool sig[], int exp);
+		Gene(int k, int typ, int thr, std::bitset<signalp_length>& sig, int exp);
 		explicit Gene(const Gene &gene);
 		virtual ~Gene();
 

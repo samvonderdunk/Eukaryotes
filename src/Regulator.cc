@@ -2,28 +2,21 @@
 
 Regulator::Regulator() : Gene(REGULATOR)
 {
-	int i;
-
   activity = 0;
-  for(i=0; i<regulator_length; i++) sequence[i] = false;
-
+	sequence.reset();
 }
 
-Regulator::Regulator(int typ, int thr, int act, bool sig[], bool seq[], int exp) : Gene(REGULATOR, typ, thr, sig, exp)
+Regulator::Regulator(int typ, int thr, int act, std::bitset<signalp_length>& sig, std::bitset<regulator_length>& seq, int exp) : Gene(REGULATOR, typ, thr, sig, exp)
 {
-	int i;
-
 	activity = act;
-	for(i=0; i<regulator_length; i++) sequence[i] = seq[i];
+	sequence = seq;
 }
 
 
 Regulator::Regulator(const Regulator &reg) : Gene(reg)
 {
-	int i;
-
   activity = reg.activity;
-  for(i=0; i<regulator_length; i++) sequence[i] = reg.sequence[i];
+	sequence = reg.sequence;
 }
 
 Regulator::~Regulator()
@@ -50,8 +43,8 @@ bool Regulator::Mutate(int organelle)
 	bool is_mutated = false;
 
 	Gene::Mutate(organelle);	//Mutate signalp and threshold
-	if ( MutateParameter(&activity, mu[organelle][ACTIVITY][REGULATOR]) )										is_mutated = true;
-	if ( MutateBitstring(sequence, regulator_length, mu[organelle][SEQUENCE][REGULATOR]) )	is_mutated = true;
+	if ( MutateParameter(&activity, mu[organelle][ACTIVITY][REGULATOR]) )		is_mutated = true;
+	if ( MutateBitstring(sequence, mu[organelle][SEQUENCE][REGULATOR]) )		is_mutated = true;
 
 	return is_mutated;
 }
@@ -59,7 +52,6 @@ bool Regulator::Mutate(int organelle)
 string Regulator::Show(bool terminal, bool type_only) const
 {
 	//There is quite some overlap between effector and regulatory Show(), so you'd think I just encode this overlap only in the Gene::Show() version. However, then I would have to slice in some elements here, because the regulatory activity preceeds the typeseq and signalp.
-	int i;
 	string Content, color_prefix, color_suffix;
 	std::stringstream ss;
 
@@ -79,11 +71,9 @@ string Regulator::Show(bool terminal, bool type_only) const
 	ss << activity << ":";
 	if (!type_only)
 	{
-		for(i=0; i<signalp_length; i++)	ss << signalp[i];
-		ss << ":";
+		ss << signalp << ":";
 	}
-	for(i=0; i<regulator_length; i++)	ss << sequence[i];
-	ss << color_suffix << ")";
+	ss << sequence << color_suffix << ")";
 
 	Content = ss.str();
 	ss.clear();

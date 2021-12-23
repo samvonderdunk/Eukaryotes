@@ -1,35 +1,19 @@
 #include "Gene.hh"
 
-// Gene::Gene() : Bead()		//Careful: with the default constructor we don't set the Bead kind.
-// {
-// 	int i;
-//
-//   type = 0;
-//   threshold = 0;
-// 	for(i=0; i<typeseq_length; i++)	typeseq[i] = false;
-// 	for(i=0; i<signalp_length; i++)	signalp[i] = false;
-//   expression = 0;
-// 	express = 0;
-// }
-
 Gene::Gene(int k) : Bead(k)		//This is the desirable constructor because it passes the kind (REGULATOR or EFFECTOR) on the to Bead constructor.
 {
-	int i;
-
   type = 0;
   threshold = 0;
-	for(i=0; i<signalp_length; i++)	signalp[i] = false;
+	signalp.reset();
   expression = 0;
 	express = 0;
 }
 
-Gene::Gene(int k, int typ, int thr, bool sig[], int exp) : Bead(k)
+Gene::Gene(int k, int typ, int thr, std::bitset<signalp_length>& sig, int exp) : Bead(k)
 {
-	int i;
-
 	type = typ;
 	threshold = thr;
-	for(i=0; i<signalp_length; i++)	signalp[i] = sig[i];
+	signalp = sig;
   expression = exp;
 	express = 0;
 }
@@ -37,11 +21,9 @@ Gene::Gene(int k, int typ, int thr, bool sig[], int exp) : Bead(k)
 
 Gene::Gene(const Gene &gene) : Bead(gene)
 {
-	int i;
-
   type = gene.type;
   threshold = gene.threshold;
-	for(i=0; i<signalp_length; i++) signalp[i] = gene.signalp[i];
+	signalp = gene.signalp;
   expression = gene.expression;
 	express = gene.express;
 }
@@ -65,8 +47,8 @@ bool Gene::Mutate(int organelle)
 {
 	bool is_mutated = false;
 
-	if ( MutateParameter(&threshold, mu[organelle][THRESHOLD][kind]) )							is_mutated = true;
-	if ( MutateBitstring(signalp, signalp_length, mu[organelle][SIGNALP][kind]) )		is_mutated = true;
+	if ( MutateParameter(&threshold, mu[organelle][THRESHOLD][kind]) )	is_mutated = true;
+	if ( MutateBitstring(signalp, mu[organelle][SIGNALP][kind]) )				is_mutated = true;
 
 	return is_mutated;
 }

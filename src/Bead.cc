@@ -37,17 +37,50 @@ bool Bead::MutateParameter(int* value, double m)
 	return is_mutated;
 }
 
-bool Bead::MutateBitstring(bool* bitstring, int bitstring_length, double m)
+bool Bead::MutateBitstring(std::bitset<regulator_length>& bitstring, double m)
 {
 	int i;
 	bool is_mutated = false;
 
-	for(i=0; i<bitstring_length; i++)
+	for(i=0; i<regulator_length; i++)
 	{
 		if(uniform() < m)
 		{
-			if (bitstring[i] == false)			bitstring[i] = true;
-			else if (bitstring[i] == true)	bitstring[i] = false;
+			bitstring.flip(i);
+			is_mutated = true;
+		}
+	}
+
+	return is_mutated;
+}
+
+bool Bead::MutateBitstring(std::bitset<effector_length>& bitstring, double m)
+{
+	int i;
+	bool is_mutated = false;
+
+	for(i=0; i<effector_length; i++)
+	{
+		if(uniform() < m)
+		{
+			bitstring.flip(i);
+			is_mutated = true;
+		}
+	}
+
+	return is_mutated;
+}
+
+bool Bead::MutateBitstring(std::bitset<signalp_length>& bitstring, double m)
+{
+	int i;
+	bool is_mutated = false;
+
+	for(i=0; i<signalp_length; i++)
+	{
+		if(uniform() < m)
+		{
+			bitstring.flip(i);
 			is_mutated = true;
 		}
 	}

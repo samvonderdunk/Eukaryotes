@@ -9,10 +9,10 @@
 class Bsite : public Bead {
 	public:
 	 	int activity;
-		bool sequence[regulator_length];
+		std::bitset<regulator_length> sequence;
 
 		Bsite();
-		Bsite(int act, bool seq[]);
+		Bsite(int act, std::bitset<regulator_length>& seq);
 		explicit Bsite(const Bsite &bsite);
 		virtual ~Bsite();
 

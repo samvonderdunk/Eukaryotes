@@ -73,7 +73,7 @@ void Cell::GeneTransport()
 		while (it != Symbionts->at(s)->ExpressedGenes->end())
 		{
 			gene = dynamic_cast<Gene*>(*it);
-			if (perfect_transport && gene->signalp[0] == false)
+			if (perfect_transport && gene->signalp.test(0))
 			{
 				it2 = it;
 				it--;
@@ -93,7 +93,7 @@ void Cell::GeneTransport()
 		while (it_cntr < Host->nr_native_expressed)
 		{
 			gene = dynamic_cast<Gene*>(*it);
-			if (perfect_transport && gene->signalp[0] == true)
+			if (perfect_transport && gene->signalp.test(0))
 			{
 				if (s == nr_symbionts-1)	//Only erase the expressed gene from the host if we get to the last symbiont (already transported to all other symbionts).
 				{

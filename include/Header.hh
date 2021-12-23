@@ -26,6 +26,8 @@ using namespace std;
 #include <ctime>
 #include <typeinfo>
 #include <string>
+#include <bitset>
+#include <array>
 
 // #include "/home/sam/Programmes/nvwa-1.1/nvwa/debug_new.h"
 
@@ -68,7 +70,7 @@ const int seq_hdist = 0;	//Maximal hamming distance to still be called this part
 const int eff_hdist = 0;	//Maximal hamming distance for defining effectors.
 const bool empty_division_killing = true;	//Hosts first divide, potentially killing a neighbour, before realising that the new cell does not get symbionts and dies right away.
 const bool cell_fitness = true;	//Fitness defined by nr_houses at the cell level (averaging symbiont n_h and adding it to host n_h); if false, fitness is defined by the n_h that each organelle carries at birth.
-const bool minimum_houses = false;	//Fitness is only decreased when the cell or organelle has fewer house hold genes than nr_household_genes; if false, the cell or organelle needs to have exactly the right number of household genes for fitness = 1.
+const bool minimum_houses = true;	//Fitness is only decreased when the cell or organelle has fewer house hold genes than nr_household_genes; if false, the cell or organelle needs to have exactly the right number of household genes for fitness = 1.
 
 //Genome parameters
 const int nr_household_genes =			100;
@@ -148,15 +150,22 @@ const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
 extern double mu[2][8][4];
 extern double muT[2][4];
 
+// const bool effector_types[5][effector_length] =
+// {
+// 	true, false, true, false, true, false, true, false, true, false,
+// 	false, false, true, true, false, false, true, true, false, false,
+// 	false, false, false, true, true, true, false, false, false, true,
+// 	true, true, true, true, false, false, false, false, true, true,
+// 	false, false, false, false, false, true, true, true, true, true
+// };
+
 //Effector definitions. Previously used to make hard-coded regulatory types.
-const bool effector_types[5][effector_length] =
-{
-	true, false, true, false, true, false, true, false, true, false,
-	false, false, true, true, false, false, true, true, false, false,
-	false, false, false, true, true, true, false, false, false, true,
-	true, true, true, true, false, false, false, false, true, true,
-	false, false, false, false, false, true, true, true, true, true
-};
+const std::array<std::bitset<effector_length>,5> effector_types = {1010101010,0011001100,0001110001,1111000011,0000011111};
+// effector_types[0] = {1010101010};
+// effector_types[1] = {0011001100};
+// effector_types[2] = {0001110001};
+// effector_types[3] = {1111000011};
+// effector_types[4] = {0000011111};
 
 //The current definition of the stages.
 const bool StageTargets[4][5] = {
