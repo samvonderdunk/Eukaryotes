@@ -9,8 +9,6 @@ Organelle::Organelle()
 	nutrient_claim=1.;
 	G = NULL;
 	G = new Genome();
-	ExpressedGenes = NULL;
-	ExpressedGenes = new list<Bead*>();
 	nr_native_expressed = 0;
 
 	alive = false;
@@ -23,32 +21,8 @@ Organelle::Organelle()
 
 Organelle::~Organelle()
 {
-	i_bead it;
-
-	//We only delete the list of pointers, they point to the things in the genome G, so we will remove the actual genes below (or they might actually be genes from different genomes in which case we also don't want to delete them).
-	if (ExpressedGenes != NULL)	it = ExpressedGenes->erase(ExpressedGenes->begin(), ExpressedGenes->end());
-	delete ExpressedGenes;
-	ExpressedGenes = NULL;
-
 	delete G;
 	G = NULL;
-}
-
-void Organelle::NativeExpression()
-{
-	i_bead it;
-
-	it = G->BeadList->begin();
-	while (it != G->BeadList->end())
-	{
-		if ((*it)->kind==REGULATOR || (*it)->kind==EFFECTOR)
-		{
-			//See similar potential issue in UpdateExpression() and in BindingAffinity().
-			Gene* gene = dynamic_cast<Gene*>(*it);
-			if(gene->expression > 0)	ExpressedGenes->push_back(gene);	//Native genes are always stored in ExpressedGenes.
-		}
-		it++;
-	}
 }
 
 void Organelle::UpdateState()
@@ -63,9 +37,9 @@ void Organelle::UpdateState()
 	privilige = true;
 
 	//Fill in the readout.
-	it = ExpressedGenes->begin();
+	it = G->ExpressedGenes->begin();
 	it_cntr = 0;
-	while (it != ExpressedGenes->end())
+	while (it != G->ExpressedGenes->end())
 	{
 		if ( (*it)->kind==REGULATOR )
 		{

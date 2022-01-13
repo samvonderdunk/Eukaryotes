@@ -8,7 +8,6 @@ class Organelle{
 	public:
 		int Stage;
 		bool privilige;
-		std::list<Bead*>* ExpressedGenes;
 		int nr_native_expressed;
 		Genome* G;
 		int nr_houses;
@@ -27,8 +26,6 @@ class Organelle{
 
 		Organelle();
 		~Organelle();
-
-		void NativeExpression();
 
 		void UpdateState();
 		int EvaluateState(int eval_state, int* readout);

@@ -7,9 +7,9 @@
 #CXX = g++4
 CXX = g++
 
-CPPFLAGS = -w -O2 -march=x86-64 -mmmx -msse -msse2 -DDSFMT_MEXP=19937 -DHAVE_SSE2 -fPIE	###1
+#CPPFLAGS = -w -O2 -march=x86-64 -mmmx -msse -msse2 -DDSFMT_MEXP=19937 -DHAVE_SSE2 -fPIE	###1
 #CPPFLAGS = -g -O0 -Wall -march=x86-64 -DDSFMT_MEXP=19937	###2
-#CPPFLAGS = -Wall -pg -DDSFMT_MEXP=19937	###3
+CPPFLAGS = -Wall -pg -DDSFMT_MEXP=19937	###3
 #CPPFLAGS= -ggdb3 -Wall -DDSFMT_MEXP=19937 -DHAVE_SSE2	###4
 
 #CPPFLAGS = -w -march=x86-64 -mmmx -msse -msse2 -DDSFMT_MEXP=521 -DHAVE_SSE2
@@ -43,10 +43,10 @@ OBJECTS = $(ALL)
 all: $(PROJECT)
 
 $(PROJECT): $(OBJECTS)
-	$(CXX) $(LNFLAGS) $(LIBDIR) $^ -o $(BINPATH)/$@ $(LIBS)
+	$(CXX) -pg $(LNFLAGS) $(LIBDIR) $^ -o $(BINPATH)/$@ $(LIBS)
 
 $(LIBRARY): $(OBJECTS)
-	$(CXX) -shared -Wl,-soname,$@.so \
+	$(CXX) -pg -shared -Wl,-soname,$@.so \
 	$(LIBDIR) $(LIBS) $^ -o $(LIBPATH)/$@.so
 
 

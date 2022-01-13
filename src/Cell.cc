@@ -32,12 +32,12 @@ void Cell::UpdateOrganelles()
 	//First determine gene expression (by making the ExpressedGenes list), then use this to determine movement of expressed genes, then update the organelle state, and lastly update gene expression on the actual genes. This updated gene expression will change the organelle state the next timestep during UpdateOrganelles.
 
 	//Set up the expression lists.
-	Host->NativeExpression();
-	Host->nr_native_expressed = (int)Host->ExpressedGenes->size();
+	Host->G->NativeExpression();
+	Host->nr_native_expressed = (int)Host->G->ExpressedGenes->size();
 	for (s=0; s<nr_symbionts; s++)
 	{
-		Symbionts->at(s)->NativeExpression();
-		Symbionts->at(s)->nr_native_expressed = (int) Symbionts->at(s)->ExpressedGenes->size();
+		Symbionts->at(s)->G->NativeExpression();
+		Symbionts->at(s)->nr_native_expressed = (int) Symbionts->at(s)->G->ExpressedGenes->size();
 	}
 
 
@@ -47,15 +47,15 @@ void Cell::UpdateOrganelles()
 	{
 		Host->UpdateState();	//Update organelle state. If foreign products should not interfere with organelle state, put that in the UpdateState() function.
 	}
-	Host->G->UpdateGeneExpression(Host->ExpressedGenes);	//Update gene expression states.
-	it = Host->ExpressedGenes->erase(Host->ExpressedGenes->begin(), Host->ExpressedGenes->end());	//Erase ExpressedGenes to avoid conflicts with pointers during cell dynamics.
+	Host->G->UpdateGeneExpression();	//Update gene expression states.
+	it = Host->G->ExpressedGenes->erase(Host->G->ExpressedGenes->begin(), Host->G->ExpressedGenes->end());	//Erase ExpressedGenes to avoid conflicts with pointers during cell dynamics.
 	Host->nr_native_expressed = 0;
 
 	for (s=0; s<nr_symbionts; s++)
 	{
 		Symbionts->at(s)->UpdateState();
-		Symbionts->at(s)->G->UpdateGeneExpression(Symbionts->at(s)->ExpressedGenes);
-		it = Symbionts->at(s)->ExpressedGenes->erase(Symbionts->at(s)->ExpressedGenes->begin(), Symbionts->at(s)->ExpressedGenes->end());
+		Symbionts->at(s)->G->UpdateGeneExpression();
+		it = Symbionts->at(s)->G->ExpressedGenes->erase(Symbionts->at(s)->G->ExpressedGenes->begin(), Symbionts->at(s)->G->ExpressedGenes->end());
 		Symbionts->at(s)->nr_native_expressed = 0;
 	}
 }
@@ -69,26 +69,26 @@ void Cell::GeneTransport()
 	for (s=0; s<nr_symbionts; s++)
 	{
 		//Movement of expressed regulators from symbionts to host.
-		it = Symbionts->at(s)->ExpressedGenes->begin();
-		while (it != Symbionts->at(s)->ExpressedGenes->end())
+		it = Symbionts->at(s)->G->ExpressedGenes->begin();
+		while (it != Symbionts->at(s)->G->ExpressedGenes->end())
 		{
 			gene = dynamic_cast<Gene*>(*it);
 			if (perfect_transport && !gene->signalp.test(0))
 			{
 				it2 = it;
 				it--;
-				Host->ExpressedGenes->splice(Host->ExpressedGenes->end(), *Symbionts->at(s)->ExpressedGenes, it2);
+				Host->G->ExpressedGenes->splice(Host->G->ExpressedGenes->end(), *Symbionts->at(s)->G->ExpressedGenes, it2);
 				Symbionts->at(s)->nr_native_expressed--;
 			}
 			else if (uniform() < leakage_to_host)
 			{
-				Host->ExpressedGenes->push_back(*it);
+				Host->G->ExpressedGenes->push_back(*it);
 			}
 			it++;
 		}
 
 		//Movement of expressed regulators from host to symbionts.
-		it = Host->ExpressedGenes->begin();
+		it = Host->G->ExpressedGenes->begin();
 		it_cntr = 0;
 		while (it_cntr < Host->nr_native_expressed)
 		{
@@ -100,17 +100,17 @@ void Cell::GeneTransport()
 					it2 = it;
 					it--;
 					it_cntr--;	//Important, bug in the first attempt of M. commu V.
-					Symbionts->at(s)->ExpressedGenes->splice(Symbionts->at(s)->ExpressedGenes->end(), *Host->ExpressedGenes, it2);
+					Symbionts->at(s)->G->ExpressedGenes->splice(Symbionts->at(s)->G->ExpressedGenes->end(), *Host->G->ExpressedGenes, it2);
 					Host->nr_native_expressed--;	//I think this will be fine (although it defines the while-loop), because the iterator takes a step back.
 				}
 				else
 				{
-					Symbionts->at(s)->ExpressedGenes->push_back(*it);
+					Symbionts->at(s)->G->ExpressedGenes->push_back(*it);
 				}
 			}
 			else if (uniform() < leakage_to_symbiont)
 			{
-				Symbionts->at(s)->ExpressedGenes->push_back(*it);
+				Symbionts->at(s)->G->ExpressedGenes->push_back(*it);
 			}
 			it++;
 			it_cntr++;

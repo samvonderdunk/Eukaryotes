@@ -5,6 +5,8 @@ Genome::Genome()
 	BeadList=NULL;
 	BeadList = new list<Bead*>();
 	RegTypeList = {NULL, NULL, NULL, NULL, NULL};
+	ExpressedGenes = NULL;
+	ExpressedGenes = new list<Bead*>();
 	g_length=0;
 	gnr[REGULATOR]=0;
 	gnr[EFFECTOR]=0;
@@ -36,11 +38,15 @@ Genome::~Genome()
 	{
 		delete RegTypeList[i];
 	}
+
+	if (ExpressedGenes != NULL)	it = ExpressedGenes->erase(ExpressedGenes->begin(), ExpressedGenes->end());
+	delete ExpressedGenes;
+	ExpressedGenes = NULL;
 }
 
 
 
-void Genome::UpdateGeneExpression(list<Bead*>* ExpressedGenes)
+void Genome::UpdateGeneExpression()
 {
 	i_bead it, i_reg;
 	int it_cntr;
@@ -64,7 +70,7 @@ void Genome::UpdateGeneExpression(list<Bead*>* ExpressedGenes)
 		}
 		else if ((*it)->kind==BSITE)
 		{
-			i_reg = RegulatorCompetition(it, ExpressedGenes);
+			i_reg = RegulatorCompetition(it);
 			if (i_reg != BeadList->end())
 			{
 				reg = dynamic_cast<Regulator*>(*i_reg);
@@ -92,26 +98,26 @@ void Genome::UpdateGeneExpression(list<Bead*>* ExpressedGenes)
 
 
 
-// void Genome::NativeExpression(list<Bead*>* ExpressedGenes)
-// {
-// 	i_bead it;
-//
-// 	it = BeadList->begin();
-// 	while (it != BeadList->end())
-// 	{
-// 		if ((*it)->kind==REGULATOR || (*it)->kind==EFFECTOR)
-// 		{
-// 			//See similar potential issue in UpdateExpression() and in BindingAffinity().
-// 			Gene* gene = dynamic_cast<Gene*>(*it);
-// 			if(gene->expression > 0)	ExpressedGenes->push_back(gene);	//Native genes are always stored in ExpressedGenes.
-// 		}
-// 		it++;
-// 	}
-// }
+void Genome::NativeExpression()
+{
+	i_bead it;
+
+	it = BeadList->begin();
+	while (it != BeadList->end())
+	{
+		if ((*it)->kind==REGULATOR || (*it)->kind==EFFECTOR)
+		{
+			//See similar potential issue in UpdateExpression() and in BindingAffinity().
+			Gene* gene = dynamic_cast<Gene*>(*it);
+			if(gene->expression > 0)	ExpressedGenes->push_back(gene);	//Native genes are always stored in ExpressedGenes.
+		}
+		it++;
+	}
+}
 
 
 
-Genome::i_bead Genome::RegulatorCompetition(i_bead i_bsite, list<Bead*>* ExpressedGenes)
+Genome::i_bead Genome::RegulatorCompetition(i_bead i_bsite)
 {
 	//Optimise this, many possibilities:
 	//	--> inline functions.
