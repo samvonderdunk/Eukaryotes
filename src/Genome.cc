@@ -92,22 +92,22 @@ void Genome::UpdateGeneExpression(list<Bead*>* ExpressedGenes)
 
 
 
-void Genome::NativeExpression(list<Bead*>* ExpressedGenes)
-{
-	i_bead it;
-
-	it = BeadList->begin();
-	while (it != BeadList->end())
-	{
-		if ((*it)->kind==REGULATOR || (*it)->kind==EFFECTOR)
-		{
-			//See similar potential issue in UpdateExpression() and in BindingAffinity().
-			Gene* gene = dynamic_cast<Gene*>(*it);
-			if(gene->expression > 0)	ExpressedGenes->push_back(gene);	//Native genes are always stored in ExpressedGenes.
-		}
-		it++;
-	}
-}
+// void Genome::NativeExpression(list<Bead*>* ExpressedGenes)
+// {
+// 	i_bead it;
+//
+// 	it = BeadList->begin();
+// 	while (it != BeadList->end())
+// 	{
+// 		if ((*it)->kind==REGULATOR || (*it)->kind==EFFECTOR)
+// 		{
+// 			//See similar potential issue in UpdateExpression() and in BindingAffinity().
+// 			Gene* gene = dynamic_cast<Gene*>(*it);
+// 			if(gene->expression > 0)	ExpressedGenes->push_back(gene);	//Native genes are always stored in ExpressedGenes.
+// 		}
+// 		it++;
+// 	}
+// }
 
 
 

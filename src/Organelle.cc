@@ -34,6 +34,23 @@ Organelle::~Organelle()
 	G = NULL;
 }
 
+void Organelle::NativeExpression()
+{
+	i_bead it;
+
+	it = G->BeadList->begin();
+	while (it != G->BeadList->end())
+	{
+		if ((*it)->kind==REGULATOR || (*it)->kind==EFFECTOR)
+		{
+			//See similar potential issue in UpdateExpression() and in BindingAffinity().
+			Gene* gene = dynamic_cast<Gene*>(*it);
+			if(gene->expression > 0)	ExpressedGenes->push_back(gene);	//Native genes are always stored in ExpressedGenes.
+		}
+		it++;
+	}
+}
+
 void Organelle::UpdateState()
 {
 	int readout[5] = {0, 0, 0, 0, 0};	//States of the five cell-cycle regulators. Overloaded with the states of effector genes if they are functional.

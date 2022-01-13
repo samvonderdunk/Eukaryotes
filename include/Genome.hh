@@ -26,7 +26,7 @@ class Genome {
   ~Genome();
 
 	void UpdateGeneExpression(list<Bead*>* ExpressedGenes);
-	void NativeExpression(list<Bead*>* ExpressedGenes);
+	// void NativeExpression(list<Bead*>* ExpressedGenes);
 	i_bead RegulatorCompetition(i_bead i_bsite, list<Bead*>* ExpressedGenes);
 
 	void ReplicateStep(double resource);

@@ -28,9 +28,11 @@ class Organelle{
 		Organelle();
 		~Organelle();
 
+		void NativeExpression();
+
 		void UpdateState();
 		int EvaluateState(int eval_state, int* readout);
-		
+
 		double CalculateFitness(int target_nr, double real_nr);
 
 		void Mitosis(Organelle* parent, unsigned long long id_count);

@@ -32,11 +32,11 @@ void Cell::UpdateOrganelles()
 	//First determine gene expression (by making the ExpressedGenes list), then use this to determine movement of expressed genes, then update the organelle state, and lastly update gene expression on the actual genes. This updated gene expression will change the organelle state the next timestep during UpdateOrganelles.
 
 	//Set up the expression lists.
-	Host->G->NativeExpression(Host->ExpressedGenes);
+	Host->NativeExpression();
 	Host->nr_native_expressed = (int)Host->ExpressedGenes->size();
 	for (s=0; s<nr_symbionts; s++)
 	{
-		Symbionts->at(s)->G->NativeExpression(Symbionts->at(s)->ExpressedGenes);
+		Symbionts->at(s)->NativeExpression();
 		Symbionts->at(s)->nr_native_expressed = (int) Symbionts->at(s)->ExpressedGenes->size();
 	}
 
