@@ -202,7 +202,10 @@ void Population::UpdatePopulation()
 	if(Time%TimeOutputFossils==0 && Time!=0)																	FossilSpace->ExhibitFossils();
 	if(Time%TimeSaveBackup==0 && Time!=0)
 	{
-		for(i=0; i<NR; i++) for(j=0; j<NC; j++)	if (Space[i][j]!=NULL)	Space[i][j]->CalculateCellFitness();
+		if (cell_fitness)
+		{
+			for(i=0; i<NR; i++) for(j=0; j<NC; j++)	if (Space[i][j]!=NULL)	Space[i][j]->CalculateCellFitness();
+		}
 		OutputGrid(true);
 	}
 
@@ -277,7 +280,7 @@ void Population::UpdatePopulation()
 
 			/* Division of host */
 			coords neigh = PickNeighbour(i, j);
-			Space[i][j]->CalculateCellFitness();	//Calculate cellular fitness once before using it for all simultaneous division events.
+			if (cell_fitness)	Space[i][j]->CalculateCellFitness();	//Calculate cellular fitness once before using it for all simultaneous division events.
 
 			if ( Space[i][j]->Host->Stage == 4  &&  (uniform() < Space[i][j]->Host->fitness)  &&  (host_growth == 0 || (host_growth == 1 && Space[neigh.first][neigh.second] == NULL)) )	//All division criteria in this line.
 			{
@@ -758,7 +761,7 @@ void Population::ReadBackupFile()
 	char* data_element, *number;
 	string::iterator sit;
 	Genome::i_bead it;
-	int r, c, s, begin_data, end_data, success, stage, pfork, pterm, nr, nc, count_lines = 0, nn = 0, idx_primary, idx_secondary;
+	int r, c, s, begin_data, end_data, success, stage, pfork, pterm, nr, nc, count_lines = 0, nn = 0, idx_primary, idx_secondary, it_cntr;
 	unsigned long long org_id, anc_id;
 	char temp_is_mutant[20], temp_priv[20];
 	double fit, nutcl;
@@ -889,6 +892,17 @@ void Population::ReadBackupFile()
 					O->alive = true;
 					if (org_id > id_count) id_count = org_id;
 
+					//nr_houses is not stored in the backup, so we calculate it. Note that this might be a burden for workflows that use backups (although runtime is probably still the bigger burden).
+					it = O->G->BeadList->begin();
+					it_cntr = 0;
+					while (it != O->G->BeadList->end())
+					{
+						if ((*it)->kind == HOUSE)	O->nr_houses++;
+						it++;
+						it_cntr++;
+						if (it_cntr == O->G->terminus_position)	break;
+					}
+					
 					SaveO = O;	//SaveO takes the pointer value of O.
 					O = FindInFossilRecord(SaveO->fossil_id);	//Check the current organelle was already put in the fossil record; O is reassigned as pointer.
 					if (O == NULL)	//It is not yet in the fossil record. Act like nothing happened.
