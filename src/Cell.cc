@@ -143,14 +143,14 @@ void Cell::DNATransferToHost()
 					uu = uniform();
 					if (Symbionts->at(s)->Stage >= 2)
 					{
-						if (uu < muT[SYMBIONT][(*it)->kind])					it = TransferGene(it, Symbionts->at(s), Host, false, false);
-						else if (uu < 2*muT[SYMBIONT][(*it)->kind])		it = TransferGene(it, Symbionts->at(s), Host, true, false);
+						if (uu < 0.5*muT[SYMBIONT][(*it)->kind])			it = TransferGene(it, Symbionts->at(s), Host, false, false);
+						else if (uu < muT[SYMBIONT][(*it)->kind])			it = TransferGene(it, Symbionts->at(s), Host, true, false);
 						else	it++;
 					}
 					else
 					{
-						if (uu < muT[SYMBIONT][(*it)->kind])					it = TransferGene(it, Symbionts->at(s), Host, false, true);
-						else if (uu < 2*muT[SYMBIONT][(*it)->kind])		it = TransferGene(it, Symbionts->at(s), Host, true, true);
+						if (uu < 0.5*muT[SYMBIONT][(*it)->kind])			it = TransferGene(it, Symbionts->at(s), Host, false, true);
+						else if (uu < muT[SYMBIONT][(*it)->kind])			it = TransferGene(it, Symbionts->at(s), Host, true, true);
 						else	it++;
 					}
 				}
@@ -183,14 +183,14 @@ void Cell::DNATransfertoSymbiont(Organelle* Symbiont)
 			uu = uniform();
 			if (Host->Stage >= 2)
 			{
-				if (uu < muT[HOST][(*it)->kind]) 					it = TransferGene(it, Host, Symbiont, false, false);
-				else if (uu < 2*muT[HOST][(*it)->kind])		it = TransferGene(it, Host, Symbiont, true, false);
+				if (uu < 0.5*muT[HOST][(*it)->kind]) 			it = TransferGene(it, Host, Symbiont, false, false);
+				else if (uu < muT[HOST][(*it)->kind])			it = TransferGene(it, Host, Symbiont, true, false);
 				else	it++;
 			}
 			else
 			{
-				if (uu < muT[HOST][(*it)->kind])					it = TransferGene(it, Host, Symbiont, false, true);
-				else if (uu < 2*muT[HOST][(*it)->kind])		it = TransferGene(it, Host, Symbiont, true, true);
+				if (uu < 0.5*muT[HOST][(*it)->kind])			it = TransferGene(it, Host, Symbiont, false, true);
+				else if (uu < muT[HOST][(*it)->kind])			it = TransferGene(it, Host, Symbiont, true, true);
 				else	it++;
 			}
 		}
