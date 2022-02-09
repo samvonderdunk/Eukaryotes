@@ -71,7 +71,7 @@ void Genome::UpdateGeneExpression()
 		else if ((*it)->kind==BSITE)
 		{
 			i_reg = RegulatorCompetition(it);
-			if (i_reg != BeadList->end())
+			if (i_reg != ExpressedGenes->end())
 			{
 				reg = dynamic_cast<Regulator*>(*i_reg);
 				bs = dynamic_cast<Bsite*>(*it);
@@ -146,7 +146,7 @@ Genome::i_bead Genome::RegulatorCompetition(i_bead i_bsite)
 	//Pick one of the probabilities.
 	double die_roll = uniform();
 	die_roll -= 1 / z_partition;
-	if (die_roll <= 0.)	return BeadList->end();
+	if (die_roll <= 0.)	return ExpressedGenes->end();
 
 	it = ExpressedGenes->begin();
 	while (it != ExpressedGenes->end())
