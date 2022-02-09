@@ -137,6 +137,7 @@ const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
 //Mutation rates are specified like this:
 // mu[HOST][DUPLICATION][BSITE]
 // mut[HOST][EFFECTOR] specifies the transfer mutation rate FROM HOST (to symbiont) for effectors.
+// muWGD[HOST] specifies WGD rate for host.
 
 #define DUPLICATION 0
 #define DELETION 1
@@ -149,6 +150,7 @@ const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
 
 extern double mu[2][8][4];
 extern double muT[2][4];
+extern double muWGD[2];
 
 const bool effector_types[5][effector_length] =
 {

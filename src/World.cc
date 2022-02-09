@@ -48,8 +48,9 @@ double nutrient_abundance = default_nutrient_abundance;
 int nutrient_competition = default_nutrient_competition;
 int strain_competition = default_strain_competition;
 
-double mu[2][8][4] = {0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,};
+double mu[2][8][4] = {0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.};
 double muT[2][4] = {0., 0., 0., 0., 0., 0., 0., 0.};
+double muWGD[2] = {0., 0.};
 
 void Setup(int argc, char** argv);
 void SetMutationRates();
@@ -97,18 +98,26 @@ int main(int argc, char** argv) {
 			//Periods of high mutation.
 			if ( mutation_epochs && Time!=TimeZero && Time%(high_mu_period+high_mu_interval)==0 )	//Finished an interval and a high mutation period. So going into the next interval (low mutation).
 			{
-				for (i=0; i<2; i++) for (k=0; k<4; k++)
+				for (i=0; i<2; i++)
 				{
-					for (j=0; j<8; j++)	mu[i][j][k] /= high_mu_factor;	//Divide all mu's by high_mu_factor.
-					muT[i][k] /= high_mu_factor;
+					muWGD[i] /= high_mu_factor;
+					for (k=0; k<4; k++)
+					{
+						for (j=0; j<8; j++)	mu[i][j][k] /= high_mu_factor;	//Divide all mu's by high_mu_factor.
+						muT[i][k] /= high_mu_factor;
+					}
 				}
 			}
 			else if ( mutation_epochs && Time%(high_mu_period+high_mu_interval)==high_mu_interval )	//Finished an interval, going into the next high mutation period.
 			{
-				for (i=0; i<2; i++) for (k=0; k<4; k++)
+				for (i=0; i<2; i++)
 				{
-					for (j=0; j<8; j++)	mu[i][j][k] *= high_mu_factor;	//Multiply all mu's by high_mu_factor.
-					muT[i][k] *= high_mu_factor;
+					muWGD[i] *= high_mu_factor;
+					for (k=0; k<4; k++)
+					{
+						for (j=0; j<8; j++)	mu[i][j][k] *= high_mu_factor;	//Multiply all mu's by high_mu_factor.
+						muT[i][k] *= high_mu_factor;
+					}
 				}
 			}
 
@@ -489,8 +498,12 @@ void SetMutationRates()
 		{
 			success = sscanf(data, "#%s\t%lf %lf %lf %lf %lf %lf %lf %lf", buffer, &muT[HOST][HOUSE], &muT[HOST][BSITE], &muT[HOST][REGULATOR], &muT[HOST][EFFECTOR], &muT[SYMBIONT][HOUSE], &muT[SYMBIONT][BSITE], &muT[SYMBIONT][REGULATOR], &muT[SYMBIONT][EFFECTOR]);
 		}
+		else if (count_lines == 9)
+		{
+			success = sscanf(data, "#%s\t%lf %lf", buffer, &muWGD[HOST], &muWGD[SYMBIONT]);
+		}
 
-		if(success != 9)
+		if((count_lines < 9 && success != 9) || (count_lines == 9 && success != 3))
 		{
 			cerr << "Error: mutation file potentially corrupt.\n" << endl;
 			exit(1);

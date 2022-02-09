@@ -43,6 +43,7 @@ class Genome {
 	i_bead Duplication(i_bead it, int* pdup_length);
 	void Inventions(int* pdup_length);
 	i_bead Shuffle(i_bead it);
+	void WholeGenomeDuplication(int* pdup_length);
 
 	int CountBeads(int kind);
 

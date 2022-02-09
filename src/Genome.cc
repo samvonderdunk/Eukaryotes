@@ -399,6 +399,14 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 		//Innovations.
 		Inventions(pdup_length);
 
+		//WGDs.
+		if (uniform() < muWGD[organelle])
+		{
+			cout << Show(NULL, true, false) << endl;
+			WholeGenomeDuplication(pdup_length);
+			cout << Show(NULL, true, false) << endl;
+		}
+
 		assert(g_length == g_length_before_mut + (*pdup_length) - (*pdel_length));
 	}	//END of mutations.
 
@@ -741,6 +749,21 @@ Genome::i_bead Genome::Shuffle(i_bead it)
 		is_mutated = true;
 		return last;
 	}
+}
+
+void Genome::WholeGenomeDuplication(int* pdup_length)
+{
+	int k;
+	list<Bead*> BeadListTemp;	//Create a new temporary genome list.
+
+	//Update counters.
+	for (k=0; k<4; k++){	gnr[k] *= 2;	}
+	(*pdup_length) += g_length;
+	g_length *= 2;
+
+	//Do the actual copying.
+	CopyPartOfGenomeToTemplate(BeadList->begin(), BeadList->end(), &BeadListTemp); //Makes a new piece of DNA with the duplicated beads on it.
+	BeadList->splice(BeadList->end(), BeadListTemp);	//Splice temporary list into chromosome.
 }
 
 int Genome::CountBeads(int kind)	//Useful for debugging.
