@@ -400,12 +400,7 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 		Inventions(pdup_length);
 
 		//WGDs.
-		if (uniform() < muWGD[organelle])
-		{
-			cout << Show(NULL, true, false) << endl;
-			WholeGenomeDuplication(pdup_length);
-			cout << Show(NULL, true, false) << endl;
-		}
+		if (uniform() < muWGD[organelle])		WholeGenomeDuplication(pdup_length);
 
 		assert(g_length == g_length_before_mut + (*pdup_length) - (*pdel_length));
 	}	//END of mutations.
