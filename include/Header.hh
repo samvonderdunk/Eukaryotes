@@ -30,6 +30,7 @@ using namespace std;
 #include <array>
 
 // #include "/home/sam/Programmes/nvwa-1.1/nvwa/debug_new.h"
+// Just for your info, devoon on TBB seems to have C++14.
 
 #define toDigit(c) (c-'0')  // Converts char to digit
 

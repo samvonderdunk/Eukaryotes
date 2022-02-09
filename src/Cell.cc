@@ -19,7 +19,7 @@ Cell::~Cell()
 
 	for (s=0; s<nr_symbionts; s++)	delete Symbionts->at(s);
 
-	Symbionts->erase(Symbionts->begin(),Symbionts->end());
+	Symbionts->clear();
 	delete Symbionts;
 	Symbionts = NULL;
 }
@@ -48,14 +48,14 @@ void Cell::UpdateOrganelles()
 		Host->UpdateState();	//Update organelle state. If foreign products should not interfere with organelle state, put that in the UpdateState() function.
 	}
 	Host->G->UpdateGeneExpression();	//Update gene expression states.
-	it = Host->G->ExpressedGenes->erase(Host->G->ExpressedGenes->begin(), Host->G->ExpressedGenes->end());	//Erase ExpressedGenes to avoid conflicts with pointers during cell dynamics.
+	Host->G->ExpressedGenes->clear();	//Erase ExpressedGenes to avoid conflicts with pointers during cell dynamics.
 	Host->nr_native_expressed = 0;
 
 	for (s=0; s<nr_symbionts; s++)
 	{
 		Symbionts->at(s)->UpdateState();
 		Symbionts->at(s)->G->UpdateGeneExpression();
-		it = Symbionts->at(s)->G->ExpressedGenes->erase(Symbionts->at(s)->G->ExpressedGenes->begin(), Symbionts->at(s)->G->ExpressedGenes->end());
+		Symbionts->at(s)->G->ExpressedGenes->clear();
 		Symbionts->at(s)->nr_native_expressed = 0;
 	}
 }

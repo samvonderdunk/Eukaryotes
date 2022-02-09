@@ -30,7 +30,7 @@ Genome::~Genome()
 		it++;
 	}
 
-	it=BeadList->erase(BeadList->begin(),BeadList->end());
+	BeadList->clear();
 	delete BeadList;
 	BeadList=NULL;
 
@@ -39,7 +39,7 @@ Genome::~Genome()
 		delete RegTypeList[i];
 	}
 
-	if (ExpressedGenes != NULL)	it = ExpressedGenes->erase(ExpressedGenes->begin(), ExpressedGenes->end());
+	if (ExpressedGenes != NULL)	ExpressedGenes->clear();
 	delete ExpressedGenes;
 	ExpressedGenes = NULL;
 }
