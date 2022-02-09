@@ -50,7 +50,7 @@ const int effector_length =		10;
 
 //Grid size and host size, setting the dimensions of the model.
 const int NR_max = 100;
-const int NC_max = 100;	//Gradient is over columns.
+const int NC_max = 300;	//Gradient is over columns.
 
 //Main settings
 const int relative_replication = -1;	// -1 to turn off. If we're doing relative replication (i.e. not -1), how many nutrients are considered to be needed for replication of the entire genome. This removes selection against genome size by scaling replication length with a given genome length.
@@ -93,8 +93,11 @@ const int default_TimeSaveBackup =			10000;
 //Population parameters
 const double death_rate_host =								0.001;
 const double death_rate_symbiont =						0.001;
-const double default_nutrient_abundance =			30.;
 const int default_nutrient_competition =			2;
+const int nr_sectors =												11;	// 11 for Standard gradient, 9 for new gradient.
+const double default_conditions[nr_sectors] =	{80., 70., 60., 50., 40., 30., 20., 10., 8., 5., 2.};	//Standard gradient from Prokaryotes.
+// const double default_conditions[nr_sectors] =	{50., 20., 10., 5., 2., 1., 0.5, 0.2, 0.1};	//New, challenging gradient.
+
 //Options for nutrient_competition:
 // 0, constant nutrient level, unaffected by cells.
 // 1, classic nutrient function (e.g. Paramecium tetraurelia):		n_ij = ( n_tot - (x_nei-x_i) ) / x_i
@@ -104,7 +107,7 @@ const int default_nutrient_competition =			2;
 // 5, distribute by cell, let host give a fraction nutrient_claim to each of its symbionts, itself taking whatever's left: n_iH = max(0, 1 - (x_i-1)*claim_H) * (n_tot / c_nei) and n_iS = min(1, (x_i-1)*claim_H)/(x_i-1) * (n_tot / c_nei)
 // 6, evolvable nutrient claims per organelle (defining depletion of nutrients in the environment and the nutrients claimed by each organelle of the available nutrients).
 // where n_ij is nutrients at site i for organelle j,
-//       n_tot is total nutrient_abundance (see par above), i.e. influx per site,
+//       n_tot is total nutrient_condition (see par above), i.e. influx per site,
 //       x_nei is total number of organelles in the neighbourhood,
 //       x_i is total number of organelles at site i,
 //       c_nei is number of cells (or hosts) in the neighbourhood,
@@ -213,8 +216,8 @@ extern bool well_mixing;
 
 extern int init_stage;
 
-extern double nutrient_abundance;
 extern int nutrient_competition;
+extern double nutrient_condition[nr_sectors];
 extern int strain_competition;
 
 extern dsfmt_t dsfmt;

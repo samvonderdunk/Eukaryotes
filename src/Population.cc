@@ -154,7 +154,7 @@ void Population::FollowSingleCell()
 		C->UpdateOrganelles();	//Expression dynamics within cell.
 
 		//Replication.
-		nutrients = nutrient_abundance/(double)(C->nr_symbionts+1);
+		nutrients = nutrient_condition[0]/(double)(C->nr_symbionts+1);
 		if (C->Host->Stage == 2   &&   C->Host->privilige)
 		{
 			C->Host->Replicate(nutrients);
@@ -518,7 +518,9 @@ Population::coords Population::PickNeighbour(int i, int j)
 void Population::CollectNutrientsFromSite(int i, int j)
 {
 	int ii, jj, nrow, ncol, cell_density=0, organelle_density=0, s;
-	double nutrient_share, starting_nuts, claim_density=0.;
+	double nut_condition, nutrient_share, starting_nuts, claim_density=0.;
+
+	nut_condition = nutrient_condition[j/(NC/nr_sectors)];
 
 	//First obtain organelle and cell density in 3x3 neighbourhood.
 	for (ii=i-1; ii<=i+1; ii++) for (jj=j-1; jj<=j+1; jj++)
@@ -558,16 +560,16 @@ void Population::CollectNutrientsFromSite(int i, int j)
 	//If we don't have wrapped columns, border pixels get fewer nutrients to start with.
 	if (invasion_experiment && (j==0 || j==NC-1))
 	{
-		starting_nuts = (6/9)*nutrient_abundance;
+		starting_nuts = (6/9)*nut_condition;
 	}
 	else
 	{
-		starting_nuts = nutrient_abundance;
+		starting_nuts = nut_condition;
 	}
 
 	if (nutrient_competition == 0)	//Constant nutrient level.
 	{
-		NutrientSpace[i][j] += nutrient_abundance;
+		NutrientSpace[i][j] += nut_condition;
 	}
 
 	else if (nutrient_competition == 1)	//Finish classic nutrient function here.
@@ -902,7 +904,7 @@ void Population::ReadBackupFile()
 						it_cntr++;
 						if (it_cntr == O->G->terminus_position)	break;
 					}
-					
+
 					SaveO = O;	//SaveO takes the pointer value of O.
 					O = FindInFossilRecord(SaveO->fossil_id);	//Check the current organelle was already put in the fossil record; O is reassigned as pointer.
 					if (O == NULL)	//It is not yet in the fossil record. Act like nothing happened.
@@ -1307,15 +1309,16 @@ void Population::OutputLineage(int i, int j)
 
 void Population::ShowGeneralProgress()
 {
-	int i, j, host_count=0, symbiont_count=0;
-	int stage_counts[2][6] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	int i, j, symbiont_count=0;
+	int host_count[nr_sectors] = {0};
+	int stage_counts[2][6] = {0};
 	i_org iS;
 
 	for (i=0; i<NR; i++) for(j=0; j<NC; j++)
 	{
 		if ( Space[i][j] != NULL )
 		{
-			host_count++;
+			host_count[j/(NC/nr_sectors)]++;	// sector = j/(NC/nr_sectors)
 			symbiont_count += Space[i][j]->nr_symbionts;
 			stage_counts[0][Space[i][j]->Host->Stage]++;
 			iS = Space[i][j]->Symbionts->begin();
@@ -1328,14 +1331,18 @@ void Population::ShowGeneralProgress()
 		}
 	}
 
-	cout << "Time " << Time;
-	cout << "\tHosts " << host_count;
+	cout << "Time " << Time << "\tHosts ";
+	for (i=0; i<nr_sectors; i++)
+	{
+		cout << host_count[i];
+		if (i != nr_sectors-1)	cout << "|";
+	}
 	cout << "\tSymbionts " << symbiont_count;
 	for (i=0; i<6; i++)	cout << "\tS(" << i << ") " << stage_counts[0][i] << "," << stage_counts[1][i];
 	if (invasion_complete==Time)	cout << "\tINVASION COMPLETE";
 	cout << endl;
 
-	if (host_count==0)
+	if (symbiont_count==0)	//Easier to use symbiont_count as we did not split this over sectors.
 	{
 		cout << "And since there is no more life, we will stop the experiment here.\n" << endl;
 		exit(1);

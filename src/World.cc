@@ -14,13 +14,13 @@ int Time;
 int seed = time(0);	//Unless changed at command line.
 
 string folder = "/linuxhome/tmp/sam/Eukaryotes/";
-string genome_files[max_input_files] = {"", "", "", "", "", "", "", "", "", ""};
-string expression_files[max_input_files] = {"", "", "", "", "", "", "", "", "", ""};
-string definition_files[max_input_files] = {"", "", "", "", "", "", "", "", "", ""};
-string mutation_file = "";
-string backup_file = "";
-string anctrace_file = "";
-string lineage_file = "";
+string genome_files[max_input_files];	//Apparently strings don't need to be explicitly set to "".
+string expression_files[max_input_files];
+string definition_files[max_input_files];
+string mutation_file;
+string backup_file;
+string anctrace_file;
+string lineage_file;
 
 int TimeZero = default_TimeZero;
 int SimTime = default_SimTime;
@@ -44,13 +44,13 @@ bool log_lineage = false;
 
 int init_stage = 0;
 
-double nutrient_abundance = default_nutrient_abundance;
+double nutrient_condition[nr_sectors] = {0.};
 int nutrient_competition = default_nutrient_competition;
 int strain_competition = default_strain_competition;
 
-double mu[2][8][4] = {0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.};
-double muT[2][4] = {0., 0., 0., 0., 0., 0., 0., 0.};
-double muWGD[2] = {0., 0.};
+double mu[2][8][4] = {0.};
+double muT[2][4] = {0.};
+double muWGD[2] = {0.};
 
 void Setup(int argc, char** argv);
 void SetMutationRates();
@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
 
 void PrintUsage(bool full)
 {
-	printf("\n\033[93m### Eukaryotes --- usage ###\033[0m\nArguments:\n   -s [seed]\t\t\tSet seed for random number generator (e.g. 211)\n   -p [project title]\t\tDefines folder for local storage\n   -g [genomes file]\t\tSee World.cc or --help for format\n   -e [expressions file]\tSee World.cc or --help for format\n   -d [definitions file]\tSee World.cc or --help for format\n   -m [mutations file]\tSee World.cc or --help for format\n   -b [backup file]\t\tStart from backup (e.g. /path/backup00090000.txt)\n   -a [ancestor file]\t\tContinue ancestor trace (e.g. /path/anctrace00090000.txt)\n   -l [lineage file]\t\tLineage record (e.g. Host_MRCA_t1960k.out, see Programmes -L1 and -L2)\n   -t0 [start time]\t\tSet starting time (default: 0)\n   -tN [end time]\t\tSet simulation time (default: 10M)\n   -tT [term time]\t\tSet interval for terminal output (default: 100)\n   -tS [snap time]\t\tSet interval for saving snapshot (default: 100)\n   -tP [prune time]\t\tSet time interval for fossil pruning (default: 1000)\n   -tF [fossil time]\t\tSet time interval for saving fossil record (default: 10k)\n   -tB [backup time]\t\tSet interval for saving backup (default: 10k)\n   -nA [nutrient abundance]\tSet nutrient influx per site\n   -nC [nutrient competition]\tChoose type of nutrient competition (1: subtract/divide, 2: divide all, 3: divide/divide)\n   -sC [strain competition]\tChoose distribution of strains (1: vertical stripes, 2: mixed)\n   -r [number of rows]\n   -c [number of columns]\n   -st [initial stage]\n\nFlags:\n   --nomut\t\t\tNo mutations\n   --mixed\t\t\tWell-mixing\n   --help\t\t\tPrint full usage info\n\nProgrammes:\n   -INV\t\t\t\tInvasion/growth experiment\n   -S1\t\t\t\tFollow single cell with growing symbionts\n   -S2\t\t\t\tFollow single with fixed symbiont numbers\n   -L1\t\t\t\tTrace complete lineage (every organelle is considered a mutant)\n   -L2\t\t\t\tLog complete lineage (obtained using -L1)\n");
+	printf("\n\033[93m### Eukaryotes --- usage ###\033[0m\nArguments:\n   -s [seed]\t\t\tSet seed for random number generator (e.g. 211)\n   -p [project title]\t\tDefines folder for local storage\n   -g [genomes file]\t\tSee World.cc or --help for format\n   -e [expressions file]\tSee World.cc or --help for format\n   -d [definitions file]\tSee World.cc or --help for format\n   -m [mutations file]\tSee World.cc or --help for format\n   -b [backup file]\t\tStart from backup (e.g. /path/backup00090000.txt)\n   -a [ancestor file]\t\tContinue ancestor trace (e.g. /path/anctrace00090000.txt)\n   -l [lineage file]\t\tLineage record (e.g. Host_MRCA_t1960k.out, see Programmes -L1 and -L2)\n   -t0 [start time]\t\tSet starting time (default: 0)\n   -tN [end time]\t\tSet simulation time (default: 10M)\n   -tT [term time]\t\tSet interval for terminal output (default: 100)\n   -tS [snap time]\t\tSet interval for saving snapshot (default: 100)\n   -tP [prune time]\t\tSet time interval for fossil pruning (default: 1000)\n   -tF [fossil time]\t\tSet time interval for saving fossil record (default: 10k)\n   -tB [backup time]\t\tSet interval for saving backup (default: 10k)\n   -nA [nutrient conditions 80,70,60]\tSet nutrient influx per site\n   -nC [nutrient competition]\tChoose type of nutrient competition (1: subtract/divide, 2: divide all, 3: divide/divide)\n   -sC [strain competition]\tChoose distribution of strains (1: vertical stripes, 2: mixed)\n   -r [number of rows]\n   -c [number of columns]\n   -st [initial stage]\n\nFlags:\n   --nomut\t\t\tNo mutations\n   --mixed\t\t\tWell-mixing\n   --help\t\t\tPrint full usage info\n\nProgrammes:\n   -INV\t\t\t\tInvasion/growth experiment\n   -S1\t\t\t\tFollow single cell with growing symbionts\n   -S2\t\t\t\tFollow single with fixed symbiont numbers\n   -L1\t\t\t\tTrace complete lineage (every organelle is considered a mutant)\n   -L2\t\t\t\tLog complete lineage (obtained using -L1)\n");
 	if (full)
 	{
 		printf("\n\033[93m### Eukaryotes --- formats ###\033[0m\n\n<genomes file>\t\tHost genome on first line, each next line a symbiont.\n   (R2:0:-3:1:10010100010101010001).(H).(0:01010101000110010100).(...\n   (R4:1:-1:2:01010101100101000001).(H).(2:10100011001010001010).(...\n   (R4:1:-1:2:01010101100101000001).(H).(2:10100011001010001010).(...\n\n<expressions file>\tHost expression on first line, each next line a symbiont (matching with genomes file)\n   {10101110}\n   {...\n   {...\n\n<definitions file>\tHost type definitions on first line, each next line a symbiont\n   (R1:1:10010100010101010001);(R2:-5:01010100101010111000);(...\n   (R1:2:10100011001010001010);(...\n   (R1:2:10100011001010001010);(...\n<mutations file> Per line a different type of mutation; then 2 sets of 4 columns for the two organelles and 4 bead types\n   #DUPLICATION 0.0001 0.0003 0.0001 0.0001 0.0 0.0 0.0 0.0\n   #DELETION 0.0001 0.0003 0.0001 0.0001 0.0 0.0 0.0 0.0\n");
@@ -178,7 +178,14 @@ void PrintLog()
 			printf("%s", definition_files[i].c_str());
 		}
 	}
-	printf("\nMutations:\t\t%s\nBackup:\t\t\t%s\nAnctrace:\t\t%s\nLineage:\t\t%s\nStart time:\t\t%d\nEnd time:\t\t%d\nt-Terminal:\t\t%d\nt-Snap:\t\t\t%d\nt-Prune:\t\t%d\nt-Ancestry:\t\t%d\nt-Backup:\t\t%d\nNutrient abundance:\t%f\nNutrient comp.:\t\t%d\nStrain comp.:\t\t%d\nNR:\t\t\t%d\nNC:\t\t\t%d\n\nMutations:\t\t%s\nMixing:\t\t\t%s\nInvasion experiment:\t%s\nFollow var. host:\t%s\nFollow fixed host:\t%s\nTrace lineage:\t\t%s\nLog lineage:\t\t%s\n", mutation_file.c_str(), backup_file.c_str(), anctrace_file.c_str(), lineage_file.c_str(), TimeZero, SimTime, TimeTerminalOutput, TimeSaveGrid, TimePruneFossils, TimeOutputFossils, TimeSaveBackup, nutrient_abundance, nutrient_competition, strain_competition, NR, NC, mutations_on?"Yes":"No", well_mixing?"Yes":"No", invasion_experiment?"Yes":"No", follow_single_individual?"Yes":"No", follow_with_fixed_symbionts?"Yes":"No", trace_lineage?"Yes":"No", log_lineage?"Yes":"No");
+	printf("\nMutations:\t\t%s\nBackup:\t\t\t%s\nAnctrace:\t\t%s\nLineage:\t\t%s\nStart time:\t\t%d\nEnd time:\t\t%d\nt-Terminal:\t\t%d\nt-Snap:\t\t\t%d\nt-Prune:\t\t%d\nt-Ancestry:\t\t%d\nt-Backup:\t\t%d\n", mutation_file.c_str(), backup_file.c_str(), anctrace_file.c_str(), lineage_file.c_str(), TimeZero, SimTime, TimeTerminalOutput, TimeSaveGrid, TimePruneFossils, TimeOutputFossils, TimeSaveBackup);
+	printf("Nutrient conditions:\t");
+	for (i=0; i<nr_sectors; i++)
+	{
+		printf("%f", nutrient_condition[i]);
+		if (i != nr_sectors-1)	printf(", ");
+	}
+	printf("\nNutrient comp.:\t\t%d\nStrain comp.:\t\t%d\nNR:\t\t\t%d\nNC:\t\t\t%d\n\nMutations:\t\t%s\nMixing:\t\t\t%s\nInvasion experiment:\t%s\nFollow var. host:\t%s\nFollow fixed host:\t%s\nTrace lineage:\t\t%s\nLog lineage:\t\t%s\n", nutrient_competition, strain_competition, NR, NC, mutations_on?"Yes":"No", well_mixing?"Yes":"No", invasion_experiment?"Yes":"No", follow_single_individual?"Yes":"No", follow_with_fixed_symbionts?"Yes":"No", trace_lineage?"Yes":"No", log_lineage?"Yes":"No");
 }
 
 
@@ -186,9 +193,11 @@ void Setup(int argc, char** argv) {
 
 	string ReadOut, ReadOutN, command;
 	bool project_name_found = false;
-	int j;
+	int i, j, i_condition=0;
 
-	for(int i=1;i<argc;i++)	//Loop through input arguments.
+	for (i=0; i<nr_sectors; i++)	nutrient_condition[i]=default_conditions[i];
+
+	for(i=1; i<argc; i++)	//Loop through input arguments.
 	{
 		ReadOut = (char*) argv[i];	//There does not seem to be a quicker way to compare the input arguments with a string.
 
@@ -362,7 +371,8 @@ void Setup(int argc, char** argv) {
 
 		else if(ReadOut=="-nA" && (i+1)!=argc)
 		{
-			nutrient_abundance = atof(argv[i+1]);
+			nutrient_condition[i_condition] = atof(argv[i+1]);
+			i_condition++;
 			i++;
 			continue;
 		}
