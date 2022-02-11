@@ -23,14 +23,12 @@ Population::~Population()	//Skips deconstructor of Cell, because we need to chec
 		if((Space[i][j]) != NULL)
 		{
 			if (Space[i][j]->Host->mutant || trace_lineage || log_lineage)	FossilSpace->EraseFossil(Space[i][j]->Host->fossil_id);
-			delete Space[i][j]->Host;
-			Space[i][j]->Host = NULL;
 			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
 				if (Space[i][j]->Symbionts->at(s)->mutant || trace_lineage || log_lineage)	FossilSpace->EraseFossil(Space[i][j]->Symbionts->at(s)->fossil_id);
-				delete Space[i][j]->Symbionts->at(s);
-				Space[i][j]->Symbionts->at(s) = NULL;
 			}
+			delete Space[i][j];
+			Space[i][j] = NULL;
 		}
 	}
 
@@ -227,6 +225,7 @@ void Population::UpdatePopulation()
 			if (uniform() < death_rate_host)
 			{
 				Space[i][j]->DeathOfCell();
+				delete Space[i][j];
 				Space[i][j] = NULL;
 				continue;
 			}
@@ -242,6 +241,7 @@ void Population::UpdatePopulation()
 				}
 				if (Space[i][j]->CheckCellDeath(false))
 				{
+					delete Space[i][j];
 					Space[i][j] = NULL;
 					continue;
 				}
@@ -254,6 +254,7 @@ void Population::UpdatePopulation()
 			if (Space[i][j]->Host->Stage == 5)
 			{
 				Space[i][j]->DeathOfCell();
+				delete Space[i][j];
 				Space[i][j] = NULL;
 				continue;
 			}
@@ -271,6 +272,7 @@ void Population::UpdatePopulation()
 			}
 			if (Space[i][j]->CheckCellDeath(false))
 			{
+				delete Space[i][j];
 				Space[i][j] = NULL;
 				continue;
 			}
@@ -286,7 +288,6 @@ void Population::UpdatePopulation()
 			{
 				NewCell = new Cell();
 				NewCell->barcode = Space[i][j]->barcode;	//Transmit strain info.
-				NewCell->Host = new Organelle();
 				id_count++;
 				NewCell->Host->Mitosis(Space[i][j]->Host, id_count);
 
@@ -339,10 +340,15 @@ void Population::UpdatePopulation()
 						}
 					}
 				}
-				else NewCell = NULL;
+				else
+				{
+					delete NewCell;
+					NewCell = NULL;
+				}
 
 				if (Space[i][j]->CheckCellDeath(false))
 				{
+					delete Space[i][j];
 					if (!empty_division_killing && NewCell != NULL) //If we don't want to kill a neighbour, swap parent and daugther cell. Don't kill a neibhour; we're done here.
 					{
 						Space[i][j] = NewCell;
@@ -354,6 +360,7 @@ void Population::UpdatePopulation()
 						if (Space[neigh.first][neigh.second] != NULL)
 						{
 							Space[neigh.first][neigh.second]->DeathOfCell();
+							delete Space[neigh.first][neigh.second];
 							Space[neigh.first][neigh.second] = NULL;
 						}
 						Space[neigh.first][neigh.second] = NewCell;
@@ -368,6 +375,7 @@ void Population::UpdatePopulation()
 						if (Space[neigh.first][neigh.second] != NULL)
 						{
 							Space[neigh.first][neigh.second]->DeathOfCell();
+							delete Space[neigh.first][neigh.second];
 							Space[neigh.first][neigh.second] = NULL;
 						}
 						Space[neigh.first][neigh.second] = NewCell;
@@ -632,7 +640,7 @@ Population::nuts Population::HandleNutrientClaims(int i, int j)
 
 void Population::InitialisePopulation()
 {
-	Cell* InitCells[max_input_files] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+	Cell* InitCells[max_input_files] = {NULL};
 	int k, i, j, s, blocks, r, c;
 	double b, b_dbl, b_int;
 

@@ -14,10 +14,16 @@ Cell::~Cell()
 {
 	int s;
 
-	delete Host;
-	Host = NULL;
+	if (Host != NULL)
+	{
+		delete Host;
+		Host = NULL;
+	}
 
-	for (s=0; s<nr_symbionts; s++)	delete Symbionts->at(s);
+	for (s=0; s<nr_symbionts; s++)
+	{
+		if (Symbionts->at(s) != NULL)	delete Symbionts->at(s);
+	}
 
 	Symbionts->erase(Symbionts->begin(),Symbionts->end());
 	delete Symbionts;
@@ -427,7 +433,7 @@ void Cell::DeathOfCell()	//Called when host died or when last symbiont died, res
 	if (Host != NULL)	DeathOfHost();
 	for (s=nr_symbionts-1; s>=0; s--)
 	{
-		DeathOfSymbiont(s);
+		if (Symbionts->at(s) != NULL)	DeathOfSymbiont(s);
 		nr_symbionts--;
 	}
 }
