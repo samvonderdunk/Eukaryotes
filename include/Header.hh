@@ -44,7 +44,7 @@ using namespace std;
 const int max_input_files=20;
 
 //Bead variables
-const int signalp_length =		1;	//As long as I am not using it, make it small.
+const int signalp_length =		2;	//As long as I am not using it, make it small.
 const int regulator_length =	20;
 const int effector_length =		10;
 
@@ -94,9 +94,10 @@ const int default_TimeSaveBackup =			10000;
 const double death_rate_host =								0.001;
 const double death_rate_symbiont =						0.001;
 const int default_nutrient_competition =			2;
-const int nr_sectors =												11;	// 11 for Standard gradient, 9 for new gradient.
-const double default_conditions[nr_sectors] =	{80., 70., 60., 50., 40., 30., 20., 10., 8., 5., 2.};	//Standard gradient from Prokaryotes.
+const int nr_sectors =												1;	// 11 for Standard gradient, 9 for new gradient.
+// const double default_conditions[nr_sectors] =	{80., 70., 60., 50., 40., 30., 20., 10., 8., 5., 2.};	//Standard gradient from Prokaryotes.
 // const double default_conditions[nr_sectors] =	{50., 20., 10., 5., 2., 1., 0.5, 0.2, 0.1};	//New, challenging gradient.
+const double default_conditions[nr_sectors] =	{30.};
 
 //Options for nutrient_competition:
 // 0, constant nutrient level, unaffected by cells.

@@ -79,15 +79,15 @@ void Cell::GeneTransport()
 		while (it != Symbionts->at(s)->ExpressedGenes->end())
 		{
 			gene = dynamic_cast<Gene*>(*it);
-			if (perfect_transport && gene->signalp[0] == false)
-			{
+			if (perfect_transport && gene->signalp[0] == true && gene->signalp[1] == false)
+			{	//Protein translocated to host.
 				it2 = it;
 				it--;
 				Host->ExpressedGenes->splice(Host->ExpressedGenes->end(), *Symbionts->at(s)->ExpressedGenes, it2);
 				Symbionts->at(s)->nr_native_expressed--;
 			}
-			else if (uniform() < leakage_to_host)
-			{
+			else if ((perfect_transport && gene->signalp[0] == true && gene->signalp[1] == true) || uniform() < leakage_to_host)
+			{	//Protein also transported to host.
 				Host->ExpressedGenes->push_back(*it);
 			}
 			it++;
@@ -99,8 +99,8 @@ void Cell::GeneTransport()
 		while (it_cntr < Host->nr_native_expressed)
 		{
 			gene = dynamic_cast<Gene*>(*it);
-			if (perfect_transport && gene->signalp[0] == true)
-			{
+			if (perfect_transport && gene->signalp[0] == false && gene->signalp[1] == true)
+			{	//Protein translocated to symbiont.
 				if (s == nr_symbionts-1)	//Only erase the expressed gene from the host if we get to the last symbiont (already transported to all other symbionts).
 				{
 					it2 = it;
@@ -114,7 +114,7 @@ void Cell::GeneTransport()
 					Symbionts->at(s)->ExpressedGenes->push_back(*it);
 				}
 			}
-			else if (uniform() < leakage_to_symbiont)
+			else if ((perfect_transport && gene->signalp[0] == true && gene->signalp[1] == true) || uniform() < leakage_to_symbiont)
 			{
 				Symbionts->at(s)->ExpressedGenes->push_back(*it);
 			}
