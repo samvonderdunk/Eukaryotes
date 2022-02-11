@@ -57,7 +57,6 @@ class Genome {
 	void ReadGenome(string genome);
 	void ReadExpression(string expression);
 	void ReadDefinition(string definition);
-	void ReadBuffer(string buffer, bool* array, char start_sign, char stop_sign, int ith_start_sign = 1, int ith_stop_sign = 1);
 
 	string Show(list<Bead*>* chromosome, bool terminal, bool only_parent);
 	string ShowExpression(list<Bead*>* chromosome, bool only_parent);
