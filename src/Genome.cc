@@ -229,7 +229,7 @@ void Genome::ReplicateStep(double resource)
 	}
 
 
-	if (g_length > 500)	//We only check after the full replication step, not after each replicated bead.
+	if (g_length > max_g_length)	//We only check after the full replication step, not after each replicated bead.
 	{
 		printf("Warning: genome sizes reached extravagant size (%d) during replication.\nExiting just to be safe...\n", g_length);
 		cout << Show(NULL, true, false) << endl;

@@ -42,6 +42,7 @@ using namespace std;
 #define EFFECTOR 3
 
 const int max_input_files=20;
+const int max_g_length=1000;
 
 //Bead variables
 const int signalp_length =		2;	//As long as I am not using it, make it small.
