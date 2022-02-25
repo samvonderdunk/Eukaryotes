@@ -35,17 +35,12 @@ void Cell::UpdateOrganelles()
 	i_bead it;
 	int s;
 
-	//First determine gene expression (by making the ExpressedGenes list), then use this to determine movement of expressed genes, then update the organelle state, and lastly update gene expression on the actual genes. This updated gene expression will change the organelle state the next timestep during UpdateOrganelles.
-
-	//Set up the expression lists.
-	Host->G->NativeExpression();
+	//Set number of native expressed genes. This is used in GeneTransport & UpdateState, so right after here. This avoids having to record native expressed genes anywhere after UpdateGeneExpression until here.
 	Host->G->nr_native_expressed = (int)Host->G->ExpressedGenes->size();
 	for (s=0; s<nr_symbionts; s++)
 	{
-		Symbionts->at(s)->G->NativeExpression();
 		Symbionts->at(s)->G->nr_native_expressed = (int) Symbionts->at(s)->G->ExpressedGenes->size();
 	}
-
 
 	GeneTransport();	//Move around expression products.
 
@@ -54,15 +49,10 @@ void Cell::UpdateOrganelles()
 		Host->UpdateState();	//Update organelle state. If foreign products should not interfere with organelle state, put that in the UpdateState() function.
 	}
 	Host->G->UpdateGeneExpression();	//Update gene expression states.
-	Host->G->ExpressedGenes->clear();	//Erase ExpressedGenes to avoid conflicts with pointers during cell dynamics.
-	Host->G->nr_native_expressed = 0;
-
 	for (s=0; s<nr_symbionts; s++)
 	{
 		Symbionts->at(s)->UpdateState();
 		Symbionts->at(s)->G->UpdateGeneExpression();
-		Symbionts->at(s)->G->ExpressedGenes->clear();
-		Symbionts->at(s)->G->nr_native_expressed = 0;
 	}
 }
 
@@ -250,9 +240,7 @@ Cell::i_bead Cell::TransferGene(i_bead it, Organelle* Source, Organelle* Target,
 			{
 				Source->G->g_length--;
 				Source->G->terminus_position--;
-				if ((*ii)->kind == BSITE)						Source->G->gnr[BSITE]--;
-				else if ((*ii)->kind == REGULATOR)	Source->G->gnr[REGULATOR]--;
-				else if ((*ii)->kind == EFFECTOR)		Source->G->gnr[EFFECTOR]--;
+				Source->G->gnr[(*ii)->kind]--;
 				delete (*ii);
 				ii = Source->G->BeadList->erase(ii);
 			}

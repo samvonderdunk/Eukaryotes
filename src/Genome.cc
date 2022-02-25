@@ -66,6 +66,11 @@ void Genome::UpdateGeneExpression()
 			cum_effects -= (double)gene->threshold;
 			gene->express = max(min((int)cum_effects+1,1),0);	//For the +1, see explanation of the gene threshold in Gene.hh
 			cum_effects = 0.;
+
+			//Several options to make use of the fact that genes may be rare in the genome...
+			// 1. Make the next ExpressedGenes list here, and swap it with the current ExpressedGenes list.
+			// 2. Store the iterators in another list, and use boost below to fast-forward to genes to update expression states.
+			// 3. Store the positions of the genes in a list (of integers), and use that to jump through the genome (similar to 2.).
 		}
 		else if ((*it)->kind==BSITE)
 		{
@@ -82,6 +87,9 @@ void Genome::UpdateGeneExpression()
 		if (it_cntr == terminus_position)	cum_effects = 0.;
 	}
 
+	//Erase gene expression list.
+	ExpressedGenes->clear();
+
 	//Realise the just calculated regulatory dynamics.
 	it = BeadList->begin();
 	while (it != BeadList->end())
@@ -89,7 +97,11 @@ void Genome::UpdateGeneExpression()
 		if ((*it)->kind==REGULATOR || (*it)->kind==EFFECTOR)
 		{
 			gene = dynamic_cast<Gene*>(*it);
-			gene->expression = gene->express;
+			gene->expression = gene->express;	//Just record expression state.
+			while (gene->express > 0){	//We're not going to do expression > 1, but compared to a single if statement, this piece of code only does one extra thing, i.e. decreasing the gene->express variable.
+				ExpressedGenes->push_back(gene);
+				gene->express--;
+			}
 		}
 		it++;
 	}
@@ -108,7 +120,11 @@ void Genome::NativeExpression()
 		{
 			//See similar potential issue in UpdateExpression() and in BindingAffinity().
 			Gene* gene = dynamic_cast<Gene*>(*it);
-			if(gene->expression > 0)	ExpressedGenes->push_back(gene);	//Native genes are always stored in ExpressedGenes.
+			gene->express = gene->expression;	//Only difference with last paragraph of UpdateGeneExpression is that we here first have to read off gene->expression (which has been read from input files or which is stored in the just-divided genomes)
+			while (gene->express > 0){
+				ExpressedGenes->push_back(gene);
+				gene->express--;
+			}
 		}
 		it++;
 	}
@@ -174,6 +190,7 @@ void Genome::ReplicateStep(double resource)
 {
 	i_bead it, start, end;
 	Bead* bead;
+	Gene* gene;
 	int gene_length = 0, repl_remaining_steps;
 	double res_int, res_fract, fract_repl_remaining;
 
@@ -214,6 +231,21 @@ void Genome::ReplicateStep(double resource)
 		g_length++;
 		gnr[(*it)->kind]++;
 
+		//Copy expression.
+		if (bead->kind==REGULATOR || bead->kind==EFFECTOR)	//If expressed gene is replicated, the new copy is also expressed.
+		{
+			gene = dynamic_cast<Gene*>(bead);
+			if (gene->expression > 0)
+			{
+				gene->express = gene->expression;
+				while (gene->express > 0)
+				{
+					ExpressedGenes->push_back(gene);
+					gene->express--;
+				}
+			}
+		}
+
 		it++;
 		if (last_round)	break;
 		if (it == end)	last_round = true;	//We have apparently hit the last bead of the parental genome, so time for one final replication step.
@@ -251,7 +283,7 @@ void Genome::SplitGenome(Genome* parentG)	//Used to split a genome upon division
 
 	for(i=0; i<5; i++)		RegTypeList[i] = new Regulator(*parentG->RegTypeList[i]);
 
-	DevelopChildrenGenomes(parentG);
+	DevelopChildrenGenomes(parentG);	//including mutations.
 }
 
 

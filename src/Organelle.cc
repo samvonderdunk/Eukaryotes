@@ -97,8 +97,15 @@ double Organelle::CalculateFitness(int target_nr, double real_nr)
 
 void Organelle::Mitosis(Organelle* parent, unsigned long long id_count)
 {
+	//Main genome-level algorithm.
 	G->organelle = parent->G->organelle;
 	G->SplitGenome(parent->G);
+
+	//Just recreate the Expression list.
+	G->ExpressedGenes->clear();
+	G->NativeExpression();
+	parent->G->ExpressedGenes->clear();
+	parent->G->NativeExpression();
 
 	parent->Stage = 0;
 	parent->privilige = false;
@@ -133,6 +140,8 @@ void Organelle::Replicate(double resource)
 void Organelle::Abort()
 {
 	G->AbortChildGenome();
+	G->ExpressedGenes->clear();	//Also renew expression state.
+	G->NativeExpression();
 
 	Stage = 0;
 	privilige = false;
@@ -148,6 +157,8 @@ void Organelle::InitialiseOrganelle(string genome, string expression, string def
 	G->ReadGenome(genome);
 	G->ReadExpression(expression);
 	G->ReadDefinition(definition);
+
+	G->NativeExpression();	//Set up gene expression list.
 
 	nr_houses = G->gnr[HOUSE];
 	if (!cell_fitness)	fitness = CalculateFitness(nr_household_genes, G->gnr[HOUSE]);
@@ -172,6 +183,7 @@ void Organelle::CloneOrganelle(Organelle* ImageO, unsigned long long id_count)
 	Ancestor = ImageO->Ancestor;
 
 	G->CloneGenome(ImageO->G);
+	G->NativeExpression();
 }
 
 string Organelle::Show(bool backup)
