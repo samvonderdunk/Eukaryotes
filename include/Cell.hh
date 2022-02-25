@@ -13,6 +13,7 @@ class Cell{
 		int barcode;
 
 		typedef std::list<Bead*>::iterator i_bead;
+		typedef std::list<Gene*>::iterator i_gene;
 		typedef std::vector<Organelle*>::iterator i_org;
 
 		Cell();

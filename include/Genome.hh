@@ -13,14 +13,15 @@ class Genome {
  public:
   std::list<Bead*>* 					BeadList;
 	std::array<Regulator*,5>		RegTypeList;	//Used to define 5 main regulatory types, not actually used when we have effectors.
-	std::list<Bead*>*						ExpressedGenes;
+	std::list<Gene*>*						ExpressedGenes;
 
   int g_length, gnr[4];
-  int fork_position, terminus_position;	//position of the replication fork and the terminus, where it stops.
+  int fork_position, terminus_position, nr_native_expressed;	//position of the replication fork and the terminus, where it stops.
   bool is_mutated;
 	int organelle;
 
 	typedef std::list<Bead*>::iterator i_bead;
+	typedef std::list<Gene*>::iterator i_gene;
 	typedef std::list<Bead*>::reverse_iterator ri_bead;
 
   Genome();
@@ -28,7 +29,7 @@ class Genome {
 
 	void UpdateGeneExpression();
 	void NativeExpression();
-	i_bead RegulatorCompetition(i_bead i_bsite);
+	i_gene RegulatorCompetition(i_bead i_bsite);
 
 	void ReplicateStep(double resource);
 

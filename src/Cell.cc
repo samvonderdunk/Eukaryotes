@@ -39,11 +39,11 @@ void Cell::UpdateOrganelles()
 
 	//Set up the expression lists.
 	Host->G->NativeExpression();
-	Host->nr_native_expressed = (int)Host->G->ExpressedGenes->size();
+	Host->G->nr_native_expressed = (int)Host->G->ExpressedGenes->size();
 	for (s=0; s<nr_symbionts; s++)
 	{
 		Symbionts->at(s)->G->NativeExpression();
-		Symbionts->at(s)->nr_native_expressed = (int) Symbionts->at(s)->G->ExpressedGenes->size();
+		Symbionts->at(s)->G->nr_native_expressed = (int) Symbionts->at(s)->G->ExpressedGenes->size();
 	}
 
 
@@ -55,20 +55,20 @@ void Cell::UpdateOrganelles()
 	}
 	Host->G->UpdateGeneExpression();	//Update gene expression states.
 	Host->G->ExpressedGenes->clear();	//Erase ExpressedGenes to avoid conflicts with pointers during cell dynamics.
-	Host->nr_native_expressed = 0;
+	Host->G->nr_native_expressed = 0;
 
 	for (s=0; s<nr_symbionts; s++)
 	{
 		Symbionts->at(s)->UpdateState();
 		Symbionts->at(s)->G->UpdateGeneExpression();
 		Symbionts->at(s)->G->ExpressedGenes->clear();
-		Symbionts->at(s)->nr_native_expressed = 0;
+		Symbionts->at(s)->G->nr_native_expressed = 0;
 	}
 }
 
 void Cell::GeneTransport()
 {
-	i_bead it, it2;
+	i_gene it, it2;
 	int s, it_cntr;
 	Gene* gene;
 
@@ -84,7 +84,7 @@ void Cell::GeneTransport()
 				it2 = it;
 				it--;
 				Host->G->ExpressedGenes->splice(Host->G->ExpressedGenes->end(), *Symbionts->at(s)->G->ExpressedGenes, it2);
-				Symbionts->at(s)->nr_native_expressed--;
+				Symbionts->at(s)->G->nr_native_expressed--;
 			}
 			else if ((perfect_transport && gene->signalp.test(0) && gene->signalp.test(1)) || uniform() < leakage_to_host)
 			{	//Protein also transported to host.
@@ -96,7 +96,7 @@ void Cell::GeneTransport()
 		//Movement of expressed regulators from host to symbionts.
 		it = Host->G->ExpressedGenes->begin();
 		it_cntr = 0;
-		while (it_cntr < Host->nr_native_expressed)
+		while (it_cntr < Host->G->nr_native_expressed)
 		{
 			gene = dynamic_cast<Gene*>(*it);
 			if (perfect_transport && !gene->signalp.test(0) && gene->signalp.test(1))
@@ -107,7 +107,7 @@ void Cell::GeneTransport()
 					it--;
 					it_cntr--;	//Important, bug in the first attempt of M. commu V.
 					Symbionts->at(s)->G->ExpressedGenes->splice(Symbionts->at(s)->G->ExpressedGenes->end(), *Host->G->ExpressedGenes, it2);
-					Host->nr_native_expressed--;	//I think this will be fine (although it defines the while-loop), because the iterator takes a step back.
+					Host->G->nr_native_expressed--;	//I think this will be fine (although it defines the while-loop), because the iterator takes a step back.
 				}
 				else
 				{

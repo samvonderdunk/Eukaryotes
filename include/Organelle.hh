@@ -8,7 +8,6 @@ class Organelle{
 	public:
 		int Stage;
 		bool privilige;
-		int nr_native_expressed;
 		Genome* G;
 		int nr_houses;
 		double fitness;
@@ -22,7 +21,8 @@ class Organelle{
 		unsigned long long fossil_id;
 		Organelle* Ancestor;
 
-		typedef std::list<Bead*>::iterator i_bead;
+		typedef std::list<Bead*>::iterator i_bead;	//Not used anywhere currently.
+		typedef std::list<Gene*>::iterator i_gene;
 
 		Organelle();
 		~Organelle();

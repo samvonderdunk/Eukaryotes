@@ -6,11 +6,12 @@ Genome::Genome()
 	BeadList = new list<Bead*>();
 	RegTypeList = {NULL};
 	ExpressedGenes = NULL;
-	ExpressedGenes = new list<Bead*>();
+	ExpressedGenes = new list<Gene*>();
 	g_length=0;
 	for (int i=0; i<4; i++)	gnr[i]=0;
 	fork_position=0;
 	terminus_position=0;
+	nr_native_expressed=0;
 	is_mutated=false;
 	organelle=0;
 }
@@ -45,7 +46,8 @@ Genome::~Genome()
 
 void Genome::UpdateGeneExpression()
 {
-	i_bead it, i_reg;
+	i_bead it;
+	i_gene i_reg;
 	int it_cntr;
 	double cum_effects = 0.;
 	Bsite* bs;
@@ -114,7 +116,7 @@ void Genome::NativeExpression()
 
 
 
-Genome::i_bead Genome::RegulatorCompetition(i_bead i_bsite)
+Genome::i_gene Genome::RegulatorCompetition(i_bead i_bsite)
 {
 	//Optimise this, many possibilities:
 	//	--> inline functions.
@@ -124,7 +126,7 @@ Genome::i_bead Genome::RegulatorCompetition(i_bead i_bsite)
 	//	--> sort the affinities before rolling the die to shorten the second part.
 	Bsite* bsite = dynamic_cast<Bsite*>(*i_bsite);
 	Regulator* reg;
-	i_bead it;
+	i_gene it;
 	double affinity, p_bind, z_partition = 1.;
 
 	//Calculate partition function.

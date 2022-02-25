@@ -9,7 +9,6 @@ Organelle::Organelle()
 	nutrient_claim=1.;
 	G = NULL;
 	G = new Genome();
-	nr_native_expressed = 0;
 
 	alive = false;
 	mutant = false;
@@ -28,7 +27,7 @@ Organelle::~Organelle()
 void Organelle::UpdateState()
 {
 	int readout[5] = {0};	//States of the five cell-cycle regulators. Overloaded with the states of effector genes if they are functional.
-	i_bead it, it2;
+	i_gene it;
 	Regulator* reg;
 	int i;
 
@@ -44,7 +43,7 @@ void Organelle::UpdateState()
 		if ( (*it)->kind==REGULATOR )
 		{
 			reg = dynamic_cast<Regulator*>(*it);
-			if (it_cntr < nr_native_expressed)	//Native genes from the organelle itself; just look at the type.
+			if (it_cntr < G->nr_native_expressed)	//Native genes from the organelle itself; just look at the type.
 			{
 				if (reg->type < 6)			readout[reg->type-1] += reg->expression;
 			}
