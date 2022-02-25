@@ -8,10 +8,7 @@ Genome::Genome()
 	ExpressedGenes = NULL;
 	ExpressedGenes = new list<Bead*>();
 	g_length=0;
-	gnr[REGULATOR]=0;
-	gnr[EFFECTOR]=0;
-	gnr[BSITE]=0;
-	gnr[HOUSE]=0;
+	for (int i=0; i<4; i++)	gnr[i]=0;
 	fork_position=0;
 	terminus_position=0;
 	is_mutated=false;
@@ -213,21 +210,7 @@ void Genome::ReplicateStep(double resource)
 		bead=(*it)->Clone();
 		(*BeadList).push_back(bead);
 		g_length++;
-		switch ((*it)->kind)
-		{
-			case HOUSE:
-				gnr[HOUSE]++;
-				break;
-			case BSITE:
-				gnr[BSITE]++;
-				break;
-			case REGULATOR:
-				gnr[REGULATOR]++;
-				break;
-			case EFFECTOR:
-				gnr[EFFECTOR]++;
-				break;
-		}
+		gnr[(*it)->kind]++;
 
 		it++;
 		if (last_round)	break;
@@ -278,21 +261,7 @@ void Genome::AbortChildGenome()
 
 	while (it != BeadList->end())
 	{
-		switch ( (*it)->kind )
-		{
-			case HOUSE:
-				gnr[HOUSE]--;
-				break;
-			case BSITE:
-				gnr[BSITE]--;
-				break;
-			case REGULATOR:
-				gnr[REGULATOR]--;
-				break;
-			case EFFECTOR:
-				gnr[EFFECTOR]--;
-				break;
-		}
+		gnr[(*it)->kind]--;
 		g_length--;
 		delete(*it);
 		it++;
@@ -311,7 +280,7 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 {
 	i_bead it;
 	vector<bool>* MutationList;
-	int k, del_length, dup_length, index, g_length_before_mut;
+	int i, k, del_length, dup_length, index, g_length_before_mut;
 	int* pdup_length, * pdel_length;
 
 	g_length = BeadList->size();
@@ -321,31 +290,14 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 	it = BeadList->begin();
 	while (it != BeadList->end())
 	{
-		switch ( (*it)->kind )
-		{
-			case HOUSE:
-				parentG->gnr[HOUSE]--;
-				break;
-			case BSITE:
-				parentG->gnr[BSITE]--;
-				break;
-			case REGULATOR:
-				parentG->gnr[REGULATOR]--;
-				break;
-			case EFFECTOR:
-				parentG->gnr[EFFECTOR]--;
-				break;
-		}
+		parentG->gnr[(*it)->kind]--;
 		parentG->g_length--;
 		it++;
 	}
 
 	parentG->fork_position = 0;
 	//Copy gene numbers, mutations happen next.
-	gnr[HOUSE] = parentG->gnr[HOUSE];
-	gnr[BSITE] = parentG->gnr[BSITE];
-	gnr[REGULATOR] = parentG->gnr[REGULATOR];
-	gnr[EFFECTOR] = parentG->gnr[EFFECTOR];
+	for (i=0; i<4; i++)	gnr[i] = parentG->gnr[i];
 
 	if (mutations_on)	//START mutations.
 	{
@@ -858,10 +810,7 @@ void Genome::CloneGenome(const Genome* ImageG)
 	for (i=0; i<5; i++)	RegTypeList[i] = new Regulator(*ImageG->RegTypeList[i]);
 
 	g_length = ImageG->g_length;
-	gnr[HOUSE] = ImageG->gnr[HOUSE];
-	gnr[BSITE] = ImageG->gnr[BSITE];
-	gnr[REGULATOR] = ImageG->gnr[REGULATOR];
-	gnr[EFFECTOR] = ImageG->gnr[EFFECTOR];
+	for (i=0; i<4; i++)	gnr[i] = ImageG->gnr[i];
 	fork_position = ImageG->fork_position;
 	terminus_position = ImageG->terminus_position;
 	is_mutated = ImageG->is_mutated;
