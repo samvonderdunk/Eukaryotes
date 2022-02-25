@@ -43,15 +43,16 @@ using namespace std;
 #define EFFECTOR 3
 
 const int max_input_files=20;
+const int max_g_length=1000;
 
 //Bead variables
-const int signalp_length =		1;	//As long as I am not using it, make it small.
+const int signalp_length =		2;	//As long as I am not using it, make it small.
 const int regulator_length =	20;
 const int effector_length =		10;
 
 //Grid size and host size, setting the dimensions of the model.
 const int NR_max = 100;
-const int NC_max = 100;	//Gradient is over columns.
+const int NC_max = 300;	//Gradient is over columns.
 
 //Main settings
 const int relative_replication = -1;	// -1 to turn off. If we're doing relative replication (i.e. not -1), how many nutrients are considered to be needed for replication of the entire genome. This removes selection against genome size by scaling replication length with a given genome length.
@@ -64,14 +65,14 @@ const int host_growth = 0;
 // 0, as in Prokaryotes: hosts overgrow one another, dividing as soon as they reach M.
 // 1, hosts wait for empty sites, but waiting is free (expression unimportant once they reach M).
 // 2, hosts wait for empty sites, but need to actively maintain M expression (i.e. making the whole cell-cycle more complex again). This option may be implemented later...
-const bool perfect_transport = false;	//Genes with a 0 in their signalp, are always moved to the host; genes with a 1 in their signalp always get targetted to the symbionts. Moving here means that they do not stick around in the compartment where they are created.
+const bool perfect_transport = true;	//Genes with a 0 in their signalp, are always moved to the host; genes with a 1 in their signalp always get targetted to the symbionts. Moving here means that they do not stick around in the compartment where they are created.
 const bool nutshare_evolve = false;	//Host can evolve how much nutrients it claims from the environment, passing on the remaining fraction to its symbionts (equally divided among these). Each host has an identical claim on environmental nutrients, i.e. independent of how many symbionts it has. This corresponds to nutrient competition 4.
 const bool mutation_epochs = false;	//Turn up mutation rate during specified time periods (see parameters below).
 const int seq_hdist = 0;	//Maximal hamming distance to still be called this particular gene type. When this value is set to 0, we have the same case as in Prokaryotes.
 const int eff_hdist = 0;	//Maximal hamming distance for defining effectors.
 const bool empty_division_killing = true;	//Hosts first divide, potentially killing a neighbour, before realising that the new cell does not get symbionts and dies right away.
-const bool cell_fitness = false;	//Fitness defined by nr_houses at the cell level (averaging symbiont n_h and adding it to host n_h); if false, fitness is defined by the n_h that each organelle carries at birth.
-const bool minimum_houses = false;	//Fitness is only decreased when the cell or organelle has fewer house hold genes than nr_household_genes; if false, the cell or organelle needs to have exactly the right number of household genes for fitness = 1.
+const bool cell_fitness = true;	//Fitness defined by nr_houses at the cell level (averaging symbiont n_h and adding it to host n_h); if false, fitness is defined by the n_h that each organelle carries at birth.
+const bool minimum_houses = true;	//Fitness is only decreased when the cell or organelle has fewer house hold genes than nr_household_genes; if false, the cell or organelle needs to have exactly the right number of household genes for fitness = 1.
 
 //Genome parameters
 const int nr_household_genes =			100;
@@ -94,8 +95,12 @@ const int default_TimeSaveBackup =			10000;
 //Population parameters
 const double death_rate_host =								0.001;
 const double death_rate_symbiont =						0.001;
-const double default_nutrient_abundance =			30.;
 const int default_nutrient_competition =			2;
+const int nr_sectors =												1;	// 11 for Standard gradient, 9 for new gradient.
+// const double default_conditions[nr_sectors] =	{80., 70., 60., 50., 40., 30., 20., 10., 8., 5., 2.};	//Standard gradient from Prokaryotes.
+// const double default_conditions[nr_sectors] =	{50., 20., 10., 5., 2., 1., 0.5, 0.2, 0.1};	//New, challenging gradient.
+const double default_conditions[nr_sectors] =	{30.};
+
 //Options for nutrient_competition:
 // 0, constant nutrient level, unaffected by cells.
 // 1, classic nutrient function (e.g. Paramecium tetraurelia):		n_ij = ( n_tot - (x_nei-x_i) ) / x_i
@@ -105,7 +110,7 @@ const int default_nutrient_competition =			2;
 // 5, distribute by cell, let host give a fraction nutrient_claim to each of its symbionts, itself taking whatever's left: n_iH = max(0, 1 - (x_i-1)*claim_H) * (n_tot / c_nei) and n_iS = min(1, (x_i-1)*claim_H)/(x_i-1) * (n_tot / c_nei)
 // 6, evolvable nutrient claims per organelle (defining depletion of nutrients in the environment and the nutrients claimed by each organelle of the available nutrients).
 // where n_ij is nutrients at site i for organelle j,
-//       n_tot is total nutrient_abundance (see par above), i.e. influx per site,
+//       n_tot is total nutrient_condition (see par above), i.e. influx per site,
 //       x_nei is total number of organelles in the neighbourhood,
 //       x_i is total number of organelles at site i,
 //       c_nei is number of cells (or hosts) in the neighbourhood,
@@ -138,6 +143,7 @@ const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
 //Mutation rates are specified like this:
 // mu[HOST][DUPLICATION][BSITE]
 // mut[HOST][EFFECTOR] specifies the transfer mutation rate FROM HOST (to symbiont) for effectors.
+// muWGD[HOST] specifies WGD rate for host.
 
 #define DUPLICATION 0
 #define DELETION 1
@@ -150,15 +156,7 @@ const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
 
 extern double mu[2][8][4];
 extern double muT[2][4];
-
-// const bool effector_types[5][effector_length] =
-// {
-// 	true, false, true, false, true, false, true, false, true, false,
-// 	false, false, true, true, false, false, true, true, false, false,
-// 	false, false, false, true, true, true, false, false, false, true,
-// 	true, true, true, true, false, false, false, false, true, true,
-// 	false, false, false, false, false, true, true, true, true, true
-// };
+extern double muWGD[2];
 
 //Effector definitions. Previously used to make hard-coded regulatory types.
 const std::array<std::bitset<effector_length>,5> effector_types = {1010101010,0011001100,0001110001,1111000011,0000011111};
@@ -212,8 +210,8 @@ extern bool well_mixing;
 
 extern int init_stage;
 
-extern double nutrient_abundance;
 extern int nutrient_competition;
+extern double nutrient_condition[nr_sectors];
 extern int strain_competition;
 
 extern dsfmt_t dsfmt;

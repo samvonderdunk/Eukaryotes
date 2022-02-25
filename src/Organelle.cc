@@ -27,7 +27,7 @@ Organelle::~Organelle()
 
 void Organelle::UpdateState()
 {
-	int readout[5] = {0, 0, 0, 0, 0};	//States of the five cell-cycle regulators. Overloaded with the states of effector genes if they are functional.
+	int readout[5] = {0};	//States of the five cell-cycle regulators. Overloaded with the states of effector genes if they are functional.
 	i_bead it, it2;
 	Regulator* reg;
 	int i;

@@ -14,10 +14,16 @@ Cell::~Cell()
 {
 	int s;
 
-	delete Host;
-	Host = NULL;
+	if (Host != NULL)
+	{
+		delete Host;
+		Host = NULL;
+	}
 
-	for (s=0; s<nr_symbionts; s++)	delete Symbionts->at(s);
+	for (s=0; s<nr_symbionts; s++)
+	{
+		if (Symbionts->at(s) != NULL)	delete Symbionts->at(s);
+	}
 
 	Symbionts->clear();
 	delete Symbionts;
@@ -73,15 +79,15 @@ void Cell::GeneTransport()
 		while (it != Symbionts->at(s)->G->ExpressedGenes->end())
 		{
 			gene = dynamic_cast<Gene*>(*it);
-			if (perfect_transport && !gene->signalp.test(0))
-			{
+			if (perfect_transport && gene->signalp.test(0) && !gene->signalp.test(1))
+			{	//Protein translocated to host.
 				it2 = it;
 				it--;
 				Host->G->ExpressedGenes->splice(Host->G->ExpressedGenes->end(), *Symbionts->at(s)->G->ExpressedGenes, it2);
 				Symbionts->at(s)->nr_native_expressed--;
 			}
-			else if (uniform() < leakage_to_host)
-			{
+			else if ((perfect_transport && gene->signalp.test(0) && gene->signalp.test(1)) || uniform() < leakage_to_host)
+			{	//Protein also transported to host.
 				Host->G->ExpressedGenes->push_back(*it);
 			}
 			it++;
@@ -93,8 +99,8 @@ void Cell::GeneTransport()
 		while (it_cntr < Host->nr_native_expressed)
 		{
 			gene = dynamic_cast<Gene*>(*it);
-			if (perfect_transport && gene->signalp.test(0))
-			{
+			if (perfect_transport && !gene->signalp.test(0) && gene->signalp.test(1))
+			{	//Protein translocated to symbiont.
 				if (s == nr_symbionts-1)	//Only erase the expressed gene from the host if we get to the last symbiont (already transported to all other symbionts).
 				{
 					it2 = it;
@@ -108,7 +114,7 @@ void Cell::GeneTransport()
 					Symbionts->at(s)->G->ExpressedGenes->push_back(*it);
 				}
 			}
-			else if (uniform() < leakage_to_symbiont)
+			else if ((perfect_transport && gene->signalp.test(0) && gene->signalp.test(1)) || uniform() < leakage_to_symbiont)
 			{
 				Symbionts->at(s)->G->ExpressedGenes->push_back(*it);
 			}
@@ -143,14 +149,14 @@ void Cell::DNATransferToHost()
 					uu = uniform();
 					if (Symbionts->at(s)->Stage >= 2)
 					{
-						if (uu < muT[SYMBIONT][(*it)->kind])					it = TransferGene(it, Symbionts->at(s), Host, false, false);
-						else if (uu < 2*muT[SYMBIONT][(*it)->kind])		it = TransferGene(it, Symbionts->at(s), Host, true, false);
+						if (uu < 0.5*muT[SYMBIONT][(*it)->kind])			it = TransferGene(it, Symbionts->at(s), Host, false, false);
+						else if (uu < muT[SYMBIONT][(*it)->kind])			it = TransferGene(it, Symbionts->at(s), Host, true, false);
 						else	it++;
 					}
 					else
 					{
-						if (uu < muT[SYMBIONT][(*it)->kind])					it = TransferGene(it, Symbionts->at(s), Host, false, true);
-						else if (uu < 2*muT[SYMBIONT][(*it)->kind])		it = TransferGene(it, Symbionts->at(s), Host, true, true);
+						if (uu < 0.5*muT[SYMBIONT][(*it)->kind])			it = TransferGene(it, Symbionts->at(s), Host, false, true);
+						else if (uu < muT[SYMBIONT][(*it)->kind])			it = TransferGene(it, Symbionts->at(s), Host, true, true);
 						else	it++;
 					}
 				}
@@ -183,14 +189,14 @@ void Cell::DNATransfertoSymbiont(Organelle* Symbiont)
 			uu = uniform();
 			if (Host->Stage >= 2)
 			{
-				if (uu < muT[HOST][(*it)->kind]) 					it = TransferGene(it, Host, Symbiont, false, false);
-				else if (uu < 2*muT[HOST][(*it)->kind])		it = TransferGene(it, Host, Symbiont, true, false);
+				if (uu < 0.5*muT[HOST][(*it)->kind]) 			it = TransferGene(it, Host, Symbiont, false, false);
+				else if (uu < muT[HOST][(*it)->kind])			it = TransferGene(it, Host, Symbiont, true, false);
 				else	it++;
 			}
 			else
 			{
-				if (uu < muT[HOST][(*it)->kind])					it = TransferGene(it, Host, Symbiont, false, true);
-				else if (uu < 2*muT[HOST][(*it)->kind])		it = TransferGene(it, Host, Symbiont, true, true);
+				if (uu < 0.5*muT[HOST][(*it)->kind])			it = TransferGene(it, Host, Symbiont, false, true);
+				else if (uu < muT[HOST][(*it)->kind])			it = TransferGene(it, Host, Symbiont, true, true);
 				else	it++;
 			}
 		}
@@ -427,7 +433,7 @@ void Cell::DeathOfCell()	//Called when host died or when last symbiont died, res
 	if (Host != NULL)	DeathOfHost();
 	for (s=nr_symbionts-1; s>=0; s--)
 	{
-		DeathOfSymbiont(s);
+		if (Symbionts->at(s) != NULL)	DeathOfSymbiont(s);
 		nr_symbionts--;
 	}
 }

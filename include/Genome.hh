@@ -44,6 +44,7 @@ class Genome {
 	i_bead Duplication(i_bead it, int* pdup_length);
 	void Inventions(int* pdup_length);
 	i_bead Shuffle(i_bead it);
+	void WholeGenomeDuplication(int* pdup_length);
 
 	int CountBeads(int kind);
 
@@ -57,7 +58,6 @@ class Genome {
 	void ReadGenome(string genome);
 	void ReadExpression(string expression);
 	void ReadDefinition(string definition);
-	void ReadBuffer(string buffer, bool* array, char start_sign, char stop_sign, int ith_start_sign = 1, int ith_stop_sign = 1);
 
 	string Show(list<Bead*>* chromosome, bool terminal, bool only_parent);
 	string ShowExpression(list<Bead*>* chromosome, bool only_parent);

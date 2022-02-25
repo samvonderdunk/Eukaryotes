@@ -23,14 +23,12 @@ Population::~Population()	//Skips deconstructor of Cell, because we need to chec
 		if((Space[i][j]) != NULL)
 		{
 			if (Space[i][j]->Host->mutant || trace_lineage || log_lineage)	FossilSpace->EraseFossil(Space[i][j]->Host->fossil_id);
-			delete Space[i][j]->Host;
-			Space[i][j]->Host = NULL;
 			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
 				if (Space[i][j]->Symbionts->at(s)->mutant || trace_lineage || log_lineage)	FossilSpace->EraseFossil(Space[i][j]->Symbionts->at(s)->fossil_id);
-				delete Space[i][j]->Symbionts->at(s);
-				Space[i][j]->Symbionts->at(s) = NULL;
 			}
+			delete Space[i][j];
+			Space[i][j] = NULL;
 		}
 	}
 
@@ -154,7 +152,7 @@ void Population::FollowSingleCell()
 		C->UpdateOrganelles();	//Expression dynamics within cell.
 
 		//Replication.
-		nutrients = nutrient_abundance/(double)(C->nr_symbionts+1);
+		nutrients = nutrient_condition[0]/(double)(C->nr_symbionts+1);
 		if (C->Host->Stage == 2   &&   C->Host->privilige)
 		{
 			C->Host->Replicate(nutrients);
@@ -202,7 +200,10 @@ void Population::UpdatePopulation()
 	if(Time%TimeOutputFossils==0 && Time!=0)																	FossilSpace->ExhibitFossils();
 	if(Time%TimeSaveBackup==0 && Time!=0)
 	{
-		for(i=0; i<NR; i++) for(j=0; j<NC; j++)	if (Space[i][j]!=NULL)	Space[i][j]->CalculateCellFitness();
+		if (cell_fitness)
+		{
+			for(i=0; i<NR; i++) for(j=0; j<NC; j++)	if (Space[i][j]!=NULL)	Space[i][j]->CalculateCellFitness();
+		}
 		OutputGrid(true);
 	}
 
@@ -224,6 +225,7 @@ void Population::UpdatePopulation()
 			if (uniform() < death_rate_host)
 			{
 				Space[i][j]->DeathOfCell();
+				delete Space[i][j];
 				Space[i][j] = NULL;
 				continue;
 			}
@@ -239,6 +241,7 @@ void Population::UpdatePopulation()
 				}
 				if (Space[i][j]->CheckCellDeath(false))
 				{
+					delete Space[i][j];
 					Space[i][j] = NULL;
 					continue;
 				}
@@ -251,6 +254,7 @@ void Population::UpdatePopulation()
 			if (Space[i][j]->Host->Stage == 5)
 			{
 				Space[i][j]->DeathOfCell();
+				delete Space[i][j];
 				Space[i][j] = NULL;
 				continue;
 			}
@@ -268,6 +272,7 @@ void Population::UpdatePopulation()
 			}
 			if (Space[i][j]->CheckCellDeath(false))
 			{
+				delete Space[i][j];
 				Space[i][j] = NULL;
 				continue;
 			}
@@ -277,13 +282,12 @@ void Population::UpdatePopulation()
 
 			/* Division of host */
 			coords neigh = PickNeighbour(i, j);
-			Space[i][j]->CalculateCellFitness();	//Calculate cellular fitness once before using it for all simultaneous division events.
+			if (cell_fitness)	Space[i][j]->CalculateCellFitness();	//Calculate cellular fitness once before using it for all simultaneous division events.
 
 			if ( Space[i][j]->Host->Stage == 4  &&  (uniform() < Space[i][j]->Host->fitness)  &&  (host_growth == 0 || (host_growth == 1 && Space[neigh.first][neigh.second] == NULL)) )	//All division criteria in this line.
 			{
 				NewCell = new Cell();
 				NewCell->barcode = Space[i][j]->barcode;	//Transmit strain info.
-				NewCell->Host = new Organelle();
 				id_count++;
 				NewCell->Host->Mitosis(Space[i][j]->Host, id_count);
 
@@ -336,10 +340,15 @@ void Population::UpdatePopulation()
 						}
 					}
 				}
-				else NewCell = NULL;
+				else
+				{
+					delete NewCell;
+					NewCell = NULL;
+				}
 
 				if (Space[i][j]->CheckCellDeath(false))
 				{
+					delete Space[i][j];
 					if (!empty_division_killing && NewCell != NULL) //If we don't want to kill a neighbour, swap parent and daugther cell. Don't kill a neibhour; we're done here.
 					{
 						Space[i][j] = NewCell;
@@ -351,6 +360,7 @@ void Population::UpdatePopulation()
 						if (Space[neigh.first][neigh.second] != NULL)
 						{
 							Space[neigh.first][neigh.second]->DeathOfCell();
+							delete Space[neigh.first][neigh.second];
 							Space[neigh.first][neigh.second] = NULL;
 						}
 						Space[neigh.first][neigh.second] = NewCell;
@@ -365,6 +375,7 @@ void Population::UpdatePopulation()
 						if (Space[neigh.first][neigh.second] != NULL)
 						{
 							Space[neigh.first][neigh.second]->DeathOfCell();
+							delete Space[neigh.first][neigh.second];
 							Space[neigh.first][neigh.second] = NULL;
 						}
 						Space[neigh.first][neigh.second] = NewCell;
@@ -515,7 +526,9 @@ Population::coords Population::PickNeighbour(int i, int j)
 void Population::CollectNutrientsFromSite(int i, int j)
 {
 	int ii, jj, nrow, ncol, cell_density=0, organelle_density=0, s;
-	double nutrient_share, starting_nuts, claim_density=0.;
+	double nut_condition, nutrient_share, starting_nuts, claim_density=0.;
+
+	nut_condition = nutrient_condition[j/(NC/nr_sectors)];
 
 	//First obtain organelle and cell density in 3x3 neighbourhood.
 	for (ii=i-1; ii<=i+1; ii++) for (jj=j-1; jj<=j+1; jj++)
@@ -555,16 +568,16 @@ void Population::CollectNutrientsFromSite(int i, int j)
 	//If we don't have wrapped columns, border pixels get fewer nutrients to start with.
 	if (invasion_experiment && (j==0 || j==NC-1))
 	{
-		starting_nuts = (6/9)*nutrient_abundance;
+		starting_nuts = (6/9)*nut_condition;
 	}
 	else
 	{
-		starting_nuts = nutrient_abundance;
+		starting_nuts = nut_condition;
 	}
 
 	if (nutrient_competition == 0)	//Constant nutrient level.
 	{
-		NutrientSpace[i][j] += nutrient_abundance;
+		NutrientSpace[i][j] += nut_condition;
 	}
 
 	else if (nutrient_competition == 1)	//Finish classic nutrient function here.
@@ -627,7 +640,7 @@ Population::nuts Population::HandleNutrientClaims(int i, int j)
 
 void Population::InitialisePopulation()
 {
-	Cell* InitCells[max_input_files] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+	Cell* InitCells[max_input_files] = {NULL};
 	int k, i, j, s, blocks, r, c;
 	double b, b_dbl, b_int;
 
@@ -758,7 +771,7 @@ void Population::ReadBackupFile()
 	char* data_element, *number;
 	string::iterator sit;
 	Genome::i_bead it;
-	int r, c, s, begin_data, end_data, success, stage, pfork, pterm, nr, nc, count_lines = 0, nn = 0, idx_primary, idx_secondary;
+	int r, c, s, begin_data, end_data, success, stage, pfork, pterm, nr, nc, count_lines = 0, nn = 0, idx_primary, idx_secondary, it_cntr;
 	unsigned long long org_id, anc_id;
 	char temp_is_mutant[20], temp_priv[20];
 	double fit, nutcl;
@@ -888,6 +901,17 @@ void Population::ReadBackupFile()
 					O->privilige = (strcmp( temp_priv, "Y") == 0);
 					O->alive = true;
 					if (org_id > id_count) id_count = org_id;
+
+					//nr_houses is not stored in the backup, so we calculate it. Note that this might be a burden for workflows that use backups (although runtime is probably still the bigger burden).
+					it = O->G->BeadList->begin();
+					it_cntr = 0;
+					while (it != O->G->BeadList->end())
+					{
+						if ((*it)->kind == HOUSE)	O->nr_houses++;
+						it++;
+						it_cntr++;
+						if (it_cntr == O->G->terminus_position)	break;
+					}
 
 					SaveO = O;	//SaveO takes the pointer value of O.
 					O = FindInFossilRecord(SaveO->fossil_id);	//Check the current organelle was already put in the fossil record; O is reassigned as pointer.
@@ -1293,15 +1317,16 @@ void Population::OutputLineage(int i, int j)
 
 void Population::ShowGeneralProgress()
 {
-	int i, j, host_count=0, symbiont_count=0;
-	int stage_counts[2][6] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	int i, j, symbiont_count=0;
+	int host_count[nr_sectors] = {0};
+	int stage_counts[2][6] = {0};
 	i_org iS;
 
 	for (i=0; i<NR; i++) for(j=0; j<NC; j++)
 	{
 		if ( Space[i][j] != NULL )
 		{
-			host_count++;
+			host_count[j/(NC/nr_sectors)]++;	// sector = j/(NC/nr_sectors)
 			symbiont_count += Space[i][j]->nr_symbionts;
 			stage_counts[0][Space[i][j]->Host->Stage]++;
 			iS = Space[i][j]->Symbionts->begin();
@@ -1314,14 +1339,18 @@ void Population::ShowGeneralProgress()
 		}
 	}
 
-	cout << "Time " << Time;
-	cout << "\tHosts " << host_count;
+	cout << "Time " << Time << "\tHosts ";
+	for (i=0; i<nr_sectors; i++)
+	{
+		cout << host_count[i];
+		if (i != nr_sectors-1)	cout << "|";
+	}
 	cout << "\tSymbionts " << symbiont_count;
 	for (i=0; i<6; i++)	cout << "\tS(" << i << ") " << stage_counts[0][i] << "," << stage_counts[1][i];
 	if (invasion_complete==Time)	cout << "\tINVASION COMPLETE";
 	cout << endl;
 
-	if (host_count==0)
+	if (symbiont_count==0)	//Easier to use symbiont_count as we did not split this over sectors.
 	{
 		cout << "And since there is no more life, we will stop the experiment here.\n" << endl;
 		exit(1);
