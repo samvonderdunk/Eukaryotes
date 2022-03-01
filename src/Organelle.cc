@@ -13,6 +13,7 @@ Organelle::Organelle()
 	alive = false;
 	mutant = false;
 	lifetime_mutant = false;
+	exp_gene_transfer = false;
 	time_of_appearance = 0;
 	fossil_id = 0;
 	Ancestor = NULL;

@@ -206,6 +206,13 @@ Cell::i_bead Cell::TransferGene(i_bead it, Organelle* Source, Organelle* Target,
 	i_bead insertsite, first, last, ii;
 	list<Bead*> BeadListTemp;	//Create a new temporary genome list.
 
+	//If an expressed gene gets tranferred via cut-and-paste, we will have to flag the organelle, so that we can reset its gene expression (inside Population.cc).
+	if (cut_and_paste)	//This has to happen before "it" is transferred and not reachable on source anymore...
+	{
+		Gene* gene = dynamic_cast<Gene*>(*it);
+		if (gene->expression > 0)	Source->exp_gene_transfer = true;	//An expressed gene has been removed from the source genome.
+	}
+
 	last = it;		//Copy the gene with its upstream tfbs's to a temporary chromosome.
 	last++;   //One further than the gene position (the one not to be part of the dupl).
 	first=Source->G->FindFirstBsiteInFrontOfGene(it, include_distal);	//First tfbs in front of gene.

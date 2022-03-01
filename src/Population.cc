@@ -421,6 +421,22 @@ void Population::UpdatePopulation()
 			}
 			/* ~Division of symbionts */
 
+			//Correct ExpressedGenes of organelles that lost a gene through transfer (cut-and-paste).
+			if (Space[i][j]->Host->exp_gene_transfer)
+			{
+				Space[i][j]->Host->G->ExpressedGenes->clear();
+				Space[i][j]->Host->G->NativeExpression();
+				Space[i][j]->Host->exp_gene_transfer = false;
+			}
+			for (s=0; s<Space[i][j]->nr_symbionts; s++)
+			{
+				if (Space[i][j]->Symbionts->at(s)->exp_gene_transfer)
+				{
+					Space[i][j]->Symbionts->at(s)->G->ExpressedGenes->clear();
+					Space[i][j]->Symbionts->at(s)->G->NativeExpression();
+					Space[i][j]->Symbionts->at(s)->exp_gene_transfer = false;
+				}
+			}
 
 			Space[i][j]->UpdateOrganelles();	//Expression dynamics within cell.
 

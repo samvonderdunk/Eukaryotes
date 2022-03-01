@@ -17,6 +17,7 @@ class Organelle{
 		bool alive;
 		bool mutant;
 		bool lifetime_mutant;	//Explicitly set whenever mutant is false (i.e. no mutations during the organelle's own division, but later during its life due to transfer).
+		bool exp_gene_transfer;	//Checks if an expressed gene was transferred through cut-and-paste, so that ExpressedGenes should be reset.
 		int time_of_appearance;
 		unsigned long long fossil_id;
 		Organelle* Ancestor;
