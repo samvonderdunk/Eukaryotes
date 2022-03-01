@@ -115,7 +115,7 @@ void Cell::GeneTransport()
 void Cell::DNATransferToHost()
 {
 	i_bead it, insertsite;
-	int s, k;
+	int s;
 	double uu;
 
 	for (s=0; s<nr_symbionts; s++)
@@ -149,18 +149,14 @@ void Cell::DNATransferToHost()
 				}
 			}
 
-			for (k=0; k<4; k++)
-			{
-				assert(Symbionts->at(s)->G->gnr[k] == Symbionts->at(s)->G->CountBeads(k));
-				assert(Host->G->gnr[k] == Host->G->CountBeads(k));
-			}
+			Symbionts->at(s)->G->CheckBeadCounts();
+			Host->G->CheckBeadCounts();
 		}
 	}
 }
 
 void Cell::DNATransfertoSymbiont(Organelle* Symbiont)
 {
-	int k;
 	double uu;
 
 	i_bead it = Host->G->BeadList->begin();
@@ -189,11 +185,8 @@ void Cell::DNATransfertoSymbiont(Organelle* Symbiont)
 		}
 	}
 
-	for (k=0; k<4; k++)
-	{
-		assert(Host->G->gnr[k] == Host->G->CountBeads(k));
-		assert(Symbiont->G->gnr[k] == Symbiont->G->CountBeads(k));
-	}
+	Host->G->CheckBeadCounts();
+	Symbiont->G->CheckBeadCounts();
 }
 
 

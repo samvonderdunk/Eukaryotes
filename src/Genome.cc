@@ -285,7 +285,7 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 {
 	i_bead it;
 	vector<bool>* MutationList;
-	int i, k, del_length, dup_length, index, g_length_before_mut;
+	int i, del_length, dup_length, index, g_length_before_mut;
 	int* pdup_length, * pdel_length;
 
 	g_length = BeadList->size();
@@ -369,7 +369,7 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 	}	//END of mutations.
 
 	assert((size_t)g_length == BeadList->size());
-	for (k=0; k<4; k++) { assert(gnr[k] == CountBeads(k)); }
+	CheckBeadCounts();
 	terminus_position = g_length;
 }
 
@@ -724,19 +724,21 @@ void Genome::WholeGenomeDuplication(int* pdup_length)
 	BeadList->splice(BeadList->end(), BeadListTemp);	//Splice temporary list into chromosome.
 }
 
-int Genome::CountBeads(int kind)	//Useful for debugging.
+void Genome::CheckBeadCounts()	//Useful for debugging.
 {
-	int total = 0;
+	int k;
 	i_bead it;
+	std::array<int,4> counts = {0};
 
 	it = BeadList->begin();
 	while (it != BeadList->end())
 	{
-		if ((*it)->kind==kind) total++;
+		counts[(*it)->kind]++;
 		it++;
 	}
 
-	return total;
+	for (k=0; k<4; k++)	assert(gnr[k] == counts[k]);
+	assert(gnr[0]+gnr[1]+gnr[2]+gnr[3] == g_length);
 }
 
 Genome::i_bead Genome::FindFirstBsiteInFrontOfGene(i_bead it, bool ignore_houses) const

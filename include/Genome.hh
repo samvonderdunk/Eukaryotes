@@ -48,7 +48,7 @@ class Genome {
 	i_bead Shuffle(i_bead it);
 	void WholeGenomeDuplication(int* pdup_length);
 
-	int CountBeads(int kind);
+	void CheckBeadCounts();
 
 	i_bead FindFirstBsiteInFrontOfGene(i_bead it, bool ignore_houses=false) const;
 	i_bead FindRandomGenePosition(bool include_houses, bool include_end) const;
