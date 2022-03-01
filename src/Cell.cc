@@ -58,57 +58,54 @@ void Cell::UpdateOrganelles()
 
 void Cell::GeneTransport()
 {
-	i_gene it, it2;
+	i_reg ir, ir2;
 	int s, it_cntr;
-	Gene* gene;
 
 	for (s=0; s<nr_symbionts; s++)
 	{
 		//Movement of expressed regulators from symbionts to host.
-		it = Symbionts->at(s)->G->ExpressedGenes->begin();
-		while (it != Symbionts->at(s)->G->ExpressedGenes->end())
+		ir = Symbionts->at(s)->G->ExpressedGenes->begin();
+		while (ir != Symbionts->at(s)->G->ExpressedGenes->end())
 		{
-			gene = dynamic_cast<Gene*>(*it);
-			if (perfect_transport && gene->signalp.test(0) && !gene->signalp.test(1))
+			if (perfect_transport && (*ir)->signalp.test(0) && !(*ir)->signalp.test(1))
 			{	//Protein translocated to host.
-				it2 = it;
-				it--;
-				Host->G->ExpressedGenes->splice(Host->G->ExpressedGenes->end(), *Symbionts->at(s)->G->ExpressedGenes, it2);
+				ir2 = ir;
+				ir--;
+				Host->G->ExpressedGenes->splice(Host->G->ExpressedGenes->end(), *Symbionts->at(s)->G->ExpressedGenes, ir2);
 				Symbionts->at(s)->G->nr_native_expressed--;
 			}
-			else if ((perfect_transport && gene->signalp.test(0) && gene->signalp.test(1)) || uniform() < leakage_to_host)
+			else if ((perfect_transport && (*ir)->signalp.test(0) && (*ir)->signalp.test(1)) || uniform() < leakage_to_host)
 			{	//Protein also transported to host.
-				Host->G->ExpressedGenes->push_back(*it);
+				Host->G->ExpressedGenes->push_back(*ir);
 			}
-			it++;
+			ir++;
 		}
 
 		//Movement of expressed regulators from host to symbionts.
-		it = Host->G->ExpressedGenes->begin();
+		ir = Host->G->ExpressedGenes->begin();
 		it_cntr = 0;
 		while (it_cntr < Host->G->nr_native_expressed)
 		{
-			gene = dynamic_cast<Gene*>(*it);
-			if (perfect_transport && !gene->signalp.test(0) && gene->signalp.test(1))
+			if (perfect_transport && !(*ir)->signalp.test(0) && (*ir)->signalp.test(1))
 			{	//Protein translocated to symbiont.
 				if (s == nr_symbionts-1)	//Only erase the expressed gene from the host if we get to the last symbiont (already transported to all other symbionts).
 				{
-					it2 = it;
-					it--;
+					ir2 = ir;
+					ir--;
 					it_cntr--;	//Important, bug in the first attempt of M. commu V.
-					Symbionts->at(s)->G->ExpressedGenes->splice(Symbionts->at(s)->G->ExpressedGenes->end(), *Host->G->ExpressedGenes, it2);
+					Symbionts->at(s)->G->ExpressedGenes->splice(Symbionts->at(s)->G->ExpressedGenes->end(), *Host->G->ExpressedGenes, ir2);
 					Host->G->nr_native_expressed--;	//I think this will be fine (although it defines the while-loop), because the iterator takes a step back.
 				}
 				else
 				{
-					Symbionts->at(s)->G->ExpressedGenes->push_back(*it);
+					Symbionts->at(s)->G->ExpressedGenes->push_back(*ir);
 				}
 			}
-			else if ((perfect_transport && gene->signalp.test(0) && gene->signalp.test(1)) || uniform() < leakage_to_symbiont)
+			else if ((perfect_transport && (*ir)->signalp.test(0) && (*ir)->signalp.test(1)) || uniform() < leakage_to_symbiont)
 			{
-				Symbionts->at(s)->G->ExpressedGenes->push_back(*it);
+				Symbionts->at(s)->G->ExpressedGenes->push_back(*ir);
 			}
-			it++;
+			ir++;
 			it_cntr++;
 		}
 	}

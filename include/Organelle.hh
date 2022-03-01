@@ -23,7 +23,7 @@ class Organelle{
 		Organelle* Ancestor;
 
 		typedef std::list<Bead*>::iterator i_bead;	//Not used anywhere currently.
-		typedef std::list<Gene*>::iterator i_gene;
+		typedef std::list<Regulator*>::iterator i_reg;
 
 		Organelle();
 		~Organelle();

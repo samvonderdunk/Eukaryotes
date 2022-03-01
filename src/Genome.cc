@@ -6,9 +6,9 @@ Genome::Genome()
 	BeadList = new list<Bead*>();
 	RegTypeList = {NULL};
 	ExpressedGenes = NULL;
-	ExpressedGenes = new list<Gene*>();
+	ExpressedGenes = new list<Regulator*>();
 	ExpressedGenesN = NULL;
-	ExpressedGenesN = new list<Gene*>();
+	ExpressedGenesN = new list<Regulator*>();
 	g_length=0;
 	for (int i=0; i<4; i++)	gnr[i]=0;
 	fork_position=0;
@@ -56,9 +56,8 @@ void Genome::UpdateGeneExpression()
 	int it_cntr, kind;
 	double cum_effects = 0.;
 	Bsite* bs;
-	Gene* gene;
 	Regulator* reg;
-	std::list<Gene*>* PointerEG; //Temporary pointer for swapping old and new expression lists.
+	std::list<Regulator*>* PointerEG; //Temporary pointer for swapping old and new expression lists.
 
 	//Determine regulatory dynamics and put result into the express variable of each gene (Gene or otherwise...).
 	it = BeadList->begin();
@@ -66,16 +65,16 @@ void Genome::UpdateGeneExpression()
 	while (it != BeadList->end())
 	{
 		kind = (*it)->kind;
-		if (kind>=REGULATOR)	//i.e. some kind of gene (REGULATOR or EFFECTOR).
+		if (kind==REGULATOR)	//i.e. some kind of gene (REGULATOR or EFFECTOR).
 		{
-			gene = dynamic_cast<Gene*>(*it);
-			cum_effects -= (double)gene->threshold;
-			gene->express = max(min((int)cum_effects+1,1),0);	//For the +1, see explanation of the gene threshold in Gene.hh
-			gene->expression = gene->express;	//Store the expression.
-			while (gene->express > 0)
+			reg = dynamic_cast<Regulator*>(*it);
+			cum_effects -= (double)reg->threshold;
+			reg->express = max(min((int)cum_effects+1,1),0);	//For the +1, see explanation of the gene threshold in Gene.hh
+			reg->expression = reg->express;	//Store the expression.
+			while (reg->express > 0)
 			{
-				ExpressedGenesN->push_back(gene);
-				gene->express--;
+				ExpressedGenesN->push_back(reg);
+				reg->express--;
 			}
 			cum_effects = 0.;
 		}
@@ -102,18 +101,19 @@ void Genome::UpdateGeneExpression()
 void Genome::NativeExpression()
 {
 	i_bead it;
+	Regulator* reg;
 
 	it = BeadList->begin();
 	while (it != BeadList->end())
 	{
-		if ((*it)->kind>=REGULATOR)
+		if ((*it)->kind==REGULATOR)
 		{
 			//See similar potential issue in UpdateExpression() and in BindingAffinity().
-			Gene* gene = dynamic_cast<Gene*>(*it);
-			gene->express = gene->expression;	//Only difference with last paragraph of UpdateGeneExpression is that we here first have to read off gene->expression (which has been read from input files or which is stored in the just-divided genomes)
-			while (gene->express > 0){
-				ExpressedGenes->push_back(gene);
-				gene->express--;
+			reg = dynamic_cast<Regulator*>(*it);
+			reg->express = reg->expression;	//Only difference with last paragraph of UpdateGeneExpression is that we here first have to read off gene->expression (which has been read from input files or which is stored in the just-divided genomes)
+			while (reg->express > 0){
+				ExpressedGenes->push_back(reg);
+				reg->express--;
 			}
 		}
 		it++;
@@ -124,21 +124,16 @@ void Genome::NativeExpression()
 
 Regulator* Genome::RegulatorCompetition(Bsite* bsite)
 {
-	Regulator* reg;
-	i_gene it;
+	i_reg ir;
 	double affinity, p_bind, z_partition = 1.;
 
 	//Calculate partition function.
-	it = ExpressedGenes->begin();
-	while (it != ExpressedGenes->end())
+	ir = ExpressedGenes->begin();
+	while (ir != ExpressedGenes->end())
 	{
-		if (!use_effectors || (*it)->kind == REGULATOR)
-		{
-			reg = dynamic_cast<Regulator*>(*it);
-			affinity = (double)reg->BindingAffinity(bsite->sequence, reg->sequence);
-			z_partition += 1 * k_zero * exp(affinity * epsilon);	//Exp===1, higher expression means that more copies will be present in ExpressedGenes.
-		}
-		it++;
+		affinity = (double)(*ir)->BindingAffinity(bsite->sequence, (*ir)->sequence);
+		z_partition += 1 * k_zero * exp(affinity * epsilon);	//Exp===1, higher expression means that more copies will be present in ExpressedGenes.
+		ir++;
 	}
 
 	//Pick one of the probabilities. BindingAffinity has been optimised so much, that this algorithm outperforms a simple one where we store the affinities in a list in the above iteration, and look them up here.
@@ -146,18 +141,14 @@ Regulator* Genome::RegulatorCompetition(Bsite* bsite)
 	die_roll -= 1 / z_partition;
 	if (die_roll <= 0.)	return NULL;
 
-	it = ExpressedGenes->begin();
-	while (it != ExpressedGenes->end())
+	ir = ExpressedGenes->begin();
+	while (ir != ExpressedGenes->end())
 	{
-		if (!use_effectors || (*it)->kind == REGULATOR)
-		{
-			reg = dynamic_cast<Regulator*>(*it);
-			affinity = (double)reg->BindingAffinity(bsite->sequence, reg->sequence);
-			p_bind = ( 1 * k_zero * exp(affinity * epsilon) ) / z_partition;	//Exp===1, see above.
-			die_roll -= p_bind;
-			if (die_roll <= 0.)	return reg;
-		}
-		it++;
+		affinity = (double)(*ir)->BindingAffinity(bsite->sequence, (*ir)->sequence);
+		p_bind = ( 1 * k_zero * exp(affinity * epsilon) ) / z_partition;	//Exp===1, see above.
+		die_roll -= p_bind;
+		if (die_roll <= 0.)	return *ir;
+		ir++;
 	}
 
 	printf("Error: partition function out of bounds.\n");
@@ -170,7 +161,7 @@ void Genome::ReplicateStep(double resource)
 {
 	i_bead it, start, end;
 	Bead* bead;
-	Gene* gene;
+	Regulator* reg;
 	int replicate_beads = 0, repl_remaining_steps;
 	double res_int, res_fract, fract_repl_remaining;
 	bool last_round = false;
@@ -212,16 +203,16 @@ void Genome::ReplicateStep(double resource)
 		gnr[(*it)->kind]++;
 
 		//Copy expression.
-		if (bead->kind>=REGULATOR)	//If expressed gene is replicated, the new copy is also expressed.
+		if (bead->kind==REGULATOR)	//If expressed gene is replicated, the new copy is also expressed.
 		{
-			gene = dynamic_cast<Gene*>(bead);
-			if (gene->expression > 0)
+			reg = dynamic_cast<Regulator*>(bead);
+			if (reg->expression > 0)
 			{
-				gene->express = gene->expression;
-				while (gene->express > 0)
+				reg->express = reg->expression;
+				while (reg->express > 0)
 				{
-					ExpressedGenes->push_back(gene);
-					gene->express--;
+					ExpressedGenes->push_back(reg);
+					reg->express--;
 				}
 			}
 		}

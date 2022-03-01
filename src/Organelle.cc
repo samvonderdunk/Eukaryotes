@@ -27,40 +27,33 @@ Organelle::~Organelle()
 
 void Organelle::UpdateState()
 {
-	int readout[5] = {0};	//States of the five cell-cycle regulators. Overloaded with the states of effector genes if they are functional.
-	i_gene it;
-	Regulator* reg;
-	int i;
+	i_reg ir;
+	int i, it_cntr, eval_state = Stage, readout[5] = {0};	//States of the five cell-cycle regulators. Overloaded with the states of effector genes if they are functional.
 
-	int eval_state = Stage, it_cntr;
 	if (Stage == 2   &&   G->fork_position != G->terminus_position)	eval_state--;	//You cannot proceed to G2 without finishing replication.
 	privilige = true;
 
 	//Fill in the readout.
-	it = G->ExpressedGenes->begin();
+	ir = G->ExpressedGenes->begin();
 	it_cntr = 0;
-	while (it != G->ExpressedGenes->end())
+	while (ir != G->ExpressedGenes->end())
 	{
-		if ( (*it)->kind==REGULATOR )
+		if (it_cntr < G->nr_native_expressed)	//Native genes from the organelle itself; just look at the type.
 		{
-			reg = dynamic_cast<Regulator*>(*it);
-			if (it_cntr < G->nr_native_expressed)	//Native genes from the organelle itself; just look at the type.
+			if ((*ir)->type < 6)			readout[(*ir)->type-1] += 1;	//Exp===1.
+		}
+		else	//Foreign genes.
+		{
+			for (i=0; i<5; i++)
 			{
-				if (reg->type < 6)			readout[reg->type-1] += reg->expression;
-			}
-			else	//Foreign genes.
-			{
-				for (i=0; i<5; i++)
+				if (   (*ir)->BindingAffinity((*ir)->sequence, G->RegTypeList[i]->sequence) + abs((*ir)->activity - G->RegTypeList[i]->activity) <= seq_hdist   )
 				{
-					if (   reg->BindingAffinity(reg->sequence, G->RegTypeList[i]->sequence) + abs(reg->activity - G->RegTypeList[i]->activity) <= seq_hdist   )
-					{
-						readout[i] += reg->expression;
-					}
-					break;	//We assume that only 1 gene type will be matched. This means that when two type definitions come to close by mutation, only the lower gene type will be scored, probably preventing types from coming to close. NEW: actually check out PotentialTypeChange() to see that the type defs can never come within the regtype_hdist.
+					readout[i] += 1;	//Exp===1
 				}
+				break;	//We assume that only 1 gene type will be matched. This means that when two type definitions come to close by mutation, only the lower gene type will be scored, probably preventing types from coming to close. NEW: actually check out PotentialTypeChange() to see that the type defs can never come within the regtype_hdist.
 			}
 		}
-		it++;
+		ir++;
 		it_cntr++;
 	}
 
