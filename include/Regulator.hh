@@ -10,7 +10,6 @@
 class Regulator : public Gene {
 	public:
 		int activity;
-		// bool sequence[regulator_length];
 		std::bitset<regulator_length> sequence;
 
 		Regulator();

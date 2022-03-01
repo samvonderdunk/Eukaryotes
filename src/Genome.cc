@@ -54,7 +54,7 @@ void Genome::UpdateGeneExpression()
 {
 	i_bead it;
 	i_gene i_reg;
-	int it_cntr;
+	int it_cntr, kind;
 	double cum_effects = 0.;
 	Bsite* bs;
 	Gene* gene;
@@ -66,7 +66,8 @@ void Genome::UpdateGeneExpression()
 	it_cntr = 0;
 	while (it != BeadList->end())
 	{
-		if ((*it)->kind==REGULATOR || (*it)->kind==EFFECTOR)
+		kind = (*it)->kind;
+		if (kind>=REGULATOR)	//i.e. some kind of gene (REGULATOR or EFFECTOR).
 		{
 			gene = dynamic_cast<Gene*>(*it);
 			cum_effects -= (double)gene->threshold;
@@ -79,7 +80,7 @@ void Genome::UpdateGeneExpression()
 			}
 			cum_effects = 0.;
 		}
-		else if ((*it)->kind==BSITE)
+		else if (kind==BSITE)
 		{
 			i_reg = RegulatorCompetition(it);
 			if (i_reg != ExpressedGenes->end())
@@ -105,12 +106,14 @@ void Genome::UpdateGeneExpression()
 
 void Genome::NativeExpression()
 {
+	int kind;
 	i_bead it;
 
 	it = BeadList->begin();
 	while (it != BeadList->end())
 	{
-		if ((*it)->kind==REGULATOR || (*it)->kind==EFFECTOR)
+		kind = (*it)->kind;
+		if (kind>=REGULATOR)
 		{
 			//See similar potential issue in UpdateExpression() and in BindingAffinity().
 			Gene* gene = dynamic_cast<Gene*>(*it);
