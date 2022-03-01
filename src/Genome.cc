@@ -7,6 +7,8 @@ Genome::Genome()
 	RegTypeList = {NULL};
 	ExpressedGenes = NULL;
 	ExpressedGenes = new list<Gene*>();
+	ExpressedGenesN = NULL;
+	ExpressedGenesN = new list<Gene*>();
 	g_length=0;
 	for (int i=0; i<4; i++)	gnr[i]=0;
 	fork_position=0;
@@ -40,6 +42,10 @@ Genome::~Genome()
 	if (ExpressedGenes != NULL)	ExpressedGenes->clear();
 	delete ExpressedGenes;
 	ExpressedGenes = NULL;
+
+	if (ExpressedGenesN != NULL)	ExpressedGenesN->clear();
+	delete ExpressedGenesN;
+	ExpressedGenesN = NULL;
 }
 
 
@@ -53,6 +59,7 @@ void Genome::UpdateGeneExpression()
 	Bsite* bs;
 	Gene* gene;
 	Regulator* reg;
+	std::list<Gene*>* PointerEG; //Temporary pointer for swapping old and new expression lists.
 
 	//Determine regulatory dynamics and put result into the express variable of each gene (Gene or otherwise...).
 	it = BeadList->begin();
@@ -62,15 +69,15 @@ void Genome::UpdateGeneExpression()
 		if ((*it)->kind==REGULATOR || (*it)->kind==EFFECTOR)
 		{
 			gene = dynamic_cast<Gene*>(*it);
-
 			cum_effects -= (double)gene->threshold;
 			gene->express = max(min((int)cum_effects+1,1),0);	//For the +1, see explanation of the gene threshold in Gene.hh
+			gene->expression = gene->express;	//Store the expression.
+			while (gene->express > 0)
+			{
+				ExpressedGenesN->push_back(gene);
+				gene->express--;
+			}
 			cum_effects = 0.;
-
-			//Several options to make use of the fact that genes may be rare in the genome...
-			// 1. Make the next ExpressedGenes list here, and swap it with the current ExpressedGenes list.
-			// 2. Store the iterators in another list, and use boost below to fast-forward to genes to update expression states.
-			// 3. Store the positions of the genes in a list (of integers), and use that to jump through the genome (similar to 2.).
 		}
 		else if ((*it)->kind==BSITE)
 		{
@@ -87,24 +94,11 @@ void Genome::UpdateGeneExpression()
 		if (it_cntr == terminus_position)	cum_effects = 0.;
 	}
 
-	//Erase gene expression list.
+	//Realise expression states by swapping pointers of old and new expression lists.
 	ExpressedGenes->clear();
-
-	//Realise the just calculated regulatory dynamics.
-	it = BeadList->begin();
-	while (it != BeadList->end())
-	{
-		if ((*it)->kind==REGULATOR || (*it)->kind==EFFECTOR)
-		{
-			gene = dynamic_cast<Gene*>(*it);
-			gene->expression = gene->express;	//Just record expression state.
-			while (gene->express > 0){	//We're not going to do expression > 1, but compared to a single if statement, this piece of code only does one extra thing, i.e. decreasing the gene->express variable.
-				ExpressedGenes->push_back(gene);
-				gene->express--;
-			}
-		}
-		it++;
-	}
+	PointerEG = ExpressedGenes;	//Pointer swapping using temporary pointer.
+	ExpressedGenes = ExpressedGenesN;
+	ExpressedGenesN = PointerEG;
 }
 
 
@@ -153,7 +147,7 @@ Genome::i_gene Genome::RegulatorCompetition(i_bead i_bsite)
 		{
 			reg = dynamic_cast<Regulator*>(*it);
 			affinity = (double)reg->BindingAffinity(bsite->sequence, reg->sequence);
-			z_partition += reg->expression * k_zero * exp(affinity * epsilon);
+			z_partition += 1 * k_zero * exp(affinity * epsilon);	//exp=1, higher expression means that more copies will be present in ExpressedGenes.
 		}
 		it++;
 	}
@@ -170,7 +164,7 @@ Genome::i_gene Genome::RegulatorCompetition(i_bead i_bsite)
 		{
 			reg = dynamic_cast<Regulator*>(*it);
 			affinity = (double)reg->BindingAffinity(bsite->sequence, reg->sequence);
-			p_bind = ( reg->expression * k_zero * exp(affinity * epsilon) ) / z_partition;
+			p_bind = ( 1 * k_zero * exp(affinity * epsilon) ) / z_partition;	//exp=1, see above.
 			die_roll -= p_bind;
 			if (die_roll <= 0.)
 			{

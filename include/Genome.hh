@@ -13,7 +13,8 @@ class Genome {
  public:
   std::list<Bead*>* 					BeadList;
 	std::array<Regulator*,5>		RegTypeList;	//Used to define 5 main regulatory types, not actually used when we have effectors.
-	std::list<Gene*>*						ExpressedGenes;
+	std::list<Gene*>*						ExpressedGenes;	//Also modified by GeneTransport(), ReplicateStep(), NativeExpression().
+	std::list<Gene*>*						ExpressedGenesN;	//Only used to update expression in UpdateGeneExpression().
 
   int g_length, gnr[4];
   int fork_position, terminus_position, nr_native_expressed;	//position of the replication fork and the terminus, where it stops.
