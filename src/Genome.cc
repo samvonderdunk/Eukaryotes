@@ -53,7 +53,6 @@ Genome::~Genome()
 void Genome::UpdateGeneExpression()
 {
 	i_bead it;
-	i_gene i_reg;
 	int it_cntr, kind;
 	double cum_effects = 0.;
 	Bsite* bs;
@@ -82,13 +81,9 @@ void Genome::UpdateGeneExpression()
 		}
 		else if (kind==BSITE)
 		{
-			i_reg = RegulatorCompetition(it);
-			if (i_reg != ExpressedGenes->end())
-			{
-				reg = dynamic_cast<Regulator*>(*i_reg);
-				bs = dynamic_cast<Bsite*>(*it);
-				cum_effects += bs->activity * reg->activity;
-			}
+			bs = dynamic_cast<Bsite*>(*it);
+			reg = RegulatorCompetition(bs);
+			if (reg != NULL)		cum_effects += bs->activity * reg->activity;
 		}
 		it++;
 		it_cntr++;
@@ -129,15 +124,8 @@ void Genome::NativeExpression()
 
 
 
-Genome::i_gene Genome::RegulatorCompetition(i_bead i_bsite)
+Regulator* Genome::RegulatorCompetition(Bsite* bsite)
 {
-	//Optimise this, many possibilities:
-	//	--> inline functions.
-	//  --> reduce casting operations.
-	//	--> only calculate binding affinity once.
-	//	--> obtain binding affinity from some stored variable or look-up in hash-table?
-	//	--> sort the affinities before rolling the die to shorten the second part.
-	Bsite* bsite = dynamic_cast<Bsite*>(*i_bsite);
 	Regulator* reg;
 	i_gene it;
 	double affinity, p_bind, z_partition = 1.;
@@ -150,15 +138,15 @@ Genome::i_gene Genome::RegulatorCompetition(i_bead i_bsite)
 		{
 			reg = dynamic_cast<Regulator*>(*it);
 			affinity = (double)reg->BindingAffinity(bsite->sequence, reg->sequence);
-			z_partition += 1 * k_zero * exp(affinity * epsilon);	//exp=1, higher expression means that more copies will be present in ExpressedGenes.
+			z_partition += 1 * k_zero * exp(affinity * epsilon);	//Exp===1, higher expression means that more copies will be present in ExpressedGenes.
 		}
 		it++;
 	}
 
-	//Pick one of the probabilities.
+	//Pick one of the probabilities. BindingAffinity has been optimised so much, that this algorithm outperforms a simple one where we store the affinities in a list in the above iteration, and look them up here.
 	double die_roll = uniform();
 	die_roll -= 1 / z_partition;
-	if (die_roll <= 0.)	return ExpressedGenes->end();
+	if (die_roll <= 0.)	return NULL;
 
 	it = ExpressedGenes->begin();
 	while (it != ExpressedGenes->end())
@@ -167,12 +155,9 @@ Genome::i_gene Genome::RegulatorCompetition(i_bead i_bsite)
 		{
 			reg = dynamic_cast<Regulator*>(*it);
 			affinity = (double)reg->BindingAffinity(bsite->sequence, reg->sequence);
-			p_bind = ( 1 * k_zero * exp(affinity * epsilon) ) / z_partition;	//exp=1, see above.
+			p_bind = ( 1 * k_zero * exp(affinity * epsilon) ) / z_partition;	//Exp===1, see above.
 			die_roll -= p_bind;
-			if (die_roll <= 0.)
-			{
-				return it;
-			}
+			if (die_roll <= 0.)	return reg;
 		}
 		it++;
 	}

@@ -30,7 +30,7 @@ class Genome {
 
 	void UpdateGeneExpression();
 	void NativeExpression();
-	i_gene RegulatorCompetition(i_bead i_bsite);
+	Regulator* RegulatorCompetition(Bsite* bsite);
 
 	void ReplicateStep(double resource);
 
