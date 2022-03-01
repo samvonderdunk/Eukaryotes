@@ -101,14 +101,12 @@ void Genome::UpdateGeneExpression()
 
 void Genome::NativeExpression()
 {
-	int kind;
 	i_bead it;
 
 	it = BeadList->begin();
 	while (it != BeadList->end())
 	{
-		kind = (*it)->kind;
-		if (kind>=REGULATOR)
+		if ((*it)->kind>=REGULATOR)
 		{
 			//See similar potential issue in UpdateExpression() and in BindingAffinity().
 			Gene* gene = dynamic_cast<Gene*>(*it);
@@ -134,7 +132,7 @@ Regulator* Genome::RegulatorCompetition(Bsite* bsite)
 	it = ExpressedGenes->begin();
 	while (it != ExpressedGenes->end())
 	{
-		if ((*it)->kind == REGULATOR)
+		if (!use_effectors || (*it)->kind == REGULATOR)
 		{
 			reg = dynamic_cast<Regulator*>(*it);
 			affinity = (double)reg->BindingAffinity(bsite->sequence, reg->sequence);
@@ -151,7 +149,7 @@ Regulator* Genome::RegulatorCompetition(Bsite* bsite)
 	it = ExpressedGenes->begin();
 	while (it != ExpressedGenes->end())
 	{
-		if ((*it)->kind == REGULATOR)
+		if (!use_effectors || (*it)->kind == REGULATOR)
 		{
 			reg = dynamic_cast<Regulator*>(*it);
 			affinity = (double)reg->BindingAffinity(bsite->sequence, reg->sequence);
@@ -173,8 +171,9 @@ void Genome::ReplicateStep(double resource)
 	i_bead it, start, end;
 	Bead* bead;
 	Gene* gene;
-	int gene_length = 0, repl_remaining_steps;
+	int replicate_beads = 0, repl_remaining_steps;
 	double res_int, res_fract, fract_repl_remaining;
+	bool last_round = false;
 
 	if (relative_replication > 0)	//Modify resource to represent relative replication. Still, the fractional part of the resulting (normalised) resource is seen as a probability.
 	{
@@ -193,16 +192,15 @@ void Genome::ReplicateStep(double resource)
 	end = start;	//End starts at start.
 
 	//This loop sets "end".
-	while ((distance(BeadList->begin(),end) < terminus_position) && repl_remaining_steps > 0)	//The maximal position of end is defined by pos_anti_ori - 1 (pointing to the last bead of the parental genome). pos_anti_ori holds the number of genes in the parental genome, so if your distance to the first bead is pos_anti_ori, you are actually one past the last bead of the parental genome. The first replication step, this will point to NULL, but in consecutive steps it will point to a child bead; we want to point to an end point that does not change, hence the last bead of the parental genome.
+	while (fork_position+replicate_beads < terminus_position && repl_remaining_steps > 0)	//The maximal position of end is defined by pos_anti_ori - 1 (pointing to the last bead of the parental genome). pos_anti_ori holds the number of genes in the parental genome, so if your distance to the first bead is pos_anti_ori, you are actually one past the last bead of the parental genome. The first replication step, this will point to NULL, but in consecutive steps it will point to a child bead; we want to point to an end point that does not change, hence the last bead of the parental genome.
 	{
-		if((*end)->kind==REGULATOR || (*end)->kind==EFFECTOR)	repl_remaining_steps--;	//Genes for sure count for the repl_step_size.
-		else if(!gene_replication)				repl_remaining_steps--;	//TFBSs count if replicate_entire_genes is set to false.
-		gene_length++;
+		if ((*end)->kind>=REGULATOR)		repl_remaining_steps--;	//Genes for sure count for the repl_step_size.
+		else if(!gene_replication)			repl_remaining_steps--;	//TFBSs count if replicate_entire_genes is set to false.
+		replicate_beads++;
 		end++;
 	}
 	end--;
 
-	bool last_round = false;
 	it = start;	//Loop over a number of beads (how many we will replicate in one step).
 	if(start == end)	last_round = true;	//We go straight into the last round.
 	while (it != BeadList->end())
@@ -214,7 +212,7 @@ void Genome::ReplicateStep(double resource)
 		gnr[(*it)->kind]++;
 
 		//Copy expression.
-		if (bead->kind==REGULATOR || bead->kind==EFFECTOR)	//If expressed gene is replicated, the new copy is also expressed.
+		if (bead->kind>=REGULATOR)	//If expressed gene is replicated, the new copy is also expressed.
 		{
 			gene = dynamic_cast<Gene*>(bead);
 			if (gene->expression > 0)
@@ -241,7 +239,7 @@ void Genome::ReplicateStep(double resource)
 		exit(1);
 	}
 
-	fork_position += gene_length;	//Move the fork to the right.
+	fork_position += replicate_beads;	//Move the fork to the right.
 	if (fork_position >= terminus_position)	//If this is the final replication step.
 	{
 		fork_position = terminus_position;

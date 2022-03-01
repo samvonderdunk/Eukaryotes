@@ -73,6 +73,7 @@ const int eff_hdist = 0;	//Maximal hamming distance for defining effectors.
 const bool empty_division_killing = true;	//Hosts first divide, potentially killing a neighbour, before realising that the new cell does not get symbionts and dies right away.
 const bool cell_fitness = true;	//Fitness defined by nr_houses at the cell level (averaging symbiont n_h and adding it to host n_h); if false, fitness is defined by the n_h that each organelle carries at birth.
 const bool minimum_houses = true;	//Fitness is only decreased when the cell or organelle has fewer house hold genes than nr_household_genes; if false, the cell or organelle needs to have exactly the right number of household genes for fitness = 1.
+const bool use_effectors = false;	//Short-cut in RegulatorCompetition, no need to check if bead is REGULATOR.
 
 //Genome parameters
 const int nr_household_genes =			100;
