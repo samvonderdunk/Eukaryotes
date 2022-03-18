@@ -61,6 +61,15 @@ void Cell::GeneTransport()
 	i_reg ir, ir2;
 	int s, it_cntr;
 
+	/*
+	signal peptides:
+
+	10 -> HOST
+	01 -> SYMBIONT
+	11 -> dual
+	00 -> no transport (remains in compartment where produced).
+	*/
+
 	for (s=0; s<nr_symbionts; s++)
 	{
 		//Movement of expressed regulators from symbionts to host.

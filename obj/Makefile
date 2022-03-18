@@ -43,10 +43,10 @@ OBJECTS = $(ALL)
 all: $(PROJECT)
 
 $(PROJECT): $(OBJECTS)
-	$(CXX) -pg $(LNFLAGS) $(LIBDIR) $^ -o $(BINPATH)/$@ $(LIBS)
+	$(CXX) $(LNFLAGS) $(LIBDIR) $^ -o $(BINPATH)/$@ $(LIBS)
 
 $(LIBRARY): $(OBJECTS)
-	$(CXX) -pg -shared -Wl,-soname,$@.so \
+	$(CXX) -shared -Wl,-soname,$@.so \
 	$(LIBDIR) $(LIBS) $^ -o $(LIBPATH)/$@.so
 
 
