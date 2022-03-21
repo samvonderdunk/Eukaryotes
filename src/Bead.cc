@@ -37,6 +37,20 @@ bool Bead::MutateParameter(int* value, double m)
 	return is_mutated;
 }
 
+bool Bead::MutateType(int* value, double m)
+{
+	int old_value = (*value);
+	bool is_mutated = false;
+
+	if (uniform() < m)
+	{
+		*value = 1+(int)(uniform()*nr_gene_types);
+	}
+
+	if ((*value) != old_value)		is_mutated = true;
+	return is_mutated;
+}
+
 bool Bead::MutateBitstring(std::bitset<regulator_length>& bitstring, double m)
 {
 	int i;

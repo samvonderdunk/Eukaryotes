@@ -18,6 +18,7 @@ class Bead {
 		virtual bool Mutate(int organelle)=0;	//No parameters to mutate for a plain bead, but function used by all derived classes.
 		virtual void Randomize()=0;
 		bool MutateParameter(int* value, double m);
+		bool MutateType(int* value, double m);
 
 		//Try overloading the BindingAffinity and MutateBitstring functions with different length bitsets.
 		bool MutateBitstring(std::bitset<regulator_length>& bitstring, double m);

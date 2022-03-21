@@ -48,7 +48,7 @@ double nutrient_condition[nr_sectors] = {0.};
 int nutrient_competition = default_nutrient_competition;
 int strain_competition = default_strain_competition;
 
-double mu[2][8][4] = {0.};
+double mu[2][9][4] = {0.};
 double muT[2][4] = {0.};
 double muWGD[2] = {0.};
 
@@ -500,20 +500,20 @@ void SetMutationRates()
 	while(getline(infile,line))
 	{
 		data = (char*)line.c_str();
-		if (count_lines < 8)
+		if (count_lines < 9)
 		{
 			success = sscanf(data, "#%s\t%lf %lf %lf %lf %lf %lf %lf %lf", buffer, &mu[HOST][count_lines][HOUSE], &mu[HOST][count_lines][BSITE], &mu[HOST][count_lines][REGULATOR], &mu[HOST][count_lines][EFFECTOR], &mu[SYMBIONT][count_lines][HOUSE], &mu[SYMBIONT][count_lines][BSITE], &mu[SYMBIONT][count_lines][REGULATOR], &mu[SYMBIONT][count_lines][EFFECTOR]);
 		}
-		else if (count_lines == 8)
+		else if (count_lines == 9)
 		{
 			success = sscanf(data, "#%s\t%lf %lf %lf %lf %lf %lf %lf %lf", buffer, &muT[HOST][HOUSE], &muT[HOST][BSITE], &muT[HOST][REGULATOR], &muT[HOST][EFFECTOR], &muT[SYMBIONT][HOUSE], &muT[SYMBIONT][BSITE], &muT[SYMBIONT][REGULATOR], &muT[SYMBIONT][EFFECTOR]);
 		}
-		else if (count_lines == 9)
+		else if (count_lines == 10)
 		{
 			success = sscanf(data, "#%s\t%lf %lf", buffer, &muWGD[HOST], &muWGD[SYMBIONT]);
 		}
 
-		if((count_lines < 9 && success != 9) || (count_lines == 9 && success != 3))
+		if((count_lines < 10 && success != 9) || (count_lines == 10 && success != 3))
 		{
 			cerr << "Error: mutation file potentially corrupt.\n" << endl;
 			exit(1);

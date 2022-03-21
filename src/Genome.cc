@@ -480,7 +480,7 @@ Genome::i_bead Genome::Mutation(i_bead it, int* pdel_length)
 	{
 		if ( (*it)->Mutate(organelle) )
 		{
-			if ( (*it)->kind == REGULATOR )	PotentialTypeChange(it);	//Check type change, maybe activity or sequence has been mutated.	Note that for effectors, the type change is immediately checked by the Mutate function, as it does not need to know other variables of the Genome (for regulatory types, we do need those).
+			if ( (*it)->kind == REGULATOR && mu[organelle][TYPE][(*it)->kind]==0.0 )	PotentialTypeChange(it);	//Check type change, maybe activity or sequence has been mutated.	Note that for effectors, the type change is immediately checked by the Mutate function, as it does not need to know other variables of the Genome (for regulatory types, we do need those).
 			is_mutated = true;
 		}
 		it++;
@@ -636,7 +636,8 @@ void Genome::Inventions(int* pdup_length)
 			insertsite = FindRandomGenePosition(true,true);
 			insertsite = FindFirstBsiteInFrontOfGene(insertsite);
 			insertsite = BeadList->insert(insertsite, reg);
-			PotentialTypeChange(insertsite);
+			if (mu[organelle][TYPE][REGULATOR]==0.0)	PotentialTypeChange(insertsite);
+			else																			reg->MutateType(&reg->type, 1.0);	//m=1, so that "mutation" always takes place.
 
 			gnr[REGULATOR]++;
 			g_length++;

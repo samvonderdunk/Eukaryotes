@@ -47,8 +47,9 @@ bool Gene::Mutate(int organelle)
 {
 	bool is_mutated = false;
 
-	if ( MutateParameter(&threshold, mu[organelle][THRESHOLD][kind]) )	is_mutated = true;
-	if ( MutateBitstring(signalp, mu[organelle][SIGNALP][kind]) )				is_mutated = true;
+	if ( MutateParameter(&threshold, mu[organelle][THRESHOLD][kind]) )			is_mutated = true;
+	if ( MutateBitstring(signalp, mu[organelle][SIGNALP][kind]) )						is_mutated = true;
+	if ( MutateType(&type, mu[organelle][TYPE][kind]) )														is_mutated = true;
 
 	return is_mutated;
 }

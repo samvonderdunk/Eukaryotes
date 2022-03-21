@@ -70,6 +70,7 @@ const bool nutshare_evolve = false;	//Host can evolve how much nutrients it clai
 const bool mutation_epochs = false;	//Turn up mutation rate during specified time periods (see parameters below).
 const int seq_hdist = 0;	//Maximal hamming distance to still be called this particular gene type. When this value is set to 0, we have the same case as in Prokaryotes.
 const int eff_hdist = 0;	//Maximal hamming distance for defining effectors.
+const int nr_gene_types = 30;	//Pick a random integer between 0 and this. Independent gene types mode takes effect as soon as mu[organelle][TYPE][REGULATOR] != 0.0; i.e. when we are specifically doing mutations on gene type; then mutations on regulatory properties (bitstring & activity) are no longer checked by PotentialTypeChange as to whether we need to change the gene type.
 const bool empty_division_killing = true;	//Hosts first divide, potentially killing a neighbour, before realising that the new cell does not get symbionts and dies right away.
 const bool cell_fitness = true;	//Fitness defined by nr_houses at the cell level (averaging symbiont n_h and adding it to host n_h); if false, fitness is defined by the n_h that each organelle carries at birth.
 const bool minimum_houses = true;	//Fitness is only decreased when the cell or organelle has fewer house hold genes than nr_household_genes; if false, the cell or organelle needs to have exactly the right number of household genes for fitness = 1.
@@ -153,11 +154,11 @@ const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
 #define SIGNALP 5
 #define SEQUENCE 6
 #define ACTIVITY 7
+#define TYPE 8
 
-extern double mu[2][8][4];
+extern double mu[2][9][4];
 extern double muT[2][4];
 extern double muWGD[2];
-
 
 //NOTE: watch out with bitsets, if you print the entire set, the order of bits is reversed (i.e. the 1-bit is the first bit if you iterate through the set, but printed on the right of the entire string).
 
