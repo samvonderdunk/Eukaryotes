@@ -158,22 +158,24 @@ extern double mu[2][8][4];
 extern double muT[2][4];
 extern double muWGD[2];
 
+
+//NOTE: watch out with bitsets, if you print the entire set, the order of bits is reversed (i.e. the 1-bit is the first bit if you iterate through the set, but printed on the right of the entire string).
+
 //Effector definitions. Previously used to make hard-coded regulatory types.
-const std::array<std::bitset<effector_length>,5> effector_types = {1010101010,0011001100,0001110001,1111000011,0000011111};
-// effector_types[0] = {1010101010};
-// effector_types[1] = {0011001100};
-// effector_types[2] = {0001110001};
-// effector_types[3] = {1111000011};
-// effector_types[4] = {0000011111};
+const std::array<std::bitset<effector_length>,5> effector_types = {341,204,568,783,992};
+// 341: 1010101010
+// 204:	0011001100
+// 568:	0001110001
+// 783:	1111000011
+// 992:	0000011111
 
 //The current definition of the stages.
-const bool StageTargets[4][5] = {
-  true, false, false, true, true,       // 1 0 0 1 1    G1
-  false, false, true, false, true,      // 0 0 1 0 1    S
-  false, true, false, false, false,     // 0 1 0 0 0    G2
-  true, false, false, false, false,     // 1 0 0 0 0    M
-                                        // 1-CtrA 2-GcrA 3-DnaA 4-CcrM 5-SciP
-};
+const std::array<std::bitset<5>,4> StageTargets = {25,20,2,1};
+// G1 (25): 10011
+// S (20):	00101
+// G2 (2):	01000
+// M (1):		10000
+//1-CtrA 2-GcrA 3-DnaA 4-CcrM 5-SciP
 
 //Variables defined in World.cc
 extern int Time;

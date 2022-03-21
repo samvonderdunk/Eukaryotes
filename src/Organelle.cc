@@ -28,7 +28,8 @@ Organelle::~Organelle()
 void Organelle::UpdateState()
 {
 	i_reg ir;
-	int i, it_cntr, eval_state = Stage, readout[5] = {0};	//States of the five cell-cycle regulators. Overloaded with the states of effector genes if they are functional.
+	int i, it_cntr, eval_state = Stage;
+	std::bitset<5> readout;	//States of the five cell-cycle regulators. Overloaded with the states of effector genes if they are functional.
 
 	if (Stage == 2   &&   G->fork_position != G->terminus_position)	eval_state--;	//You cannot proceed to G2 without finishing replication.
 	privilige = true;
@@ -40,7 +41,7 @@ void Organelle::UpdateState()
 	{
 		if (it_cntr < G->nr_native_expressed)	//Native genes from the organelle itself; just look at the type.
 		{
-			if ((*ir)->type < 6)			readout[(*ir)->type-1] += 1;	//Exp===1.
+			if ((*ir)->type < 6)			readout.set((*ir)->type-1);	//Exp===1.
 		}
 		else	//Foreign genes.
 		{
@@ -48,7 +49,7 @@ void Organelle::UpdateState()
 			{
 				if (   (*ir)->BindingAffinity((*ir)->sequence, G->RegTypeList[i]->sequence) + abs((*ir)->activity - G->RegTypeList[i]->activity) <= seq_hdist   )
 				{
-					readout[i] += 1;	//Exp===1
+					readout.set(i);	//Exp===1
 				}
 				break;	//We assume that only 1 gene type will be matched. This means that when two type definitions come to close by mutation, only the lower gene type will be scored, probably preventing types from coming to close. NEW: actually check out PotentialTypeChange() to see that the type defs can never come within the regtype_hdist.
 			}
@@ -58,21 +59,9 @@ void Organelle::UpdateState()
 	}
 
 	//Compare readout (expression states) with cell-cycle states.
-	if (EvaluateState(eval_state, readout) == 5) Stage = eval_state + 1;	//Success!
-	else if (EvaluateState(3, readout) == 5)	Stage = 5;	//Marked for death during attempted mitosis.
+	if (EvaluateState(StageTargets[eval_state], readout) == 5) Stage = eval_state + 1;	//Success!
+	else if (EvaluateState(StageTargets[3], readout) == 5)	Stage = 5;	//Marked for death during attempted mitosis.
 	else if (Stage == 2   &&   G->fork_position != G->terminus_position)	privilige = false;
-}
-
-int Organelle::EvaluateState(int eval_state, int* readout)
-{
-	int i, match=0;
-
-	for (i=0; i<5; i++)
-	{
-		if ((readout[i]>0) == StageTargets[eval_state][i])	match++;
-	}
-
-	return match;
 }
 
 

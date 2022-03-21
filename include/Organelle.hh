@@ -29,7 +29,6 @@ class Organelle{
 		~Organelle();
 
 		void UpdateState();
-		int EvaluateState(int eval_state, int* readout);
 
 		double CalculateFitness(int target_nr, double real_nr);
 
@@ -43,6 +42,13 @@ class Organelle{
 		string Show(bool backup);
 		string Output(bool backup);
 
+		int EvaluateState(std::bitset<5> stateA, const std::bitset<5>& stateB) const;
+
 };
+
+inline int Organelle::EvaluateState(std::bitset<5> stateA, const std::bitset<5>& stateB) const
+{
+	return (int)(~(stateA ^= stateB)).count();	//Equal bits.
+}
 
 #endif
