@@ -3,6 +3,8 @@
 
 #include "Header.hh"
 #include "Cell.hh"
+#include "Prokaryote.hh"
+#include "Eukaryote.hh"
 #include "Fossils.hh"
 
 class Population
@@ -17,7 +19,7 @@ class Population
 		int nr_strains;
 
 		typedef std::pair<int,int> coords;
-		typedef std::pair<double,double> nuts;
+		typedef std::tuple<double,double,double> nuts;
 		typedef std::vector<Organelle*>::iterator i_org;
 		typedef std::list<Organelle*>::iterator i_fos;
 		typedef std::list<unsigned long long>::iterator i_ull;
@@ -25,9 +27,6 @@ class Population
 
 		Population();
 		~Population();
-
-		void FollowSingleCell();
-		void ResetSingleCell(Cell** CP, Cell** CP_reset);
 
 		void UpdatePopulation();
 

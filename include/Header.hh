@@ -28,11 +28,15 @@ using namespace std;
 #include <string>
 #include <bitset>
 #include <array>
+#include <tuple>
 
 // #include "/home/sam/Programmes/nvwa-1.1/nvwa/debug_new.h"
 // Just for your info, devoon on TBB seems to have C++14.
 
 #define toDigit(c) (c-'0')  // Converts char to digit
+
+#define PROKARYOTE 0
+#define EUKARYOTE 1
 
 #define HOST 0
 #define SYMBIONT 1
@@ -94,6 +98,7 @@ const int default_TimeOutputFossils =		10000;
 const int default_TimeSaveBackup =			10000;
 
 //Population parameters
+const double death_rate_prok =								0.001;
 const double death_rate_host =								0.001;
 const double death_rate_symbiont =						0.001;
 const int default_nutrient_competition =			2;
@@ -145,6 +150,7 @@ const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
 // mu[HOST][DUPLICATION][BSITE]
 // mut[HOST][EFFECTOR] specifies the transfer mutation rate FROM HOST (to symbiont) for effectors.
 // muWGD[HOST] specifies WGD rate for host.
+// Note the prokaryotes all also initialised with G->organelle = 0, so they mirror the mutation rates of the eukaryotic hosts.
 
 #define DUPLICATION 0
 #define DELETION 1
@@ -204,8 +210,6 @@ extern int TimeSaveBackup;
 
 extern bool invasion_experiment;	//If set, do an invasion experiment, and stop simulation when the first cell hits the right-most column.
 extern int invasion_complete;
-extern bool follow_single_individual;
-extern bool follow_with_fixed_symbionts;
 extern bool trace_lineage;
 extern bool log_lineage;
 extern bool mutations_on;

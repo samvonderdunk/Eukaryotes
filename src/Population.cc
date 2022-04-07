@@ -17,15 +17,26 @@ Population::Population()
 Population::~Population()	//Skips deconstructor of Cell, because we need to check whether organelles are also in the FossilSpace.
 {
 	int i,j,s;
+	Prokaryote* P;
+	Eukaryote* E;
 
 	for(i=0;i<NR;i++) for(j=0;j<NC;j++)
 	{
-		if((Space[i][j]) != NULL)
+		if ((Space[i][j]) != NULL)
 		{
-			if (Space[i][j]->Host->mutant || trace_lineage || log_lineage)	FossilSpace->EraseFossil(Space[i][j]->Host->fossil_id);
-			for (s=0; s<Space[i][j]->nr_symbionts; s++)
+			if (Space[i][j]->kind == PROKARYOTE)
 			{
-				if (Space[i][j]->Symbionts->at(s)->mutant || trace_lineage || log_lineage)	FossilSpace->EraseFossil(Space[i][j]->Symbionts->at(s)->fossil_id);
+				P = dynamic_cast<Prokaryote*>(Space[i][j]);
+				if (P->Vesicle->mutant || trace_lineage || log_lineage) FossilSpace->EraseFossil(P->Vesicle->fossil_id);
+			}
+			else if (Space[i][j]->kind == EUKARYOTE)
+			{
+				E = dynamic_cast<Eukaryote*>(Space[i][j]);
+				if (E->Host->mutant || trace_lineage || log_lineage)	FossilSpace->EraseFossil(E->Host->fossil_id);
+				for (s=0; s<E->nr_symbionts; s++)
+				{
+					if (E->Symbionts->at(s)->mutant || trace_lineage || log_lineage)	FossilSpace->EraseFossil(E->Symbionts->at(s)->fossil_id);
+				}
 			}
 			delete Space[i][j];
 			Space[i][j] = NULL;
@@ -36,155 +47,12 @@ Population::~Population()	//Skips deconstructor of Cell, because we need to chec
 	FossilSpace = NULL;
 }
 
-void Population::FollowSingleCell()
-{
-	Cell* C_init, * C, * C_copy;
-	Organelle* S_copy;
-	int s, nutrients;
-
-	C_init = new Cell();
-	C_init->InitialiseCell(0);
-	C = new Cell();
-	C->CloneCell(C_init, &id_count);
-
-	for (Time=TimeZero; Time<SimTime+1; Time++)
-	{
-		C->SingleCellOutput(false);	//Print all relevant data.
-
-		//Failed division.
-		if (C->Host->Stage == 5)
-		{
-			if (follow_with_fixed_symbionts)
-			{
-				//Just reset the host.
-				delete C->Host;
-				C->Host = NULL;
-				C->Host = new Organelle();
-				C->Host->CloneOrganelle(C_init->Host, id_count);
-			}
-			else
-			{
-				//Actually kill the host, and therewith the entire cell.
-				C->SingleCellOutput(true);
-				ResetSingleCell(&C, &C_init);
-				continue;
-			}
-		}
-		for (s=C->nr_symbionts-1; s>=0; s--)
-		{
-			if ( C->Symbionts->at(s)->Stage == 5)
-			{
-				if (follow_with_fixed_symbionts)
-				{
-					//Just reset the symbiont.
-					delete C->Symbionts->at(s);
-					C->Symbionts->at(s) = NULL;
-					C->Symbionts->at(s) = new Organelle();
-					C->Symbionts->at(s)->CloneOrganelle(C_init->Symbionts->at(s), id_count);
-				}
-				else
-				{
-					//Actually kill the symbiont.
-					C->DeathOfSymbiont(s);
-					C->nr_symbionts--;
-				}
-			}
-		}
-		if (C->CheckCellDeath(true))
-		{
-			ResetSingleCell(&C, &C_init);
-			continue;
-		}
-
-		//Division of host.
-		if (C->Host->Stage == 4   &&   (uniform() < C->Host->fitness))
-		{
-			C_copy = new Cell();
-			C_copy->Host = new Organelle();
-			id_count++;
-			C_copy->Host->Mitosis(C->Host, id_count);
-
-			if (!follow_with_fixed_symbionts)
-			{
-				for (s=C->nr_symbionts-1; s>=0; s--)
-				{
-					if (uniform() < 0.5)	//Transfer the symbiont to the new cell (just a matter of using the right pointers).
-					{
-						C_copy->Symbionts->push_back(C->Symbionts->at(s));
-						C->Symbionts->erase(C->Symbionts->begin()+s);
-						C_copy->nr_symbionts++;
-						C->nr_symbionts--;
-					}
-				}
-			}
-			delete C_copy;	//We only track one of the offspring every time.
-			C_copy = NULL;
-
-			if (C->CheckCellDeath(true))
-			{
-				ResetSingleCell(&C, &C_init);
-				continue;
-			}
-		}
-
-		//Division of symbionts.
-		for (s=0; s<C->nr_symbionts; s++)
-		{
-			if (C->Symbionts->at(s)->Stage == 4   &&   (uniform() < C->Symbionts->at(s)->fitness))
-			{
-				S_copy = new Organelle();
-				id_count++;
-				S_copy->Mitosis(C->Symbionts->at(s), id_count);
-				if (follow_with_fixed_symbionts)
-				{
-					delete S_copy;
-					S_copy = NULL;
-				}
-				else
-				{
-					S_copy->Ancestor = C->Symbionts->at(s);
-					C->Symbionts->push_back(S_copy);
-					C->nr_symbionts++;
-				}
-			}
-		}
-
-		C->UpdateOrganelles();	//Expression dynamics within cell.
-
-		//Replication.
-		nutrients = nutrient_condition[0]/(double)(C->nr_symbionts+1);
-		if (C->Host->Stage == 2   &&   C->Host->privilige)
-		{
-			C->Host->Replicate(nutrients);
-		}
-		for (s=0; s<C->nr_symbionts; s++)
-		{
-			if ( C->Symbionts->at(s)->Stage == 2   &&   C->Symbionts->at(s)->privilige)
-			{
-				C->Symbionts->at(s)->Replicate(nutrients);
-			}
-		}
-
-	}
-}
-
-void Population::ResetSingleCell(Cell** CP, Cell** CP_reset)
-{
-	delete *CP;
-	*CP = NULL;
-
-	*CP = new Cell();
-	(*CP)->CloneCell(*CP_reset, &id_count);
-}
-
-
-
 void Population::UpdatePopulation()
 {
 	int update_order[NR*NC];
-	int u, i, j, s, pick_s;
-	Organelle* SymbiontCopy;
-	Cell* NewCell;
+	int u, i, j, s;
+	Cell* C;
+	Eukaryote* E;
 
 	if (well_mixing)	WellMix();	//Well-mixing (before determining nutrient levels).
 
@@ -217,265 +85,90 @@ void Population::UpdatePopulation()
 
 		if (Space[i][j] != NULL)
 		{
-			random_shuffle(Space[i][j]->Symbionts->begin(), Space[i][j]->Symbionts->end(), uniform_shuffle);
+			if (Space[i][j]->kind == EUKARYOTE)
+			{
+				E = dynamic_cast<Eukaryote*>(Space[i][j]);
+				random_shuffle(E->Symbionts->begin(), E->Symbionts->end(), uniform_shuffle);
+			}
 
 			if (log_lineage)	LogLineage(i,j);
 
 			/* Basal death */
-			if (uniform() < death_rate_host)
+			if (Space[i][j]->BasalDeath())
 			{
-				Space[i][j]->DeathOfCell();
-				delete Space[i][j];
+				delete Space[i][j];		//Note: collect these things in a function?
 				Space[i][j] = NULL;
 				continue;
 			}
-			if (!moran_symbionts)	//Otherwise, if no moran process, then symbionts cannot die.
-			{
-				for (s=Space[i][j]->nr_symbionts-1; s>=0; s--)
-				{
-					if (uniform() < death_rate_symbiont)
-					{
-						Space[i][j]->DeathOfSymbiont(s);
-						Space[i][j]->nr_symbionts--;
-					}
-				}
-				if (Space[i][j]->CheckCellDeath(false))
-				{
-					delete Space[i][j];
-					Space[i][j] = NULL;
-					continue;
-				}
-			}
-			/* ~Basal death */
-
-
 
 			/* Failed division */
-			if (Space[i][j]->Host->Stage == 5)
-			{
-				Space[i][j]->DeathOfCell();
-				delete Space[i][j];
-				Space[i][j] = NULL;
-				continue;
-			}
-			for (s=Space[i][j]->nr_symbionts-1; s>=0; s--)
-			{
-				if ( Space[i][j]->Symbionts->at(s)->Stage == 5)
-				{
-					if (moran_symbionts)	Space[i][j]->Symbionts->at(s)->Abort();	//No death but just abortion.
-					else
-					{
-						Space[i][j]->DeathOfSymbiont(s);
-						Space[i][j]->nr_symbionts--;
-					}
-				}
-			}
-			if (Space[i][j]->CheckCellDeath(false))
+			if (Space[i][j]->FailedDivision())
 			{
 				delete Space[i][j];
 				Space[i][j] = NULL;
 				continue;
 			}
-			/* ~Failed division */
 
-
-
-			/* Division of host */
+			/* Successful host division */
 			coords neigh = PickNeighbour(i, j);
-			if (cell_fitness)	Space[i][j]->CalculateCellFitness();	//Calculate cellular fitness once before using it for all simultaneous division events.
-
-			if ( Space[i][j]->Host->Stage == 4  &&  (uniform() < Space[i][j]->Host->fitness)  &&  (host_growth == 0 || (host_growth == 1 && Space[neigh.first][neigh.second] == NULL)) )	//All division criteria in this line.
+			C = Space[i][j]->Division(&Space[neigh.first][neigh.second], FossilSpace, &id_count);
+			if (C != NULL)	//Division returns the newborn eukaryote, and we are to kill the current cell (which cannot be done from inside the cell class).
 			{
-				NewCell = new Cell();
-				NewCell->barcode = Space[i][j]->barcode;	//Transmit strain info.
-				id_count++;
-				NewCell->Host->Mitosis(Space[i][j]->Host, id_count);
-
-				for (s=Space[i][j]->nr_symbionts-1; s>=0; s--)
+				delete Space[i][j];
+				if (!empty_division_killing) //If we don't want to kill a neighbour, swap parent and daugther cell. Don't kill a neibhour; we're done here.
 				{
-					if (moran_symbionts)	CloneSymbiont(i, j, s, NewCell);
-					else
-					{
-						if (uniform() < 0.5)	//Transfer the symbiont to the new cell (just a matter of using the right pointers).
-						{
-							NewCell->Symbionts->push_back(Space[i][j]->Symbionts->at(s));
-							Space[i][j]->Symbionts->erase(Space[i][j]->Symbionts->begin()+s);
-							NewCell->nr_symbionts++;
-							Space[i][j]->nr_symbionts--;
-						}
-					}
+					Space[i][j] = C;
+					C = NULL;
 				}
-
-				if (safe_symbiont_distribution)	//If we do not allow division to remove all symbionts from one of the daughters.
+				else	//We do want to kill a neighbour, so we're not going to swap; newcell will be put in the neighbour spot, parent simply dies.
 				{
-					if (NewCell->nr_symbionts == 0)
+					Space[i][j] = NULL;
+					if (Space[neigh.first][neigh.second] != NULL)
 					{
-						pick_s = (int) (uniform() * (double)Space[i][j]->nr_symbionts);
-						CloneSymbiont(i, j, pick_s, NewCell);
+						Space[neigh.first][neigh.second]->DeathOfCell();
+						delete Space[neigh.first][neigh.second];
+						Space[neigh.first][neigh.second] = NULL;
 					}
-					else if (Space[i][j]->nr_symbionts == 0)
-					{
-						pick_s = (int) (uniform() * (double)NewCell->nr_symbionts);
-						CloneSymbiont(neigh.first, neigh.second, pick_s, NewCell);
-					}
-				}
-
-				if (!NewCell->CheckCellDeath(false))	//Check whether NewCell received at least 1 symbiont; if not, kill it.
-				{
-					if (mutations_on)
-					{
-						NewCell->DNATransferToHost();
-					}
-					if (NewCell->Host->mutant || trace_lineage || log_lineage)
-					{
-						FossilSpace->BuryFossil(NewCell->Host);	//Bury fossil only after potential transfer events (also count as mutations).
-						for (s=0; s<NewCell->nr_symbionts; s++)	//Check whether cut-and-paste led to new mutants among symbionts.
-						{
-							if (NewCell->Symbionts->at(s)->lifetime_mutant && !NewCell->Symbionts->at(s)->mutant)
-							{
-								FossilSpace->BuryFossil(NewCell->Symbionts->at(s));
-								NewCell->Symbionts->at(s)->G->is_mutated = true;
-								NewCell->Symbionts->at(s)->mutant = true;
-							}
-						}
-					}
-				}
-				else
-				{
-					delete NewCell;
-					NewCell = NULL;
-				}
-
-				if (Space[i][j]->CheckCellDeath(false))
-				{
-					delete Space[i][j];
-					if (!empty_division_killing && NewCell != NULL) //If we don't want to kill a neighbour, swap parent and daugther cell. Don't kill a neibhour; we're done here.
-					{
-						Space[i][j] = NewCell;
-						NewCell = NULL;
-					}
-					else	//Either both parent and daughter died (impossible), and/or we do want to kill a neighbour, so we're not going to swap; newcell will be put in the neighbour spot, parent simply dies.
-					{
-						Space[i][j] = NULL;
-						if (Space[neigh.first][neigh.second] != NULL)
-						{
-							Space[neigh.first][neigh.second]->DeathOfCell();
-							delete Space[neigh.first][neigh.second];
-							Space[neigh.first][neigh.second] = NULL;
-						}
-						Space[neigh.first][neigh.second] = NewCell;
-						NewCell = NULL;
-						continue;	//We end up with an empty parent cell, so we cannot do any regulation updating, etc.
-					}
-				}
-				else	//Parent remains alive.
-				{
-					if (empty_division_killing || NewCell != NULL)	//Either we always want to kill the neighbour, or we note that we have a viable child (and a viable parent, so put the child in the spot of the neighbour).
-					{
-						if (Space[neigh.first][neigh.second] != NULL)
-						{
-							Space[neigh.first][neigh.second]->DeathOfCell();
-							delete Space[neigh.first][neigh.second];
-							Space[neigh.first][neigh.second] = NULL;
-						}
-						Space[neigh.first][neigh.second] = NewCell;
-						NewCell = NULL;
-					}
-				}
-			}
-			/* ~Division of host */
-
-
-
-			/* Division of symbionts */
-			for (s=0; s<Space[i][j]->nr_symbionts; s++)
-			{
-				if (Space[i][j]->Symbionts->at(s)->Stage == 4   &&   (uniform() < Space[i][j]->Symbionts->at(s)->fitness))
-				{
-					SymbiontCopy = new Organelle();
-					id_count++;
-					SymbiontCopy->Mitosis(Space[i][j]->Symbionts->at(s), id_count);
-					if (mutations_on)	Space[i][j]->DNATransfertoSymbiont(SymbiontCopy);
-					if (moran_symbionts || (symbiont_overgrowth>0 && uniform()<(double)(Space[i][j]->nr_symbionts-1)/(symbiont_overgrowth-1)) )	//If there is overgrowth, the chance of killing a colleague is proportional to the number of colleagues divided by the total room available.
-					{
-						do	pick_s = (int) (uniform() * (double)Space[i][j]->nr_symbionts);
-						while(pick_s == s);
-						Space[i][j]->DeathOfSymbiont(pick_s);
-					}
-					else
-					{
-						Space[i][j]->nr_symbionts++;
-					}
-					Space[i][j]->Symbionts->push_back(SymbiontCopy);
-					if (Space[i][j]->Symbionts->at(Space[i][j]->nr_symbionts-1)->mutant)
-					{
-						FossilSpace->BuryFossil(Space[i][j]->Symbionts->at(Space[i][j]->nr_symbionts-1));
-					}
-				}
-			}
-			if (Space[i][j]->Host->lifetime_mutant && !Space[i][j]->Host->mutant)
-			{
-				FossilSpace->BuryFossil(Space[i][j]->Host);
-				Space[i][j]->Host->G->is_mutated = true;
-				Space[i][j]->Host->mutant = true;
-			}
-			/* ~Division of symbionts */
-
-			//Correct ExpressedGenes of organelles that lost a gene through transfer (cut-and-paste).
-			if (Space[i][j]->Host->exp_gene_transfer)
-			{
-				Space[i][j]->Host->G->ExpressedGenes->clear();
-				Space[i][j]->Host->G->NativeExpression();
-				Space[i][j]->Host->exp_gene_transfer = false;
-			}
-			for (s=0; s<Space[i][j]->nr_symbionts; s++)
-			{
-				if (Space[i][j]->Symbionts->at(s)->exp_gene_transfer)
-				{
-					Space[i][j]->Symbionts->at(s)->G->ExpressedGenes->clear();
-					Space[i][j]->Symbionts->at(s)->G->NativeExpression();
-					Space[i][j]->Symbionts->at(s)->exp_gene_transfer = false;
+					Space[neigh.first][neigh.second] = C;
+					C = NULL;
+					continue;	//We end up with an empty parent cell, so we cannot do any regulation updating, etc.
 				}
 			}
 
+			/* Division of symbionts & fix expression for transferred genes in Eukaryotes */
+			if (Space[i][j]->kind == EUKARYOTE)
+			{
+				E = dynamic_cast<Eukaryote*>(Space[i][j]);
+				E->SymbiontDivisions(FossilSpace, &id_count);	//Nothing needs to be returned bc symbionts will not disappear during division.
+
+				//Correct ExpressedGenes of organelles that lost a gene through transfer (cut-and-paste).
+				if (E->Host->exp_gene_transfer)
+				{
+					E->Host->G->ExpressedGenes->clear();
+					E->Host->G->NativeExpression();
+					E->Host->exp_gene_transfer = false;
+				}
+				for (s=0; s<E->nr_symbionts; s++)
+				{
+					if (E->Symbionts->at(s)->exp_gene_transfer)
+					{
+						E->Symbionts->at(s)->G->ExpressedGenes->clear();
+						E->Symbionts->at(s)->G->NativeExpression();
+						E->Symbionts->at(s)->exp_gene_transfer = false;
+					}
+				}
+			}
+
+			/* Update expression */
 			Space[i][j]->UpdateOrganelles();	//Expression dynamics within cell.
-
 
 			/* Replication */
 			nuts nutrients = HandleNutrientClaims(i, j);
-
-			if (Space[i][j]->Host->Stage == 2   &&   Space[i][j]->Host->privilige)
-			{
-				Space[i][j]->Host->Replicate(Space[i][j]->Host->nutrient_claim * nutrients.first);
-			}
-			for (s=0; s<Space[i][j]->nr_symbionts; s++)
-			{
-				if ( Space[i][j]->Symbionts->at(s)->Stage == 2   &&   Space[i][j]->Symbionts->at(s)->privilige)
-				{
-					Space[i][j]->Symbionts->at(s)->Replicate(Space[i][j]->Symbionts->at(s)->nutrient_claim * nutrients.second);
-				}
-			}
-			/* ~Replication */
+			Space[i][j]->Replication(nutrients);
 
 		}
 	}
 }
-
-
-
-void Population::CloneSymbiont(int source_i, int source_j, int s, Cell* NewCell)
-{
-	Organelle* SymbiontCopy;
-
-	SymbiontCopy = new Organelle();
-	id_count++;
-	SymbiontCopy->CloneOrganelle(Space[source_i][source_j]->Symbionts->at(s), id_count);
-	if (SymbiontCopy->mutant || trace_lineage || log_lineage)		FossilSpace->BuryFossil(SymbiontCopy);
-	NewCell->Symbionts->push_back(SymbiontCopy);
-	NewCell->nr_symbionts++;
-}
-
-
 
 void Population::WellMix()
 {
@@ -495,10 +188,17 @@ void Population::WellMix()
 
 bool Population::CheckLineage(int i, int j)
 {
+	Eukaryote* E;
 	i_lin check_id;
-	check_id = lower_bound(Lineage.begin(), Lineage.end(), Space[i][j]->Host->fossil_id);
-	if (*check_id == Space[i][j]->Host->fossil_id)	return true;
-	else																						return false;
+
+	if (Space[i][j]->kind == EUKARYOTE)
+	{
+		E = dynamic_cast<Eukaryote*>(Space[i][j]);
+		check_id = lower_bound(Lineage.begin(), Lineage.end(), E->Host->fossil_id);
+		if (*check_id == E->Host->fossil_id)	return true;
+		else																	return false;
+	}
+	else	return false;	//Only trace eukaryotic lineage.
 }
 
 void Population::LogLineage(int i, int j)
@@ -542,7 +242,9 @@ Population::coords Population::PickNeighbour(int i, int j)
 void Population::CollectNutrientsFromSite(int i, int j)
 {
 	int ii, jj, nrow, ncol, cell_density=0, organelle_density=0, s;
-	double nut_condition, nutrient_share, starting_nuts, claim_density=0.;
+	double nut_condition, nutrient_share, starting_nuts, claim_density=0., orgs_at_site;
+	Prokaryote* P;
+	Eukaryote* E;
 
 	nut_condition = nutrient_condition[j/(NC/nr_sectors)];
 
@@ -571,14 +273,31 @@ void Population::CollectNutrientsFromSite(int i, int j)
 		if (Space[nrow][ncol] != NULL)
 		{
 			cell_density++;
-			organelle_density += Space[nrow][ncol]->nr_symbionts + 1;		//Host always counts for one.
-
-			claim_density += Space[nrow][ncol]->Host->nutrient_claim;	//Evolvable nutrient claims.
-			for (s=0; s<Space[nrow][ncol]->nr_symbionts; s++)
+			if (Space[nrow][ncol]->kind == PROKARYOTE)
 			{
-				claim_density += Space[nrow][ncol]->Symbionts->at(s)->nutrient_claim;
+				P = dynamic_cast<Prokaryote*>(Space[nrow][ncol]);
+				organelle_density++;
+				claim_density += P->Vesicle->nutrient_claim;
+			}
+			else	//EUKARYOTE.
+			{
+				E = dynamic_cast<Eukaryote*>(Space[nrow][ncol]);
+				organelle_density += E->nr_symbionts + 1;		//Host always counts for one.
+				claim_density += E->Host->nutrient_claim;	//Evolvable nutrient claims.
+				for (s=0; s<E->nr_symbionts; s++)
+				{
+					claim_density += E->Symbionts->at(s)->nutrient_claim;
+				}
 			}
 		}
+	}
+
+	if (Space[i][j] == NULL)										orgs_at_site = 0.;
+	else if (Space[i][j]->kind == PROKARYOTE)		orgs_at_site = 1.;
+	else
+	{
+		E = dynamic_cast<Eukaryote*>(Space[i][j]);
+		orgs_at_site = (double)(E->nr_symbionts+1);		//i.e. only do this once.
 	}
 
 	//If we don't have wrapped columns, border pixels get fewer nutrients to start with.
@@ -599,7 +318,7 @@ void Population::CollectNutrientsFromSite(int i, int j)
 	else if (nutrient_competition == 1)	//Finish classic nutrient function here.
 	{
 		if (Space[i][j] == NULL)	NutrientSpace[i][j] += starting_nuts - (double)organelle_density;
-		else											NutrientSpace[i][j] += (starting_nuts - (double)organelle_density) / (double)(Space[i][j]->nr_symbionts+1);
+		else											NutrientSpace[i][j] += (starting_nuts - (double)organelle_density) / orgs_at_site;
 	}
 
 	else
@@ -623,7 +342,7 @@ void Population::CollectNutrientsFromSite(int i, int j)
 			else	//Used in second nutrient function.
 			{
 				if (Space[nrow][ncol] == NULL)	NutrientSpace[nrow][ncol] += nutrient_share;
-				else														NutrientSpace[nrow][ncol] += nutrient_share / (double)(Space[nrow][ncol]->nr_symbionts+1);
+				else														NutrientSpace[nrow][ncol] += nutrient_share / orgs_at_site;
 			}
 		}
 	}
@@ -632,21 +351,26 @@ void Population::CollectNutrientsFromSite(int i, int j)
 Population::nuts Population::HandleNutrientClaims(int i, int j)
 {
 	//In principle, only necessary when we do nutrient competition between host and symbiont (nutrient competition 4).
-	double nutH, nutS;
+	double nutH, nutS, nutP;
+	Eukaryote* E;
+
 	nutH = NutrientSpace[i][j];
 	nutS = NutrientSpace[i][j];
-	if (nutrient_competition == 4)
+	nutP = NutrientSpace[i][j];	//For now prokaryote just get what ends up in the NutrientSpace.
+	if (nutrient_competition == 4 && Space[i][j]->kind == EUKARYOTE)
 	{
-		nutH *= Space[i][j]->Host->nutrient_claim;
-		nutS *= (1-Space[i][j]->Host->nutrient_claim)/Space[i][j]->nr_symbionts;
+		E = dynamic_cast<Eukaryote*>(Space[i][j]);
+		nutH *= E->Host->nutrient_claim;
+		nutS *= (1-E->Host->nutrient_claim)/E->nr_symbionts;
 	}
-	else if (nutrient_competition == 5)
+	else if (nutrient_competition == 5 && Space[i][j]->kind == EUKARYOTE)
 	{
-		nutH *= max(0., 1 - Space[i][j]->nr_symbionts*Space[i][j]->Host->nutrient_claim);
-		nutS *= min(1., Space[i][j]->nr_symbionts*Space[i][j]->Host->nutrient_claim) / Space[i][j]->nr_symbionts;
+		E = dynamic_cast<Eukaryote*>(Space[i][j]);
+		nutH *= max(0., 1 - E->nr_symbionts*E->Host->nutrient_claim);
+		nutS *= min(1., E->nr_symbionts*E->Host->nutrient_claim) / E->nr_symbionts;
 	}
 
-	return std::make_pair(nutH, nutS);
+	return std::make_tuple(nutH, nutS, nutP);
 }
 
 
@@ -657,6 +381,8 @@ Population::nuts Population::HandleNutrientClaims(int i, int j)
 void Population::InitialisePopulation()
 {
 	Cell* InitCells[max_input_files] = {NULL};
+	Prokaryote* P;
+	Eukaryote* E;
 	int k, i, j, s, blocks, r, c;
 	double b, b_dbl, b_int;
 
@@ -669,7 +395,8 @@ void Population::InitialisePopulation()
 			break;
 		}
 
-		InitCells[k] = new Cell();
+		if (k%2 == PROKARYOTE)			InitCells[k] = new Prokaryote();
+		else if (k%2 == EUKARYOTE)	InitCells[k] = new Eukaryote();
 		InitCells[k]->InitialiseCell(k);
 	}
 
@@ -689,17 +416,18 @@ void Population::InitialisePopulation()
 	for (i=0; i<NR; i++) for(j=0; j<NC; j++)
 	{
 
-		if (invasion_experiment)
+		if (invasion_experiment)	//Only available for eukaryotes.
 		{
 			if (j<NC/5)	//Only the left-most 10% of columns gets initialised.
 			{
-				Space[i][j] = new Cell();
-				Space[i][j]->CloneCell(InitCells[0], &id_count);
-				FossilSpace->BuryFossil(Space[i][j]->Host);
-				for (s=0; s<Space[i][j]->nr_symbionts; s++)
+				E = new Eukaryote();
+				E->CloneCell(InitCells[0], &id_count);
+				FossilSpace->BuryFossil(E->Host);
+				for (s=0; s<E->nr_symbionts; s++)
 				{
-					FossilSpace->BuryFossil(Space[i][j]->Symbionts->at(s));
+					FossilSpace->BuryFossil(E->Symbionts->at(s));
 				}
+				Space[i][j] = E;
 			}
 			continue;	//Don't bother with what's below.
 		}
@@ -731,12 +459,23 @@ void Population::InitialisePopulation()
 
 		if (uniform() < 0.6)
 		{
-			Space[i][j] = new Cell();
-			Space[i][j]->CloneCell(InitCells[k], &id_count);
-			FossilSpace->BuryFossil(Space[i][j]->Host);
-			for (s=0; s<Space[i][j]->nr_symbionts; s++)
+			if (k%2 == PROKARYOTE)
 			{
-				FossilSpace->BuryFossil(Space[i][j]->Symbionts->at(s));
+				P = new Prokaryote();
+				P->CloneCell(InitCells[k], &id_count);
+				FossilSpace->BuryFossil(P->Vesicle);
+				Space[i][j] = P;
+			}
+			else if (k%2 == EUKARYOTE)
+			{
+				E = new Eukaryote();
+				E->CloneCell(InitCells[k], &id_count);
+				FossilSpace->BuryFossil(E->Host);
+				for (s=0; s<E->nr_symbionts; s++)
+				{
+					FossilSpace->BuryFossil(E->Symbionts->at(s));
+				}
+				Space[i][j] = E;
 			}
 		}
 	}
@@ -751,6 +490,8 @@ void Population::InitialisePopulation()
 void Population::ContinuePopulationFromBackup()
 {
 	int i, j, s;
+	Prokaryote* P;
+	Eukaryote* E;
 
 	ReadBackupFile();
 	if(anctrace_file != "")	ReadAncestorFile();
@@ -761,12 +502,22 @@ void Population::ContinuePopulationFromBackup()
 		{
 			if (Space[i][j]!=NULL)
 			{
-				id_count++;
-				Space[i][j]->Host->fossil_id = id_count;	//Other things such as time_of_appearance and Ancestor are set to zero by the EmptyProkaryote function.
-				for (s=0; s<Space[i][j]->nr_symbionts; s++)
+				if (Space[i][j]->kind == PROKARYOTE)
 				{
+					P = dynamic_cast<Prokaryote*>(Space[i][j]);
 					id_count++;
-					Space[i][j]->Symbionts->at(s)->fossil_id = id_count;
+					P->Vesicle->fossil_id = id_count;
+				}
+				else if (Space[i][j]->kind == EUKARYOTE)
+				{
+					E = dynamic_cast<Eukaryote*>(Space[i][j]);
+					id_count++;
+					E->Host->fossil_id = id_count;
+					for (s=0; s<E->nr_symbionts; s++)
+					{
+						id_count++;
+						E->Symbionts->at(s)->fossil_id = id_count;
+					}
 				}
 			}
 		}
@@ -793,7 +544,8 @@ void Population::ReadBackupFile()
 	double fit, nutcl;
 	size_t pos;
 	Organelle* O, * OF, * SaveO;
-	Cell* C;
+	Prokaryote* P;
+	Eukaryote* E;
 	i_fos iF;
 
 	if (!infile.is_open())
@@ -969,18 +721,26 @@ void Population::ReadBackupFile()
 				{
 					cerr << "Could not read r, c, s from non-empty site. Backup file potentially corrupt.\n" << endl;
 				}
-				if (s == -1)
+				if (s == -2)
 				{
-					C = new Cell();
-					C->Host = O;
-					C->barcode = count_lines;
-					Space[r][c] = C;
+					P = new Prokaryote();
+					P->Vesicle = O;
+					P->barcode = count_lines;
+					Space[r][c] = P;
+				}
+				else if (s == -1)
+				{
+					E = new Eukaryote();
+					E->Host = O;
+					E->barcode = count_lines;
+					Space[r][c] = E;
 				}
 				else
 				{
+					E = dynamic_cast<Eukaryote*>(Space[r][c]);
 					O->G->organelle = SYMBIONT;
-					Space[r][c]->Symbionts->push_back(O);
-					Space[r][c]->nr_symbionts++;
+					E->Symbionts->push_back(O);
+					E->nr_symbionts++;
 				}
 			}
 
@@ -1166,10 +926,12 @@ void Population::PruneFossilRecord()
 	i_ull findit;
 	Organelle* lastCA;
 	i_lin iL;
+	Prokaryote* P;
+	Eukaryote* E;
 
 	if (trace_lineage && Time == SimTime)
 	{
-		//Only trace hosts that are in the lineage record.
+		//Only trace hosts that are in the lineage record. // Also added for prokaryotes, but haven't thought about it.
 
 		iL = Lineage.begin();
 		while (iL != Lineage.end() && *iL <= id_count)
@@ -1182,10 +944,23 @@ void Population::PruneFossilRecord()
 			{
 				if (Space[i][j] != NULL)
 				{
-					if (Space[i][j]->Host->fossil_id == *iL)
+					if (Space[i][j]->kind == PROKARYOTE)
 					{
-						lastCA = Space[i][j]->Host->Ancestor;
-						break;
+						P = dynamic_cast<Prokaryote*>(Space[i][j]);
+						if (P->Vesicle->fossil_id == *iL)
+						{
+							lastCA = P->Vesicle->Ancestor;
+							break;
+						}
+					}
+					else if (Space[i][j]->kind == EUKARYOTE)
+					{
+						E = dynamic_cast<Eukaryote*>(Space[i][j]);
+						if (E->Host->fossil_id == *iL)
+						{
+							lastCA = E->Host->Ancestor;
+							break;
+						}
 					}
 				}
 			}
@@ -1207,20 +982,34 @@ void Population::PruneFossilRecord()
 		{
 			if(Space[i][j] != NULL)
 			{
-				lastCA = Space[i][j]->Host->Ancestor;
-				while(lastCA != NULL)
+				if (Space[i][j]->kind == PROKARYOTE)
 				{
-					AllFossilIDs.push_back(lastCA->fossil_id);
-					lastCA = lastCA->Ancestor;
-				}
-
-				for (s=0; s<Space[i][j]->nr_symbionts; s++)
-				{
-					lastCA = Space[i][j]->Symbionts->at(s)->Ancestor;
+					P = dynamic_cast<Prokaryote*>(Space[i][j]);
+					lastCA = P->Vesicle->Ancestor;
 					while(lastCA != NULL)
 					{
 						AllFossilIDs.push_back(lastCA->fossil_id);
 						lastCA = lastCA->Ancestor;
+					}
+				}
+				else if (Space[i][j]->kind == EUKARYOTE)
+				{
+					E = dynamic_cast<Eukaryote*>(Space[i][j]);
+					lastCA = E->Host->Ancestor;
+					while(lastCA != NULL)
+					{
+						AllFossilIDs.push_back(lastCA->fossil_id);
+						lastCA = lastCA->Ancestor;
+					}
+
+					for (s=0; s<E->nr_symbionts; s++)
+					{
+						lastCA = E->Symbionts->at(s)->Ancestor;
+						while(lastCA != NULL)
+						{
+							AllFossilIDs.push_back(lastCA->fossil_id);
+							lastCA = lastCA->Ancestor;
+						}
 					}
 				}
 
@@ -1264,6 +1053,8 @@ void Population::OutputGrid(bool backup)
 	FILE* f;
 	char OutputFile[800];
 	int i, j, s;
+	Prokaryote* P;
+	Eukaryote* E;
 
 	if (backup)
 	{
@@ -1295,10 +1086,19 @@ void Population::OutputGrid(bool backup)
 		{
 			nuts nutrients = HandleNutrientClaims(i, j);
 
-			fprintf(f, "%d %d -1 %f %d\t%s\n", i, j, nutrients.first, Space[i][j]->barcode, Space[i][j]->Host->Output(backup).c_str());
-			for (s=0; s<Space[i][j]->nr_symbionts; s++)
+			if (Space[i][j]->kind == PROKARYOTE)
 			{
-				fprintf(f, "%d %d %d %f %d\t%s\n", i, j, s, nutrients.second, Space[i][j]->barcode, Space[i][j]->Symbionts->at(s)->Output(backup).c_str());
+				P = dynamic_cast<Prokaryote*>(Space[i][j]);
+				fprintf(f, "%d %d -2 %f %d\t%s\n", i, j, std::get<2>(nutrients), P->barcode, P->Vesicle->Output(backup).c_str());
+			}
+			else if (Space[i][j]->kind == EUKARYOTE)
+			{
+				E = dynamic_cast<Eukaryote*>(Space[i][j]);
+				fprintf(f, "%d %d -1 %f %d\t%s\n", i, j, std::get<0>(nutrients), E->barcode, E->Host->Output(backup).c_str());
+				for (s=0; s<E->nr_symbionts; s++)
+				{
+					fprintf(f, "%d %d %d %f %d\t%s\n", i, j, s, std::get<1>(nutrients), E->barcode, E->Symbionts->at(s)->Output(backup).c_str());
+				}
 			}
 		}
 	}
@@ -1311,6 +1111,8 @@ void Population::OutputLineage(int i, int j)
 	FILE* f;
 	char OutputFile[800];
 	int s;
+	Prokaryote* P;
+	Eukaryote* E;
 
 	sprintf(OutputFile, "%s/lineage.out", folder.c_str());
 	f=fopen(OutputFile, "a");
@@ -1318,10 +1120,19 @@ void Population::OutputLineage(int i, int j)
 
 	nuts nutrients = HandleNutrientClaims(i, j);
 
-	fprintf(f, "%d %d %d -1 %f\t%s\n", Time, i, j, nutrients.first, Space[i][j]->Host->Output(true).c_str());
-	for (s=0; s<Space[i][j]->nr_symbionts; s++)
+	if (Space[i][j]->kind == PROKARYOTE)
 	{
-		fprintf(f, "%d %d %d %d %f\t%s\n", Time, i, j, s, nutrients.second, Space[i][j]->Symbionts->at(s)->Output(true).c_str());
+		P = dynamic_cast<Prokaryote*>(Space[i][j]);
+		fprintf(f, "%d %d %d -2 %f\t%s\n", Time, i, j, std::get<2>(nutrients), P->Vesicle->Output(true).c_str());
+	}
+	else if (Space[i][j]->kind == EUKARYOTE)
+	{
+		E = dynamic_cast<Eukaryote*>(Space[i][j]);
+		fprintf(f, "%d %d %d -1 %f\t%s\n", Time, i, j, std::get<0>(nutrients), E->Host->Output(true).c_str());
+		for (s=0; s<E->nr_symbionts; s++)
+		{
+			fprintf(f, "%d %d %d %d %f\t%s\n", Time, i, j, s, std::get<1>(nutrients), E->Symbionts->at(s)->Output(true).c_str());
+		}
 	}
 
 	fclose(f);
@@ -1334,39 +1145,56 @@ void Population::OutputLineage(int i, int j)
 void Population::ShowGeneralProgress()
 {
 	int i, j, symbiont_count=0;
-	int host_count[nr_sectors] = {0};
-	int stage_counts[2][6] = {0};
+	int cell_count[2][nr_sectors] = {0};
+	int stage_counts[3][6] = {0};
 	i_org iS;
+	Prokaryote* P;
+	Eukaryote* E;
 
 	for (i=0; i<NR; i++) for(j=0; j<NC; j++)
 	{
 		if ( Space[i][j] != NULL )
 		{
-			host_count[j/(NC/nr_sectors)]++;	// sector = j/(NC/nr_sectors)
-			symbiont_count += Space[i][j]->nr_symbionts;
-			stage_counts[0][Space[i][j]->Host->Stage]++;
-			iS = Space[i][j]->Symbionts->begin();
-			while (iS != Space[i][j]->Symbionts->end())
+			cell_count[Space[i][j]->kind][j/(NC/nr_sectors)]++;	// sector = j/(NC/nr_sectors)
+			if (Space[i][j]->kind == PROKARYOTE)
 			{
-				stage_counts[1][(*iS)->Stage]++;
-				iS++;
+				P = dynamic_cast<Prokaryote*>(Space[i][j]);
+				stage_counts[0][P->Vesicle->Stage]++;
+			}
+			else if (Space[i][j]->kind == EUKARYOTE)
+			{
+				E = dynamic_cast<Eukaryote*>(Space[i][j]);
+				symbiont_count += E->nr_symbionts;
+				stage_counts[1][E->Host->Stage]++;
+				iS = E->Symbionts->begin();
+				while (iS != E->Symbionts->end())
+				{
+					stage_counts[2][(*iS)->Stage]++;
+					iS++;
+				}
 			}
 			if (invasion_experiment && invasion_complete==-1 && Time>equilibration_time && j==NC-1)	invasion_complete = Time;
 		}
 	}
 
-	cout << "Time " << Time << "\tHosts ";
+	cout << "Time " << Time << "\tProks ";
 	for (i=0; i<nr_sectors; i++)
 	{
-		cout << host_count[i];
+		cout << cell_count[0][i];
+		if (i != nr_sectors-1)	cout << "|";
+	}
+	cout << "\tHosts ";
+	for (i=0; i<nr_sectors; i++)
+	{
+		cout << cell_count[1][i];
 		if (i != nr_sectors-1)	cout << "|";
 	}
 	cout << "\tSymbionts " << symbiont_count;
-	for (i=0; i<6; i++)	cout << "\tS(" << i << ") " << stage_counts[0][i] << "," << stage_counts[1][i];
+	for (i=0; i<6; i++)	cout << "\tS(" << i << ") " << stage_counts[0][i] << "," << stage_counts[1][i] << "," << stage_counts[2][i];
 	if (invasion_complete==Time)	cout << "\tINVASION COMPLETE";
 	cout << endl;
 
-	if (symbiont_count==0)	//Easier to use symbiont_count as we did not split this over sectors.
+	if (cell_count[0][0]+cell_count[0][1]+cell_count[0][2]+cell_count[0][3]+cell_count[0][4]+cell_count[0][5]+symbiont_count == 0)	//Easier to use symbiont_count as we did not split this over sectors.
 	{
 		cout << "And since there is no more life, we will stop the experiment here.\n" << endl;
 		exit(1);
