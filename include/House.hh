@@ -15,8 +15,8 @@ class House : public Bead {
 		// ~House();
 		// explicit House(const House &house);
 		virtual Bead* Clone() const;
-		void Randomize();
 
+		void Randomize(int organelle);
 		bool Mutate(int organelle);
 		string Show(bool terminal, bool type_only=false) const;
 

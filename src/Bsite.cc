@@ -27,7 +27,7 @@ Bead* Bsite::Clone() const
   return new Bsite(*this);
 }
 
-void Bsite::Randomize()
+void Bsite::Randomize(int organelle)
 {
 	int i;
 
