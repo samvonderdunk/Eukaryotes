@@ -356,7 +356,7 @@ Population::nuts Population::HandleNutrientClaims(int i, int j)
 
 	nutH = NutrientSpace[i][j];
 	nutS = NutrientSpace[i][j];
-	nutP = NutrientSpace[i][j];	//For now prokaryote just get what ends up in the NutrientSpace.
+	nutP = NutrientSpace[i][j] * prok_nutscale_fact;	//For now prokaryote just get what ends up in the NutrientSpace.
 	if (nutrient_competition == 4 && Space[i][j]->kind == EUKARYOTE)
 	{
 		E = dynamic_cast<Eukaryote*>(Space[i][j]);
