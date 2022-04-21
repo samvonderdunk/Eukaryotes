@@ -54,6 +54,7 @@ string Regulator::Show(bool terminal, bool type_only) const
 	//There is quite some overlap between effector and regulatory Show(), so you'd think I just encode this overlap only in the Gene::Show() version. However, then I would have to slice in some elements here, because the regulatory activity preceeds the typeseq and signalp.
 	string Content, color_prefix, color_suffix;
 	std::stringstream ss;
+	int i;
 
 	if (terminal)
 	{
@@ -71,9 +72,17 @@ string Regulator::Show(bool terminal, bool type_only) const
 	ss << activity << ":";
 	if (!type_only)
 	{
-		ss << signalp << ":";
+		for (i=0; i<signalp_length; i++)
+		{
+			ss << signalp[i];
+		}
 	}
-	ss << sequence << color_suffix << ")";
+	ss << ":";
+	for (i=0; i<regulator_length; i++)
+	{
+		ss << sequence[i];
+	}
+	ss << color_suffix << ")";
 
 	Content = ss.str();
 	ss.clear();

@@ -63,6 +63,7 @@ string Effector::Show(bool terminal, bool type_only) const
 {
 	string Content, color_prefix, color_suffix;
 	std::stringstream ss;
+	int i;
 
 	if (terminal)
 	{
@@ -79,9 +80,17 @@ string Effector::Show(bool terminal, bool type_only) const
 	if (!type_only) ss << threshold << ":";
 	if (!type_only)
 	{
-		ss << signalp << ":";
+		for (i=0; i<signalp_length; i++)
+		{
+			ss << signalp[i];
+		}
 	}
-	ss << sequence << color_suffix << ")";
+	ss << ":";
+	for (i=0; i<effector_length; i++)
+	{
+		ss << sequence[i];
+	}
+	ss << color_suffix << ")";
 
 	Content = ss.str();
 	ss.clear();
