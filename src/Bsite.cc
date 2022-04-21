@@ -49,6 +49,7 @@ string Bsite::Show(bool terminal, bool type_only) const
 {
 	string Content, color_prefix, color_suffix;
 	std::stringstream ss;
+	int i;
 
 	if(terminal){
 		color_prefix = "\033[92m";
@@ -60,7 +61,13 @@ string Bsite::Show(bool terminal, bool type_only) const
 		color_suffix = "";
 	}
 
-	ss << "(" << color_prefix << activity << ":" << sequence << color_suffix << ")";
+	ss << "(" << color_prefix << activity << ":";
+	for (i=0; i<regulator_length; i++)
+	{
+		ss << sequence[i];
+	}
+	ss << color_suffix << ")";
+
 	Content = ss.str();
 	ss.clear();
 
