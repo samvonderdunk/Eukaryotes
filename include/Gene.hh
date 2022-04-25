@@ -20,8 +20,8 @@ class Gene : public Bead {
 		virtual ~Gene();
 
 		virtual Bead* Clone() const=0;
-		void Randomize();
 
+		void Randomize(int organelle);
 		bool Mutate(int organelle);
 		virtual string Show(bool terminal, bool type_only=false) const=0;
 };

@@ -16,7 +16,7 @@ class Bead {
 		virtual Bead* Clone() const=0;
 
 		virtual bool Mutate(int organelle)=0;	//No parameters to mutate for a plain bead, but function used by all derived classes.
-		virtual void Randomize()=0;
+		virtual void Randomize(int organelle)=0;
 		bool MutateParameter(int* value, double m);
 		bool MutateType(int* value, double m);
 

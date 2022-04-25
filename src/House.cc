@@ -9,7 +9,7 @@ Bead* House::Clone() const
   return new House(*this);
 }
 
-void House::Randomize()
+void House::Randomize(int organelle)
 {
 }
 

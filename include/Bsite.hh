@@ -17,8 +17,8 @@ class Bsite : public Bead {
 		virtual ~Bsite();
 
 		virtual Bead* Clone() const;
-		void Randomize();
 
+		void Randomize(int organelle);
 		bool Mutate(int organelle);
 		string Show(bool terminal, bool type_only=false) const;
 };

@@ -32,13 +32,11 @@ Gene::~Gene()
 {
 }
 
-void Gene::Randomize()
+void Gene::Randomize(int organelle)
 {
-	int i;
-
 	type = 0;
   threshold = (int)(uniform()*(2*WeightRange+1) - WeightRange);	//Value between -WeightRange and +WeightRange (incl. borders).
-	for (i=0; i<signalp_length; i++)	signalp[i] = (uniform()>0.5) ? true : false;	//Warning: genes with random localization are produced, even if mu[..][SIGNALP][..] is set to 0.
+	signalp = organelle_signals[organelle];	//Let's never let a random gene take on a non-native localization.
   expression = 0;
 	express = 0;
 }
@@ -49,7 +47,7 @@ bool Gene::Mutate(int organelle)
 
 	if ( MutateParameter(&threshold, mu[organelle][THRESHOLD][kind]) )			is_mutated = true;
 	if ( MutateBitstring(signalp, mu[organelle][SIGNALP][kind]) )						is_mutated = true;
-	if ( MutateType(&type, mu[organelle][TYPE][kind]) )														is_mutated = true;
+	if ( MutateType(&type, mu[organelle][TYPE][kind]) )											is_mutated = true;
 
 	return is_mutated;
 }

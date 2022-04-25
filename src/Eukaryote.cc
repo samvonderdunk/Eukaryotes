@@ -350,14 +350,14 @@ void Eukaryote::GeneTransport()
 		ir = Symbionts->at(s)->G->ExpressedGenes->begin();
 		while (ir != Symbionts->at(s)->G->ExpressedGenes->end())
 		{
-			if (perfect_transport && (*ir)->signalp.test(0) && !(*ir)->signalp.test(1))
+			if ((*ir)->signalp.test(0) && !(*ir)->signalp.test(1))
 			{	//Protein translocated to host.
 				ir2 = ir;
 				ir--;
 				Host->G->ExpressedGenes->splice(Host->G->ExpressedGenes->end(), *Symbionts->at(s)->G->ExpressedGenes, ir2);
 				Symbionts->at(s)->G->nr_native_expressed--;
 			}
-			else if ((perfect_transport && (*ir)->signalp.test(0) && (*ir)->signalp.test(1)) || uniform() < leakage_to_host)
+			else if (((*ir)->signalp.test(0) && (*ir)->signalp.test(1)) || uniform() < leakage_to_host)
 			{	//Protein also transported to host.
 				Host->G->ExpressedGenes->push_back(*ir);
 			}
@@ -369,7 +369,7 @@ void Eukaryote::GeneTransport()
 		it_cntr = 0;
 		while (it_cntr < Host->G->nr_native_expressed)
 		{
-			if (perfect_transport && !(*ir)->signalp.test(0) && (*ir)->signalp.test(1))
+			if (!(*ir)->signalp.test(0) && (*ir)->signalp.test(1))
 			{	//Protein translocated to symbiont.
 				if (s == nr_symbionts-1)	//Only erase the expressed gene from the host if we get to the last symbiont (already transported to all other symbionts).
 				{
@@ -384,7 +384,7 @@ void Eukaryote::GeneTransport()
 					Symbionts->at(s)->G->ExpressedGenes->push_back(*ir);
 				}
 			}
-			else if ((perfect_transport && (*ir)->signalp.test(0) && (*ir)->signalp.test(1)) || uniform() < leakage_to_symbiont)
+			else if (((*ir)->signalp.test(0) && (*ir)->signalp.test(1)) || uniform() < leakage_to_symbiont)
 			{
 				Symbionts->at(s)->G->ExpressedGenes->push_back(*ir);
 			}

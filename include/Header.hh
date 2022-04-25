@@ -69,7 +69,6 @@ const int host_growth = 0;
 // 0, as in Prokaryotes: hosts overgrow one another, dividing as soon as they reach M.
 // 1, hosts wait for empty sites, but waiting is free (expression unimportant once they reach M).
 // 2, hosts wait for empty sites, but need to actively maintain M expression (i.e. making the whole cell-cycle more complex again). This option may be implemented later...
-const bool perfect_transport = true;	//Genes with a 0 in their signalp, are always moved to the host; genes with a 1 in their signalp always get targetted to the symbionts. Moving here means that they do not stick around in the compartment where they are created.
 const bool nutshare_evolve = false;	//Host can evolve how much nutrients it claims from the environment, passing on the remaining fraction to its symbionts (equally divided among these). Each host has an identical claim on environmental nutrients, i.e. independent of how many symbionts it has. This corresponds to nutrient competition 4.
 const bool mutation_epochs = false;	//Turn up mutation rate during specified time periods (see parameters below).
 const int seq_hdist = 0;	//Maximal hamming distance to still be called this particular gene type. When this value is set to 0, we have the same case as in Prokaryotes.
@@ -184,6 +183,13 @@ const std::array<std::bitset<5>,4> StageTargets = {25,20,2,1};
 // G2 (2):	01000
 // M (1):		10000
 //1-CtrA 2-GcrA 3-DnaA 4-CcrM 5-SciP
+
+// Localizations.
+// 00: native only.
+// 01: localized to host (independent of origin).
+// 10: localized to symbiont (independent of origin).
+// 11: dual localization.
+const std::array<std::bitset<signalp_length>,2> organelle_signals = {1,2};	//First symbiont, then host signal.
 
 //Variables defined in World.cc
 extern int Time;

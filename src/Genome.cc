@@ -588,7 +588,7 @@ Genome::i_bead Genome::Duplication(i_bead it, int* pdup_length)
 void Genome::Inventions(int* pdup_length)
 {
 	i_bead focus, insertsite;
-	int k, i;
+	int k;
 	double uu;
 	House* house;
 	Bsite* bsite;
@@ -602,7 +602,7 @@ void Genome::Inventions(int* pdup_length)
 		if (k == HOUSE && uu < mu[organelle][INVENTION][HOUSE])
 		{
 			house = new House();
-			house->Randomize();
+			house->Randomize(organelle);
 
 			insertsite = FindRandomPosition(true);
 			insertsite = BeadList->insert(insertsite, house);
@@ -614,7 +614,7 @@ void Genome::Inventions(int* pdup_length)
 		else if (k == BSITE && uu < mu[organelle][INVENTION][BSITE])
 		{
 			bsite = new Bsite();
-			bsite->Randomize();
+			bsite->Randomize(organelle);
 
 			insertsite = FindRandomPosition(true);
 			insertsite = BeadList->insert(insertsite, bsite);
@@ -626,12 +626,7 @@ void Genome::Inventions(int* pdup_length)
 		else if (k == REGULATOR && uu < mu[organelle][INVENTION][REGULATOR])
 		{
 			reg = new Regulator();
-			reg->Randomize();
-
-			if (!perfect_transport)	//If we are not doing transport, just give it the actual localization (make analysis a bit easier).
-			{
-				for (i=0; i<signalp_length; i++)	reg->signalp[i] = (organelle==SYMBIONT);
-			}
+			reg->Randomize(organelle);
 
 			insertsite = FindRandomGenePosition(true,true);
 			insertsite = FindFirstBsiteInFrontOfGene(insertsite);
@@ -646,12 +641,7 @@ void Genome::Inventions(int* pdup_length)
 		else if (k == EFFECTOR && uu < mu[organelle][INVENTION][EFFECTOR])
 		{
 			eff = new Effector();
-			eff->Randomize();
-
-			if (!perfect_transport)	//If we are not doing transport, just give it the actual localization (make analysis a bit easier).
-			{
-				for (i=0; i<signalp_length; i++)	eff->signalp[i] = (organelle==SYMBIONT);
-			}
+			eff->Randomize(organelle);
 
 			insertsite = FindRandomGenePosition(true,true);
 			insertsite = FindFirstBsiteInFrontOfGene(insertsite);

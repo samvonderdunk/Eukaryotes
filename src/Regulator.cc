@@ -28,11 +28,11 @@ Bead* Regulator::Clone() const
   return new Regulator(*this);
 }
 
-void Regulator::Randomize()
+void Regulator::Randomize(int organelle)
 {
 	int i;
 
-	Gene::Randomize();
+	Gene::Randomize(organelle);
   activity = (int)(uniform()*(2*WeightRange+1) - WeightRange);
   for (i=0; i<regulator_length; i++)	sequence[i] = (uniform()>0.5) ? true : false;
 
