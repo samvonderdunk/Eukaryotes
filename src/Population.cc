@@ -342,7 +342,16 @@ void Population::CollectNutrientsFromSite(int i, int j)
 			else	//Used in second nutrient function.
 			{
 				if (Space[nrow][ncol] == NULL)	NutrientSpace[nrow][ncol] += nutrient_share;
-				else														NutrientSpace[nrow][ncol] += nutrient_share / orgs_at_site;
+				else
+				{
+					if (Space[nrow][ncol]->kind==PROKARYOTE)	NutrientSpace[nrow][ncol] += nutrient_share;
+					else
+					{
+						E = dynamic_cast<Eukaryote*>(Space[nrow][ncol]);
+						orgs_at_site = (double)(E->nr_symbionts+1);
+						NutrientSpace[nrow][ncol] += nutrient_share / orgs_at_site;
+					}
+				}
 			}
 		}
 	}
