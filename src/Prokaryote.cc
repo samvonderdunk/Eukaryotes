@@ -17,7 +17,7 @@ Prokaryote::~Prokaryote()
 
 void Prokaryote::CalculateCellFitness()
 {
-	Vesicle->fitness = Vesicle->CalculateFitness(nr_household_genes, Vesicle->nr_houses);
+	Vesicle->fitness = Vesicle->CalculateFitness(prok_hhscale_fact*nr_household_genes, Vesicle->nr_houses);
 }
 
 
@@ -56,6 +56,8 @@ Cell* Prokaryote::Division(Cell** NewSite, Fossils* FP, unsigned long long* pid_
 {
 	//Divide vesicle.
 	Prokaryote* NewProk;
+
+	CalculateCellFitness();
 
 	if (Vesicle->Stage == 4 && (uniform() < Vesicle->fitness) && (host_growth == 0 || (host_growth == 1 && *NewSite == NULL)))
 	{
