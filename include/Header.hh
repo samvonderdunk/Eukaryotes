@@ -109,6 +109,7 @@ const double default_conditions[nr_sectors] =	{30.};
 // 4, distribute by cell, let host claim its share and then divide among symbionts:	n_iH = (n_tot / c_nei)*claim_H and n_iS = (n_tot / c_nei)*(1 - claim_H) / (x_i - 1)
 // 5, distribute by cell, let host give a fraction nutrient_claim to each of its symbionts, itself taking whatever's left: n_iH = max(0, 1 - (x_i-1)*claim_H) * (n_tot / c_nei) and n_iS = min(1, (x_i-1)*claim_H)/(x_i-1) * (n_tot / c_nei)
 // 6, evolvable nutrient claims per organelle (defining depletion of nutrients in the environment and the nutrients claimed by each organelle of the available nutrients).
+// 7, distribute by cell; host proportions are changing more with symbiont number, but there is always a minimal proportion reserved for the host.
 // where n_ij is nutrients at site i for organelle j,
 //       n_tot is total nutrient_condition (see par above), i.e. influx per site,
 //       x_nei is total number of organelles in the neighbourhood,

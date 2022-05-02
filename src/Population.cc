@@ -632,7 +632,7 @@ void Population::CollectNutrientsFromSite(int i, int j)
 Population::nuts Population::HandleNutrientClaims(int i, int j)
 {
 	//In principle, only necessary when we do nutrient competition between host and symbiont (nutrient competition 4).
-	double nutH, nutS;
+	double nutH, nutS, fH;
 	nutH = NutrientSpace[i][j];
 	nutS = NutrientSpace[i][j];
 	if (nutrient_competition == 4)
@@ -644,6 +644,15 @@ Population::nuts Population::HandleNutrientClaims(int i, int j)
 	{
 		nutH *= max(0., 1 - Space[i][j]->nr_symbionts*Space[i][j]->Host->nutrient_claim);
 		nutS *= min(1., Space[i][j]->nr_symbionts*Space[i][j]->Host->nutrient_claim) / Space[i][j]->nr_symbionts;
+	}
+	else if (nutrient_competition == 7)
+	{
+		// with help from Laurens, see mathematica file stored in "Xtra_Eukaryotes/math".
+		// The formula for fH (fraction of nutrients to host) is: fH(S) = a + (1-a)*e^[S*(b/(a-1))]
+		// Here "a" is the minimal fraction allocated to host (for S -> inf.), and "b" is the basic fraction claimed by each symbiont (but which decreases as the number of symbionts increases).
+		fH = 0.1 + 0.9*exp((0.2/-0.9)*Space[i][j]->nr_symbionts);
+		nutH = NutrientSpace[i][j] * fH;
+		nutS = NutrientSpace[i][j] * ((1 - fH)/Space[i][j]->nr_symbionts);
 	}
 
 	return std::make_pair(nutH, nutS);
