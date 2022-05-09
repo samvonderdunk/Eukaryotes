@@ -110,6 +110,7 @@ const double default_conditions[nr_sectors] =	{30.};
 // 5, distribute by cell, let host give a fraction nutrient_claim to each of its symbionts, itself taking whatever's left: n_iH = max(0, 1 - (x_i-1)*claim_H) * (n_tot / c_nei) and n_iS = min(1, (x_i-1)*claim_H)/(x_i-1) * (n_tot / c_nei)
 // 6, evolvable nutrient claims per organelle (defining depletion of nutrients in the environment and the nutrients claimed by each organelle of the available nutrients).
 // 7, distribute by cell; host proportions are changing more with symbiont number, but there is always a minimal proportion reserved for the host.
+// 8, distribute by organelles, but only for host; symbiont get constant influx (viz. chloroplast from sun, which is an evolvable host parameter), but still deplete host nutrients. NOTE that we overuse the nutrient_claim var as we can output it and evolve it; but it is here clearly different from its previous usages (which resulted in a bug before).
 // where n_ij is nutrients at site i for organelle j,
 //       n_tot is total nutrient_condition (see par above), i.e. influx per site,
 //       x_nei is total number of organelles in the neighbourhood,
@@ -131,7 +132,7 @@ const int add_finish_time = 1000;
 /* MUTATION PARAMETERS */
 
 // Used by nutshare_evolve option.
-const double init_nutrient_claim =				1.0;	//If we start with 4 symbionts and 1 hosts, that means they initially share fairly.
+const double init_nutrient_claim =				1.0;	//If we start with 4 symbionts and 1 hosts, that means they initially share fairly. NOTE: if not doing nC 8, set it to 0!
 const double nutrient_claim_mu =					0.001;
 const double nutrient_claim_mu_delta =		0.05;
 

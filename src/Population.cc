@@ -446,13 +446,15 @@ void Population::UpdatePopulation()
 
 			if (Space[i][j]->Host->Stage == 2   &&   Space[i][j]->Host->privilige)
 			{
-				Space[i][j]->Host->Replicate(Space[i][j]->Host->nutrient_claim * nutrients.first);
+				if (nutrient_competition == 8)	Space[i][j]->Host->Replicate(nutrients.first);	//Don't use the nutrient_claim here, bc we're using it in a very different way for nC 8.
+				else	Space[i][j]->Host->Replicate(Space[i][j]->Host->nutrient_claim * nutrients.first);
 			}
 			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
 				if ( Space[i][j]->Symbionts->at(s)->Stage == 2   &&   Space[i][j]->Symbionts->at(s)->privilige)
 				{
-					Space[i][j]->Symbionts->at(s)->Replicate(Space[i][j]->Symbionts->at(s)->nutrient_claim * nutrients.second);
+					if (nutrient_competition == 8) Space[i][j]->Symbionts->at(s)->Replicate(nutrients.second);
+					else	Space[i][j]->Symbionts->at(s)->Replicate(Space[i][j]->Symbionts->at(s)->nutrient_claim * nutrients.second);
 				}
 			}
 			/* ~Replication */
@@ -605,7 +607,7 @@ void Population::CollectNutrientsFromSite(int i, int j)
 	else
 	{
 		if (organelle_density == 0)					nutrient_share = starting_nuts;
-		else if (nutrient_competition == 2)	nutrient_share = starting_nuts / (double)organelle_density;	//Used in first smooth nutrient function.
+		else if (nutrient_competition == 2 || nutrient_competition == 8)	nutrient_share = starting_nuts / (double)organelle_density;	//Used in first smooth nutrient function.
 		else if (nutrient_competition == 6)	nutrient_share = starting_nuts / claim_density;
 		else																nutrient_share = starting_nuts / (double)cell_density;	//Used in second smooth nutrient function and in third nutshare_evolve protocol.
 
@@ -619,7 +621,7 @@ void Population::CollectNutrientsFromSite(int i, int j)
 			else if (jj >= NC)	ncol = jj - NC;
 			else								ncol = jj;
 
-			if (nutrient_competition == 2 || nutrient_competition == 4 || nutrient_competition == 6)		NutrientSpace[nrow][ncol] += nutrient_share;	//Used in first smooth nutrient function. But also when we evolve nutrient_sharing, the whole site gets the unshared total nutrients. These will be further depleted upon replication.
+			if (nutrient_competition == 2 || nutrient_competition >= 4)		NutrientSpace[nrow][ncol] += nutrient_share;	//Used in first smooth nutrient function. But also when we evolve nutrient_sharing, the whole site gets the unshared total nutrients. These will be further depleted upon replication.
 			else	//Used in second nutrient function.
 			{
 				if (Space[nrow][ncol] == NULL)	NutrientSpace[nrow][ncol] += nutrient_share;
@@ -650,9 +652,13 @@ Population::nuts Population::HandleNutrientClaims(int i, int j)
 		// with help from Laurens, see mathematica file stored in "Xtra_Eukaryotes/math".
 		// The formula for fH (fraction of nutrients to host) is: fH(S) = a + (1-a)*e^[S*(b/(a-1))]
 		// Here "a" is the minimal fraction allocated to host (for S -> inf.), and "b" is the basic fraction claimed by each symbiont (but which decreases as the number of symbionts increases).
-		fH = 0.1 + 0.9*exp((0.2/-0.9)*Space[i][j]->nr_symbionts);
+		fH = 0.1 + 0.9*exp((0.2/-0.9)*Space[i][j]->nr_symbionts);	//Set a=0.1, b=0.2
 		nutH = NutrientSpace[i][j] * fH;
 		nutS = NutrientSpace[i][j] * ((1 - fH)/Space[i][j]->nr_symbionts);
+	}
+	else if (nutrient_competition == 8)
+	{
+		nutS = Space[i][j]->Host->nutrient_claim;	//Host evolves how much nutrients it gives to all its symbionts.
 	}
 
 	return std::make_pair(nutH, nutS);

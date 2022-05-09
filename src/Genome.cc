@@ -588,7 +588,7 @@ Genome::i_bead Genome::Duplication(i_bead it, int* pdup_length)
 void Genome::Inventions(int* pdup_length)
 {
 	i_bead focus, insertsite;
-	int k, i;
+	int k;
 	double uu;
 	House* house;
 	Bsite* bsite;

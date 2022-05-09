@@ -34,8 +34,6 @@ Gene::~Gene()
 
 void Gene::Randomize(int organelle)
 {
-	int i;
-
 	type = 0;
   threshold = (int)(uniform()*(2*WeightRange+1) - WeightRange);	//Value between -WeightRange and +WeightRange (incl. borders).
 	signalp = organelle_signals[organelle];	//Let's never let a random gene take on a non-native localization.
