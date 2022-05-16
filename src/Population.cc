@@ -906,6 +906,7 @@ void Population::ReadBackupFile()
 				end_data = line.find_first_of("}");
 				data = line.substr(begin_data, end_data-begin_data+1);	//Brackets are stripped off in ReadExpression function.
 				O->G->ReadExpression(data);
+				O->G->NativeExpression();	//Only native expression has to be set; once we get to UpdateOrganelles, we will set the nr_native_expressed, do gene transport, and update the cell-cycle stage.
 
 				//Read organelle data.
 				begin_data = line.find_last_of("[");
