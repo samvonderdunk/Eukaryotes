@@ -220,6 +220,8 @@ extern bool mutations_on;
 extern bool well_mixing;
 
 extern int init_stage;
+extern int pick_i;
+extern int pick_j;
 
 extern int nutrient_competition;
 extern double nutrient_condition[nr_sectors];

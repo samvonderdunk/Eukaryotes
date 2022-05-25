@@ -744,7 +744,7 @@ void Population::InitialisePopulation()
 		//Take InitCell[k] and copy to Space[i][j].
 		//Still we might not want to fill the entire grid, so roll another die.
 
-		if (uniform() < 0.6)
+		if (uniform() < 0.01)
 		{
 			Space[i][j] = new Cell();
 			Space[i][j]->CloneCell(InitCells[k], &id_count);
@@ -783,6 +783,20 @@ void Population::ContinuePopulationFromBackup()
 					id_count++;
 					Space[i][j]->Symbionts->at(s)->fossil_id = id_count;
 				}
+			}
+		}
+	}
+
+
+	if (pick_i!=-1 && pick_j!=-1)
+	{
+		for(i=0; i<NR; i++)		for(j=0; j<NC; j++)
+		{
+			if (!(i==pick_i && j==pick_j) && Space[i][j]!=NULL)
+			{
+				Space[i][j]->DeathOfCell();
+				delete Space[i][j];
+				Space[i][j] = NULL;
 			}
 		}
 	}
