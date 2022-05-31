@@ -76,7 +76,7 @@ void Cell::GeneTransport()
 		ir = Symbionts->at(s)->G->ExpressedGenes->begin();
 		while (ir != Symbionts->at(s)->G->ExpressedGenes->end())
 		{
-			if ((*ir)->signalp.test(0) && !(*ir)->signalp.test(1))
+			if ((*ir)->BindingAffinity((*ir)->signalp, organelle_signals[HOST])==0)
 			{	//Protein translocated to host.
 				ir2 = ir;
 				ir--;
@@ -95,7 +95,7 @@ void Cell::GeneTransport()
 		it_cntr = 0;
 		while (it_cntr < Host->G->nr_native_expressed)
 		{
-			if (!(*ir)->signalp.test(0) && (*ir)->signalp.test(1))
+			if ((*ir)->BindingAffinity((*ir)->signalp, organelle_signals[SYMBIONT])==0)
 			{	//Protein translocated to symbiont.
 				if (s == nr_symbionts-1)	//Only erase the expressed gene from the host if we get to the last symbiont (already transported to all other symbionts).
 				{

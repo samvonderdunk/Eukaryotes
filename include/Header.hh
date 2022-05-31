@@ -181,10 +181,10 @@ const std::array<std::bitset<5>,4> StageTargets = {25,20,2,1};
 
 // Localizations.
 // 00: native only.
-// 01: localized to host (independent of origin).
-// 10: localized to symbiont (independent of origin).
+// 10: localized to host (independent of origin). (set this by int 1).
+// 01: localized to symbiont (independent of origin). (set this by int 2).
 // 11: dual localization.
-const std::array<std::bitset<signalp_length>,2> organelle_signals = {1,2};	//First symbiont, then host signal.
+const std::array<std::bitset<signalp_length>,2> organelle_signals = {1,2};	//First host (symbiont->host), then symbiont (host->symbiont) signal.
 
 //Variables defined in World.cc
 extern int Time;
