@@ -652,7 +652,7 @@ Population::nuts Population::HandleNutrientClaims(int i, int j)
 		// with help from Laurens, see mathematica file stored in "Xtra_Eukaryotes/math".
 		// The formula for fH (fraction of nutrients to host) is: fH(S) = a + (1-a)*e^[S*(b/(a-1))]
 		// Here "a" is the minimal fraction allocated to host (for S -> inf.), and "b" is the basic fraction claimed by each symbiont (but which decreases as the number of symbionts increases).
-		fH = 0.1 + 0.9*exp((0.2/-0.9)*Space[i][j]->nr_symbionts);	//Set a=0.1, b=0.2
+		fH = 0.001 + 0.999*exp((0.2/-0.999)*Space[i][j]->nr_symbionts);	//Set a=0.001, b=0.2
 		nutH = NutrientSpace[i][j] * fH;
 		nutS = NutrientSpace[i][j] * ((1 - fH)/Space[i][j]->nr_symbionts);
 	}
@@ -744,7 +744,7 @@ void Population::InitialisePopulation()
 		//Take InitCell[k] and copy to Space[i][j].
 		//Still we might not want to fill the entire grid, so roll another die.
 
-		if (uniform() < 0.01)
+		if (uniform() < 0.6)
 		{
 			Space[i][j] = new Cell();
 			Space[i][j]->CloneCell(InitCells[k], &id_count);

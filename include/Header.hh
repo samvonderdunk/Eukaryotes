@@ -76,8 +76,8 @@ const bool minimum_houses = true;	//Fitness is only decreased when the cell or o
 
 //Genome parameters
 const int nr_household_genes =			100;
-const double leakage_to_host =			0.00;
-const double leakage_to_symbiont =	0.00;
+const double leakage_to_host =			0.01;
+const double leakage_to_symbiont =	0.01;
 
 //Regulation parameters
 const double k_zero =		0.0000001;
