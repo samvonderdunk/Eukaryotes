@@ -12,7 +12,7 @@ class Effector : public Gene {
 		std::bitset<effector_length> sequence;
 
 		Effector();	//Still make a default constructor that tells the Gene (and Bead) constructors which kind of bead we are creating.
-		Effector(int typ, int thr, std::bitset<signalp_length>& sig, std::bitset<effector_length>& seq, int exp);
+		Effector(int typ, int thr, std::bitset<effector_length>& seq, int exp);
 		explicit Effector(const Effector &eff);
 		virtual ~Effector();
 

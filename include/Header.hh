@@ -35,12 +35,6 @@ using namespace std;
 
 #define toDigit(c) (c-'0')  // Converts char to digit
 
-#define PROKARYOTE 0
-#define EUKARYOTE 1
-
-#define HOST 0
-#define SYMBIONT 1
-
 #define HOUSE 0
 #define BSITE 1
 #define REGULATOR 2
@@ -50,7 +44,6 @@ const int max_input_files=20;
 const int max_g_length=1000;
 
 //Bead variables
-const int signalp_length =		2;	//As long as I am not using it, make it small.
 const int regulator_length =	20;
 const int effector_length =		10;
 
@@ -78,14 +71,8 @@ const bool empty_division_killing = true;	//Hosts first divide, potentially kill
 const bool cell_fitness = true;	//Fitness defined by nr_houses at the cell level (averaging symbiont n_h and adding it to host n_h); if false, fitness is defined by the n_h that each organelle carries at birth.
 const bool minimum_houses = true;	//Fitness is only decreased when the cell or organelle has fewer house hold genes than nr_household_genes; if false, the cell or organelle needs to have exactly the right number of household genes for fitness = 1.
 
-//Euk vs Prok Competition parameters.
-const double prok_nutscale_fact = 0.5;	//Prokaryotes get less replication out of the same amount of nutrients compared to Eukaryotes.
-const double prok_hhscale_fact = 0.5;	//Prokaryotes have this many household genes compared to the whole eukaryotic holobiont.
-
 //Genome parameters
 const int nr_household_genes =			100;
-const double leakage_to_host =			0.00;
-const double leakage_to_symbiont =	0.00;
 
 //Regulation parameters
 const double k_zero =		0.0000001;
@@ -101,9 +88,7 @@ const int default_TimeOutputFossils =		10000;
 const int default_TimeSaveBackup =			10000;
 
 //Population parameters
-const double death_rate_prok =								0.001;
-const double death_rate_host =								0.001;
-const double death_rate_symbiont =						0.001;
+const double death_rate =     								0.001;
 const int default_nutrient_competition =			2;
 const int nr_sectors =												1;	// 11 for Standard gradient, 9 for new gradient.
 // const double default_conditions[nr_sectors] =	{80., 70., 60., 50., 40., 30., 20., 10., 8., 5., 2.};	//Standard gradient from Prokaryotes.
@@ -138,36 +123,21 @@ const int add_finish_time = 1000;
 
 /* MUTATION PARAMETERS */
 
-// Used by nutshare_evolve option.
-const double init_nutrient_claim =				1.0;	//If we start with 4 symbionts and 1 hosts, that means they initially share fairly.
-const double nutrient_claim_mu =					0.001;
-const double nutrient_claim_mu_delta =		0.05;
-
-const double high_mu_factor =							3;
-const int high_mu_interval =							40000;
-const int high_mu_period =								10000;
-
 const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
 
 //Mutation rates are specified like this:
-// mu[HOST][DUPLICATION][BSITE]
-// mut[HOST][EFFECTOR] specifies the transfer mutation rate FROM HOST (to symbiont) for effectors.
-// muWGD[HOST] specifies WGD rate for host.
-// Note the prokaryotes all also initialised with G->organelle = 0, so they mirror the mutation rates of the eukaryotic hosts.
+// mu[DUPLICATION][BSITE]
 
 #define DUPLICATION 0
 #define DELETION 1
 #define SHUFFLE 2
 #define INVENTION 3
 #define THRESHOLD 4
-#define SIGNALP 5
-#define SEQUENCE 6
-#define ACTIVITY 7
-#define TYPE 8
+#define SEQUENCE 5
+#define ACTIVITY 6
+#define TYPE 7
 
-extern double mu[2][9][4];
-extern double muT[2][4];
-extern double muWGD[2];
+extern double mu[8][4];
 
 //NOTE: watch out with bitsets, if you print the entire set, the order of bits is reversed (i.e. the 1-bit is the first bit if you iterate through the set, but printed on the right of the entire string).
 
@@ -187,13 +157,6 @@ const std::array<std::bitset<5>,4> StageTargets = {25,20,2,1};
 // M (1):		10000
 //1-CtrA 2-GcrA 3-DnaA 4-CcrM 5-SciP
 
-// Localizations.
-// 00: native only.
-// 01: localized to host (independent of origin).
-// 10: localized to symbiont (independent of origin).
-// 11: dual localization.
-const std::array<std::bitset<signalp_length>,2> organelle_signals = {1,2};	//First symbiont, then host signal.
-
 //Variables defined in World.cc
 extern int Time;
 extern int seed;
@@ -208,7 +171,6 @@ extern string definition_files[max_input_files];
 extern string mutation_file;
 extern string backup_file;
 extern string anctrace_file;
-extern string lineage_file;
 
 extern int TimeZero;
 extern int SimTime;
@@ -218,10 +180,6 @@ extern int TimePruneFossils;
 extern int TimeOutputFossils;
 extern int TimeSaveBackup;
 
-extern bool invasion_experiment;	//If set, do an invasion experiment, and stop simulation when the first cell hits the right-most column.
-extern int invasion_complete;
-extern bool trace_lineage;
-extern bool log_lineage;
 extern bool mutations_on;
 extern bool well_mixing;
 

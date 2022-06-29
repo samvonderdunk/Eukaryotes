@@ -6,7 +6,7 @@ Regulator::Regulator() : Gene(REGULATOR)
 	sequence.reset();
 }
 
-Regulator::Regulator(int typ, int thr, int act, std::bitset<signalp_length>& sig, std::bitset<regulator_length>& seq, int exp) : Gene(REGULATOR, typ, thr, sig, exp)
+Regulator::Regulator(int typ, int thr, int act, std::bitset<regulator_length>& seq, int exp) : Gene(REGULATOR, typ, thr, sig, exp)
 {
 	activity = act;
 	sequence = seq;
@@ -70,13 +70,6 @@ string Regulator::Show(bool terminal, bool type_only) const
 	ss << "(" << color_prefix << "R" << type << ":";
 	if (!type_only) ss << threshold << ":";
 	ss << activity << ":";
-	if (!type_only)
-	{
-		for (i=0; i<signalp_length; i++)
-		{
-			ss << signalp[i];
-		}
-	}
 	ss << ":";
 	for (i=0; i<regulator_length; i++)
 	{

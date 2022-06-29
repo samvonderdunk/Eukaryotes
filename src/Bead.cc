@@ -84,20 +84,3 @@ bool Bead::MutateBitstring(std::bitset<effector_length>& bitstring, double m)
 
 	return is_mutated;
 }
-
-bool Bead::MutateBitstring(std::bitset<signalp_length>& bitstring, double m)
-{
-	int i;
-	bool is_mutated = false;
-
-	for(i=0; i<signalp_length; i++)
-	{
-		if(uniform() < m)
-		{
-			bitstring.flip(i);
-			is_mutated = true;
-		}
-	}
-
-	return is_mutated;
-}

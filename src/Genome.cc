@@ -834,11 +834,10 @@ void Genome::ReadGenome(string genome)
 {
 	//Blueprint for this function is ReadBeadsFromString() in Prokaryotes. See that function for detailed comments.
 
-	char* bead, *sp_string, *rseq_string, *eseq_string;
+	char* bead, *rseq_string, *eseq_string;
 	int success, type, threshold, activity, i;
 	std::bitset<regulator_length> RsequenceBITS;
 	std::bitset<effector_length> EsequenceBITS;
-	std::bitset<signalp_length> signalpBITS;
 	House* house;
 	Bsite* bsite;
 	Regulator* reg;
@@ -849,40 +848,30 @@ void Genome::ReadGenome(string genome)
 	{
 		if(bead[1] == 'R')
 		{
-			sp_string = new char[signalp_length+1];
 			rseq_string = new char[regulator_length+1];
-			success = sscanf(bead, "(R%d:%d:%d:%[^:]:%[^)])", &type, &threshold, &activity, sp_string, rseq_string);
+			success = sscanf(bead, "(R%d:%d:%d:%[^)])", &type, &threshold, &activity, rseq_string);
 			if(success != 5) cerr << "Could not read regulatory gene. Input seems corrupt. \n" << endl;
 
-			for (i=0; i<signalp_length; i++)		signalpBITS[i] = (sp_string[i]=='1');
 			for (i=0; i<regulator_length; i++)	RsequenceBITS[i] = (rseq_string[i]=='1');
-
-			delete [] sp_string;
-			sp_string = NULL;
 			delete [] rseq_string;
 			rseq_string = NULL;
 
-			reg = new Regulator(type, threshold, activity, signalpBITS, RsequenceBITS, 0);
+			reg = new Regulator(type, threshold, activity, RsequenceBITS, 0);
 			(*BeadList).push_back(reg);
 			gnr[REGULATOR]++;
 			g_length++;
 		}
 		else if (bead[1] == 'E')
 		{
-			sp_string = new char[signalp_length+1];
 			eseq_string = new char[effector_length+1];
-			success = sscanf(bead, "(E%d:%d:%[^:]:%[^)])", &type, &threshold, sp_string, eseq_string);
+			success = sscanf(bead, "(E%d:%d:%[^)])", &type, &threshold, eseq_string);
 			if(success != 4) cerr << "Could not read effector gene. Input seems corrupt. \n" << endl;
 
-			for (i=0; i<signalp_length; i++)		signalpBITS[i] = (sp_string[i]=='1');
 			for (i=0; i<effector_length; i++)		EsequenceBITS[i] = (eseq_string[i]=='1');
-
-			delete [] sp_string;
-			sp_string = NULL;
 			delete [] eseq_string;
 			eseq_string = NULL;
 
-			eff = new Effector(type, threshold, signalpBITS, EsequenceBITS, 0);
+			eff = new Effector(type, threshold, EsequenceBITS, 0);
 			(*BeadList).push_back(eff);
 			gnr[EFFECTOR]++;
 			g_length++;
@@ -948,7 +937,6 @@ void Genome::ReadDefinition(string definition)
 {
 	char* bead, *rseq_string;
 	int i, success, activity, type;
-	std::bitset<signalp_length> signalpBITS;
 	std::bitset<regulator_length> sequenceBITS;
 
 	bead = strtok((char*)definition.c_str(),";");
@@ -963,8 +951,7 @@ void Genome::ReadDefinition(string definition)
 		delete [] rseq_string;
 		rseq_string = NULL;
 
-		for (i=0; i<signalp_length; i++)	signalpBITS[i] = 0;
-		RegTypeList[type-1] = new Regulator(type, 0, activity, signalpBITS, sequenceBITS, 0);
+		RegTypeList[type-1] = new Regulator(type, 0, activity, sequenceBITS, 0);
 
 		bead = strtok(NULL, ";");
 	}

@@ -5,7 +5,7 @@ Effector::Effector() : Gene(EFFECTOR)
 	sequence.reset();
 }
 
-Effector::Effector(int typ, int thr, std::bitset<signalp_length>& sig, std::bitset<effector_length>& seq, int exp) : Gene(EFFECTOR, typ, thr, sig, exp)
+Effector::Effector(int typ, int thr, std::bitset<effector_length>& seq, int exp) : Gene(EFFECTOR, typ, thr, sig, exp)
 {
 	sequence = seq;
 }
@@ -28,7 +28,7 @@ bool Effector::Mutate(int organelle)
 {
 	bool is_mutated = false;
 
-	Gene::Mutate(organelle);	//Mutate signalp and threshold
+	Gene::Mutate(organelle);	//Mutate threshold
 	if ( MutateBitstring(sequence, mu[organelle][SEQUENCE][EFFECTOR]) )
 	{
 		is_mutated = true;
@@ -78,13 +78,6 @@ string Effector::Show(bool terminal, bool type_only) const
 
 	ss << "(" << color_prefix << "E" << type << ":";
 	if (!type_only) ss << threshold << ":";
-	if (!type_only)
-	{
-		for (i=0; i<signalp_length; i++)
-		{
-			ss << signalp[i];
-		}
-	}
 	ss << ":";
 	for (i=0; i<effector_length; i++)
 	{
