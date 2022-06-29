@@ -7,8 +7,7 @@
 
 class Cell{
 	public:
-		int kind;	//Prokaryote (0) or Eukaryote (1)
-		int barcode;
+		Organelle* Vesicle;
 
 		typedef std::tuple<double,double,double> nuts;
 		typedef std::list<Bead*>::iterator i_bead;
@@ -19,22 +18,22 @@ class Cell{
 		Cell(int k);
 		virtual ~Cell();
 
-		virtual void CalculateCellFitness()=0;
-		virtual bool BasalDeath()=0;
-		virtual void DeathOfCell()=0;
-		virtual bool FailedDivision()=0;
-		virtual Cell* Division(Cell** NewSite, Fossils* FP, unsigned long long* pid_count)=0;
-		virtual void UpdateOrganelles()=0;
-		virtual void Replication(nuts n)=0;
+		void CalculateCellFitness();
+		void BasalDeath();
+		void DeathOfCell();
+		bool FailedDivision();
+		Cell* Division(Cell** NewSite, Fossils* FP, unsigned long long* pid_count);
+		void UpdateOrganelles();
+		void Replication(nuts n);
 
 		i_bead TransferGene(i_bead it, Organelle* Source, Organelle* Target, bool include_distal, bool cut_and_paste);
 		void TransferBead(i_bead it, Organelle* Target);
 
-		virtual void InitialiseCell(int input_nr)=0;
-		virtual void CloneCell(Cell* ImageC, unsigned long long* pid_count)=0;
+		void InitialiseCell(int input_nr);
+		void CloneCell(Cell* ImageC, unsigned long long* pid_count);
 
 		string Show();
-		virtual string Show(bool include_organelles, bool include_genomes)=0;
+		string Show(bool include_organelles, bool include_genomes);
 };
 
 #endif

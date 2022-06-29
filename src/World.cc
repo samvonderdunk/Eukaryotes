@@ -85,36 +85,7 @@ int main(int argc, char** argv) {
 
 	printf("\033[93m### Simulation ###\033[0m\n");
 	for(Time=TimeZero; Time<SimTime+1; Time++){	//We do one extra step, because output is generated at the beginning of a step, such that time=0 is the field as it is initialised.
-		if (invasion_experiment && Time>equilibration_time) NC = NCfull;
-
-		//Periods of high mutation.
-		if ( mutation_epochs && Time!=TimeZero && Time%(high_mu_period+high_mu_interval)==0 )	//Finished an interval and a high mutation period. So going into the next interval (low mutation).
-		{
-			for (i=0; i<2; i++)
-			{
-				muWGD[i] /= high_mu_factor;
-				for (k=0; k<4; k++)
-				{
-					for (j=0; j<8; j++)	mu[i][j][k] /= high_mu_factor;	//Divide all mu's by high_mu_factor.
-					muT[i][k] /= high_mu_factor;
-				}
-			}
-		}
-		else if ( mutation_epochs && Time%(high_mu_period+high_mu_interval)==high_mu_interval )	//Finished an interval, going into the next high mutation period.
-		{
-			for (i=0; i<2; i++)
-			{
-				muWGD[i] *= high_mu_factor;
-				for (k=0; k<4; k++)
-				{
-					for (j=0; j<8; j++)	mu[i][j][k] *= high_mu_factor;	//Multiply all mu's by high_mu_factor.
-					muT[i][k] *= high_mu_factor;
-				}
-			}
-		}
-
 		P->UpdatePopulation();		//Main next-state function, updating the population.
-		if (invasion_complete>0 && (Time==invasion_complete+add_finish_time)) break;
 	}
 	printf("Simulation completed...\n\n");
 
@@ -129,10 +100,10 @@ int main(int argc, char** argv) {
 
 void PrintUsage(bool full)
 {
-	printf("\n\033[93m### Eukaryotes --- usage ###\033[0m\nArguments:\n   -s [seed]\t\t\tSet seed for random number generator (e.g. 211)\n   -p [project title]\t\tDefines folder for local storage\n   -g [genomes file]\t\tSee World.cc or --help for format\n   -e [expressions file]\tSee World.cc or --help for format\n   -d [definitions file]\tSee World.cc or --help for format\n   -m [mutations file]\tSee World.cc or --help for format\n   -b [backup file]\t\tStart from backup (e.g. /path/backup00090000.txt)\n   -a [ancestor file]\t\tContinue ancestor trace (e.g. /path/anctrace00090000.txt)\n   -l [lineage file]\t\tLineage record (e.g. Host_MRCA_t1960k.out, see Programmes -L1 and -L2)\n   -t0 [start time]\t\tSet starting time (default: 0)\n   -tN [end time]\t\tSet simulation time (default: 10M)\n   -tT [term time]\t\tSet interval for terminal output (default: 100)\n   -tS [snap time]\t\tSet interval for saving snapshot (default: 100)\n   -tP [prune time]\t\tSet time interval for fossil pruning (default: 1000)\n   -tF [fossil time]\t\tSet time interval for saving fossil record (default: 10k)\n   -tB [backup time]\t\tSet interval for saving backup (default: 10k)\n   -nA [nutrient conditions 80,70,60]\tSet nutrient influx per site\n   -nC [nutrient competition]\tChoose type of nutrient competition (1: subtract/divide, 2: divide all, 3: divide/divide)\n   -sC [strain competition]\tChoose distribution of strains (1: vertical stripes, 2: mixed)\n   -r [number of rows]\n   -c [number of columns]\n   -st [initial stage]\n\nFlags:\n   --nomut\t\t\tNo mutations\n   --mixed\t\t\tWell-mixing\n   --help\t\t\tPrint full usage info\n\nProgrammes:\n   -INV\t\t\t\tInvasion/growth experiment\n   -L1\t\t\t\tTrace complete lineage (every organelle is considered a mutant)\n   -L2\t\t\t\tLog complete lineage (obtained using -L1)\n");
+	printf("\n\033[93m### TFEvolution --- usage ###\033[0m\nArguments:\n   -s [seed]\t\t\tSet seed for random number generator (e.g. 211)\n   -p [project title]\t\tDefines folder for local storage\n   -g [genomes file]\t\tSee World.cc or --help for format\n   -e [expressions file]\tSee World.cc or --help for format\n   -d [definitions file]\tSee World.cc or --help for format\n   -m [mutations file]\tSee World.cc or --help for format\n   -b [backup file]\t\tStart from backup (e.g. /path/backup00090000.txt)\n   -a [ancestor file]\t\tContinue ancestor trace (e.g. /path/anctrace00090000.txt)\n   -l [lineage file]\t\tLineage record (e.g. Host_MRCA_t1960k.out, see Programmes -L1 and -L2)\n   -t0 [start time]\t\tSet starting time (default: 0)\n   -tN [end time]\t\tSet simulation time (default: 10M)\n   -tT [term time]\t\tSet interval for terminal output (default: 100)\n   -tS [snap time]\t\tSet interval for saving snapshot (default: 100)\n   -tP [prune time]\t\tSet time interval for fossil pruning (default: 1000)\n   -tF [fossil time]\t\tSet time interval for saving fossil record (default: 10k)\n   -tB [backup time]\t\tSet interval for saving backup (default: 10k)\n   -nA [nutrient conditions 80,70,60]\tSet nutrient influx per site\n   -nC [nutrient competition]\tChoose type of nutrient competition (1: subtract/divide, 2: divide all, 3: divide/divide)\n   -sC [strain competition]\tChoose distribution of strains (1: vertical stripes, 2: mixed)\n   -r [number of rows]\n   -c [number of columns]\n   -st [initial stage]\n\nFlags:\n   --nomut\t\t\tNo mutations\n   --mixed\t\t\tWell-mixing\n   --help\t\t\tPrint full usage info\n\nProgrammes:\n   -INV\t\t\t\tInvasion/growth experiment\n   -L1\t\t\t\tTrace complete lineage (every organelle is considered a mutant)\n   -L2\t\t\t\tLog complete lineage (obtained using -L1)\n");
 	if (full)
 	{
-		printf("\n\033[93m### Eukaryotes --- formats ###\033[0m\n\n<genomes file>\t\tHost genome on first line, each next line a symbiont.\n   (R2:0:-3:1:10010100010101010001).(H).(0:01010101000110010100).(...\n   (R4:1:-1:2:01010101100101000001).(H).(2:10100011001010001010).(...\n   (R4:1:-1:2:01010101100101000001).(H).(2:10100011001010001010).(...\n\n<expressions file>\tHost expression on first line, each next line a symbiont (matching with genomes file)\n   {10101110}\n   {...\n   {...\n\n<definitions file>\tHost type definitions on first line, each next line a symbiont\n   (R1:1:10010100010101010001);(R2:-5:01010100101010111000);(...\n   (R1:2:10100011001010001010);(...\n   (R1:2:10100011001010001010);(...\n<mutations file> Per line a different type of mutation; then 2 sets of 4 columns for the two organelles and 4 bead types\n   #DUPLICATION 0.0001 0.0003 0.0001 0.0001 0.0 0.0 0.0 0.0\n   #DELETION 0.0001 0.0003 0.0001 0.0001 0.0 0.0 0.0 0.0\n");
+		printf("\n\033[93m### TFEvolution --- formats ###\033[0m\n\n<genomes file>\t\tHost genome on first line, each next line a symbiont.\n   (R2:0:-3:1:10010100010101010001).(H).(0:01010101000110010100).(...\n   (R4:1:-1:2:01010101100101000001).(H).(2:10100011001010001010).(...\n   (R4:1:-1:2:01010101100101000001).(H).(2:10100011001010001010).(...\n\n<expressions file>\tHost expression on first line, each next line a symbiont (matching with genomes file)\n   {10101110}\n   {...\n   {...\n\n<definitions file>\tHost type definitions on first line, each next line a symbiont\n   (R1:1:10010100010101010001);(R2:-5:01010100101010111000);(...\n   (R1:2:10100011001010001010);(...\n   (R1:2:10100011001010001010);(...\n<mutations file> Per line a different type of mutation; then 2 sets of 4 columns for the two organelles and 4 bead types\n   #DUPLICATION 0.0001 0.0003 0.0001 0.0001 0.0 0.0 0.0 0.0\n   #DELETION 0.0001 0.0003 0.0001 0.0001 0.0 0.0 0.0 0.0\n");
 	}
 	exit(1);
 }
@@ -422,23 +393,6 @@ void Setup(int argc, char** argv) {
 			PrintUsage(true);
 		}
 
-		/* ########## */
-		/* PROGRAMMES */
-		/* ########## */
-
-		else if(ReadOut=="-INV")
-		{
-			invasion_experiment = true;
-		}
-		else if(ReadOut=="-L1")
-		{
-			trace_lineage = true;
-		}
-		else if(ReadOut=="-L2")
-		{
-			log_lineage = true;
-		}
-
 		else
 		{
 			PrintUsage(false);
@@ -479,20 +433,12 @@ void SetMutationRates()
 	while(getline(infile,line))
 	{
 		data = (char*)line.c_str();
-		if (count_lines < 9)
+		if (count_lines < 8)
 		{
-			success = sscanf(data, "#%s\t%lf %lf %lf %lf %lf %lf %lf %lf", buffer, &mu[HOST][count_lines][HOUSE], &mu[HOST][count_lines][BSITE], &mu[HOST][count_lines][REGULATOR], &mu[HOST][count_lines][EFFECTOR], &mu[SYMBIONT][count_lines][HOUSE], &mu[SYMBIONT][count_lines][BSITE], &mu[SYMBIONT][count_lines][REGULATOR], &mu[SYMBIONT][count_lines][EFFECTOR]);
+			success = sscanf(data, "#%s\t%lf %lf %lf", buffer, &mu[count_lines][HOUSE], &mu[count_lines][BSITE], &mu[count_lines][REGULATOR], &mu[count_lines][EFFECTOR]);
 		}
-		else if (count_lines == 9)
-		{
-			success = sscanf(data, "#%s\t%lf %lf %lf %lf %lf %lf %lf %lf", buffer, &muT[HOST][HOUSE], &muT[HOST][BSITE], &muT[HOST][REGULATOR], &muT[HOST][EFFECTOR], &muT[SYMBIONT][HOUSE], &muT[SYMBIONT][BSITE], &muT[SYMBIONT][REGULATOR], &muT[SYMBIONT][EFFECTOR]);
-		}
-		else if (count_lines == 10)
-		{
-			success = sscanf(data, "#%s\t%lf %lf", buffer, &muWGD[HOST], &muWGD[SYMBIONT]);
-		}
-
-		if((count_lines < 10 && success != 9) || (count_lines == 10 && success != 3))
+		
+		if(count_lines < 8 && success != 4))
 		{
 			cerr << "Error: mutation file potentially corrupt.\n" << endl;
 			exit(1);
