@@ -355,7 +355,7 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 		it = BeadList->begin();
 		while(it != BeadList->end())
 		{
-			if (uniform() < mu[organelle][SHUFFLE][(*it)->kind])	it = Shuffle(it);
+			if (uniform() < mu[SHUFFLE][(*it)->kind])	it = Shuffle(it);
 			else	it++;
 		}
 
@@ -363,7 +363,7 @@ void Genome::DevelopChildrenGenomes(Genome* parentG)	//Function gets iterators o
 		Inventions(pdup_length);
 
 		//WGDs.
-		if (uniform() < muWGD[organelle])		WholeGenomeDuplication(pdup_length);
+		if (uniform() < muWGD)		WholeGenomeDuplication(pdup_length);
 
 		assert(g_length == g_length_before_mut + (*pdup_length) - (*pdel_length));
 	}	//END of mutations.
@@ -463,14 +463,14 @@ Genome::i_bead Genome::Mutation(i_bead it, int* pdel_length)
 	is_mutated = false;
 
 	double uu = uniform();
-	if (uu < mu[organelle][DUPLICATION][(*it)->kind])			//Duplication.
+	if (uu < mu[DUPLICATION][(*it)->kind])			//Duplication.
 	{
 		(*it)->duplicate = true;
 		is_mutated = true;
 		it++;
 	}
 
-	else if (uu < mu[organelle][DUPLICATION][(*it)->kind] + mu[organelle][DELETION][(*it)->kind])		//Deletion.
+	else if (uu < mu[DUPLICATION][(*it)->kind] + mu[DELETION][(*it)->kind])		//Deletion.
 	{
 		it = Deletion(it, pdel_length);
 		is_mutated = true;
@@ -480,7 +480,7 @@ Genome::i_bead Genome::Mutation(i_bead it, int* pdel_length)
 	{
 		if ( (*it)->Mutate(organelle) )
 		{
-			if ( (*it)->kind == REGULATOR && mu[organelle][TYPE][(*it)->kind]==0.0 )	PotentialTypeChange(it);	//Check type change, maybe activity or sequence has been mutated.	Note that for effectors, the type change is immediately checked by the Mutate function, as it does not need to know other variables of the Genome (for regulatory types, we do need those).
+			if ( (*it)->kind == REGULATOR && mu[TYPE][(*it)->kind]==0.0 )	PotentialTypeChange(it);	//Check type change, maybe activity or sequence has been mutated.	Note that for effectors, the type change is immediately checked by the Mutate function, as it does not need to know other variables of the Genome (for regulatory types, we do need those).
 			is_mutated = true;
 		}
 		it++;
@@ -599,7 +599,7 @@ void Genome::Inventions(int* pdup_length)
 	{
 		uu = uniform();
 
-		if (k == HOUSE && uu < mu[organelle][INVENTION][HOUSE])
+		if (k == HOUSE && uu < mu[INVENTION][HOUSE])
 		{
 			house = new House();
 			house->Randomize(organelle);
@@ -611,7 +611,7 @@ void Genome::Inventions(int* pdup_length)
 			g_length++;
 			(*pdup_length)++;
 		}
-		else if (k == BSITE && uu < mu[organelle][INVENTION][BSITE])
+		else if (k == BSITE && uu < mu[INVENTION][BSITE])
 		{
 			bsite = new Bsite();
 			bsite->Randomize(organelle);
@@ -623,7 +623,7 @@ void Genome::Inventions(int* pdup_length)
 			g_length++;
 			(*pdup_length)++;
 		}
-		else if (k == REGULATOR && uu < mu[organelle][INVENTION][REGULATOR])
+		else if (k == REGULATOR && uu < mu[INVENTION][REGULATOR])
 		{
 			reg = new Regulator();
 			reg->Randomize(organelle);
@@ -631,14 +631,14 @@ void Genome::Inventions(int* pdup_length)
 			insertsite = FindRandomGenePosition(true,true);
 			insertsite = FindFirstBsiteInFrontOfGene(insertsite);
 			insertsite = BeadList->insert(insertsite, reg);
-			if (mu[organelle][TYPE][REGULATOR]==0.0)	PotentialTypeChange(insertsite);
+			if (mu[TYPE][REGULATOR]==0.0)	PotentialTypeChange(insertsite);
 			else																			reg->MutateType(&reg->type, 1.0);	//m=1, so that "mutation" always takes place.
 
 			gnr[REGULATOR]++;
 			g_length++;
 			(*pdup_length)++;
 		}
-		else if (k == EFFECTOR && uu < mu[organelle][INVENTION][EFFECTOR])
+		else if (k == EFFECTOR && uu < mu[INVENTION][EFFECTOR])
 		{
 			eff = new Effector();
 			eff->Randomize(organelle);
@@ -850,7 +850,7 @@ void Genome::ReadGenome(string genome)
 		{
 			rseq_string = new char[regulator_length+1];
 			success = sscanf(bead, "(R%d:%d:%d:%[^)])", &type, &threshold, &activity, rseq_string);
-			if(success != 5) cerr << "Could not read regulatory gene. Input seems corrupt. \n" << endl;
+			if(success != 4) cerr << "Could not read regulatory gene. Input seems corrupt. \n" << endl;
 
 			for (i=0; i<regulator_length; i++)	RsequenceBITS[i] = (rseq_string[i]=='1');
 			delete [] rseq_string;

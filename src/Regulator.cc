@@ -6,7 +6,7 @@ Regulator::Regulator() : Gene(REGULATOR)
 	sequence.reset();
 }
 
-Regulator::Regulator(int typ, int thr, int act, std::bitset<regulator_length>& seq, int exp) : Gene(REGULATOR, typ, thr, sig, exp)
+Regulator::Regulator(int typ, int thr, int act, std::bitset<regulator_length>& seq, int exp) : Gene(REGULATOR, typ, thr, exp)
 {
 	activity = act;
 	sequence = seq;
@@ -43,8 +43,8 @@ bool Regulator::Mutate(int organelle)
 	bool is_mutated = false;
 
 	Gene::Mutate(organelle);	//Mutate signalp and threshold
-	if ( MutateParameter(&activity, mu[organelle][ACTIVITY][REGULATOR]) )		is_mutated = true;
-	if ( MutateBitstring(sequence, mu[organelle][SEQUENCE][REGULATOR]) )		is_mutated = true;
+	if ( MutateParameter(&activity, mu[ACTIVITY][REGULATOR]) )		is_mutated = true;
+	if ( MutateBitstring(sequence, mu[SEQUENCE][REGULATOR]) )		is_mutated = true;
 
 	return is_mutated;
 }

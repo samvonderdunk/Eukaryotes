@@ -8,8 +8,8 @@
 class Cell{
 	public:
 		Organelle* Vesicle;
+		int barcode;	//Track different strains or individuals.
 
-		typedef std::tuple<double,double,double> nuts;
 		typedef std::list<Bead*>::iterator i_bead;
 		typedef std::list<Regulator*>::iterator i_reg;
 		typedef std::vector<Organelle*>::iterator i_org;
@@ -19,12 +19,12 @@ class Cell{
 		virtual ~Cell();
 
 		void CalculateCellFitness();
-		void BasalDeath();
+		bool BasalDeath();
 		void DeathOfCell();
 		bool FailedDivision();
 		Cell* Division(Cell** NewSite, Fossils* FP, unsigned long long* pid_count);
 		void UpdateOrganelles();
-		void Replication(nuts n);
+		void Replication(double nuts);
 
 		i_bead TransferGene(i_bead it, Organelle* Source, Organelle* Target, bool include_distal, bool cut_and_paste);
 		void TransferBead(i_bead it, Organelle* Target);

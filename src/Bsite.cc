@@ -39,8 +39,8 @@ bool Bsite::Mutate(int organelle)
 {
 	bool is_mutated = false;
 
-	if ( MutateParameter(&activity, mu[organelle][ACTIVITY][BSITE]) )		is_mutated = true;
-	if ( MutateBitstring(sequence, mu[organelle][SEQUENCE][BSITE]) )		is_mutated = true;
+	if ( MutateParameter(&activity, mu[ACTIVITY][BSITE]) )		is_mutated = true;
+	if ( MutateBitstring(sequence, mu[SEQUENCE][BSITE]) )		is_mutated = true;
 
 	return is_mutated;
 }

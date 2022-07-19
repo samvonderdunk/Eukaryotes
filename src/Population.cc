@@ -22,7 +22,7 @@ Population::~Population()	//Skips deconstructor of Cell, because we need to chec
 	{
 		if ((Space[i][j]) != NULL)
 		{
-			if (Space[i][j]->Vesicle->mutant || trace_lineage || log_lineage) FossilSpace->EraseFossil(Space[i][j]->Vesicle->fossil_id);
+			if (Space[i][j]->Vesicle->mutant) FossilSpace->EraseFossil(Space[i][j]->Vesicle->fossil_id);
 			delete Space[i][j];
 			Space[i][j] = NULL;
 		}
@@ -35,7 +35,7 @@ Population::~Population()	//Skips deconstructor of Cell, because we need to chec
 void Population::UpdatePopulation()
 {
 	int update_order[NR*NC];
-	int u, i, j, s;
+	int u, i, j;
 	Cell* C;
 
 	if (well_mixing)	WellMix();	//Well-mixing (before determining nutrient levels).
@@ -44,10 +44,7 @@ void Population::UpdatePopulation()
 	for(i=0; i<NR; i++)	for(j=0; j<NC; j++)	CollectNutrientsFromSite(i,j);
 
 	if(Time%TimeTerminalOutput==0)																						ShowGeneralProgress();
-	if(Time%TimeSaveGrid==0 || (invasion_complete>0 && Time>=invasion_complete+add_finish_time-10))
-	{
-		OutputGrid(false);
-	}
+	if(Time%TimeSaveGrid==0)																									OutputGrid(false);
 	if(Time%TimePruneFossils==0 && Time!=0)																		PruneFossilRecord();
 	if(Time%TimeOutputFossils==0 && Time!=0)																	FossilSpace->ExhibitFossils();
 	if(Time%TimeSaveBackup==0 && Time!=0)
@@ -69,9 +66,6 @@ void Population::UpdatePopulation()
 
 		if (Space[i][j] != NULL)
 		{
-
-			if (log_lineage)	LogLineage(i,j);
-
 			/* Basal death */
 			if (Space[i][j]->BasalDeath())
 			{
@@ -118,8 +112,7 @@ void Population::UpdatePopulation()
 			Space[i][j]->UpdateOrganelles();	//Expression dynamics within cell.
 
 			/* Replication */
-			nuts nutrients = NutrientSpace[i][j];
-			Space[i][j]->Replication(nutrients);
+			Space[i][j]->Replication(NutrientSpace[i][j]);
 
 		}
 	}
@@ -157,11 +150,6 @@ Population::coords Population::PickNeighbour(int i, int j)
 		else if(nrow >= NR)	nrow -= NR;
 
 		ncol = j+nj-1;
-		if (invasion_experiment && (ncol<0 || ncol>=NC))	//If we go outside of the borders, we make you pick again. Nice that this was already a while-loop.
-		{
-			nrow = i;
-			ncol = j;
-		}
 		if(ncol < 0)	ncol += NC;
 		else if(ncol >= NC)	ncol -= NC;
 	}
@@ -170,7 +158,7 @@ Population::coords Population::PickNeighbour(int i, int j)
 
 void Population::CollectNutrientsFromSite(int i, int j)
 {
-	int ii, jj, nrow, ncol, cell_density=0, organelle_density=0, s;
+	int ii, jj, nrow, ncol, cell_density=0, organelle_density=0;
 	double nut_condition, nutrient_share, starting_nuts, claim_density=0., orgs_at_site;
 
 	nut_condition = nutrient_condition[j/(NC/nr_sectors)];
@@ -184,18 +172,9 @@ void Population::CollectNutrientsFromSite(int i, int j)
 		else if (ii >= NR)	nrow = ii - NR;
 		else								nrow = ii;
 
-		if (invasion_experiment)
-		{
-			if (jj < 0)					ncol = 0;
-			else if (jj >= NC)	ncol = NC-1;
-			else								ncol = jj;
-		}
-		else
-		{
-			if (jj < 0)					ncol = jj + NC;
-			else if (jj >= NC)	ncol = jj - NC;
-			else								ncol = jj;
-		}
+		if (jj < 0)					ncol = jj + NC;
+		else if (jj >= NC)	ncol = jj - NC;
+		else								ncol = jj;
 
 		if (Space[nrow][ncol] != NULL)
 		{
@@ -209,14 +188,7 @@ void Population::CollectNutrientsFromSite(int i, int j)
 	else																				orgs_at_site = 1.;
 
 	//If we don't have wrapped columns, border pixels get fewer nutrients to start with.
-	if (invasion_experiment && (j==0 || j==NC-1))
-	{
-		starting_nuts = (6/9)*nut_condition;
-	}
-	else
-	{
-		starting_nuts = nut_condition;
-	}
+	starting_nuts = nut_condition;
 
 	if (nutrient_competition == 0)	//Constant nutrient level.
 	{
@@ -267,8 +239,9 @@ void Population::CollectNutrientsFromSite(int i, int j)
 void Population::InitialisePopulation()
 {
 	Cell* InitCells[max_input_files] = {NULL};
-	int k, i, j, s, blocks, r, c;
+	int k, i, j, blocks, r, c;
 	double b, b_dbl, b_int;
+	Cell* C;
 
 	//Each input file (genome & expression) will be made into a cell.
 	for (k=0; k<max_input_files; k++)
@@ -362,8 +335,8 @@ void Population::ContinuePopulationFromBackup()
 	//Only do these things if we're starting at an irregular timepoint (where we wouldn't already store info inside UpdatePop.).
 	if (TimeZero%TimeTerminalOutput != 0)										ShowGeneralProgress();
 	if (TimeZero%TimeSaveGrid != 0)													OutputGrid(false);
-	if (TimeZero%TimePruneFossils != 0 && !trace_lineage && mutations_on)		PruneFossilRecord();
-	if (TimeZero%TimeOutputFossils != 0 && !trace_lineage && mutations_on)	FossilSpace->ExhibitFossils();
+	if (TimeZero%TimePruneFossils != 0 && mutations_on)			PruneFossilRecord();
+	if (TimeZero%TimeOutputFossils != 0 && mutations_on)		FossilSpace->ExhibitFossils();
 	if (TimeZero%TimeSaveBackup != 0)												OutputGrid(true);
 }
 
@@ -703,34 +676,6 @@ Organelle* Population::FindInFossilRecord(unsigned long long AncID)
 	return NULL;
 }
 
-void Population::ReadLineageFile()
-{
-	ifstream infile(lineage_file.c_str());
-	string line, data;
-	int end_data, count_lines = 0;
-	unsigned long long ID;
-
-	if (!infile.is_open())
-	{
-		printf("Lineage-file could not be opened.\n");
-		exit(1);
-	}
-
-	printf("Reading lineage from file: %s\n", lineage_file.c_str());
-	while(getline(infile,line))
-	{
-		if (count_lines%10000 == 0 && count_lines!=0)	printf("%d\n", count_lines);
-		end_data = line.find("\t");
-		data = line.substr(0,end_data);
-
-		stringstream(data) >> ID;
-		Lineage.push_back(ID);
-		count_lines++;
-	}
-	assert (Lineage.size() == (size_t)count_lines);
-	sort(Lineage.begin(), Lineage.end());
-}
-
 /* ######################################################################## */
 /*				FOSSILS	FOSSILS	FOSSILS	FOSSILS	FOSSILS	FOSSILS	FOSSILS						*/
 /* ######################################################################## */
@@ -738,59 +683,23 @@ void Population::ReadLineageFile()
 void Population::PruneFossilRecord()
 {
 	std::list<unsigned long long> AllFossilIDs;
-	int i, j, s, fossil_record_size;
+	int i, j, fossil_record_size;
 	unsigned long long fossilID;
 	i_fos iF;
 	i_ull findit;
 	Organelle* lastCA;
 	i_lin iL;
 
-	if (trace_lineage && Time == SimTime)
+	//Trace all living individuals back to the beginning, storing all individuals along their lineage.
+	for(i=0; i<NR; i++)	for(j=0; j<NC; j++)
 	{
-		//Only trace hosts that are in the lineage record. // Also added for prokaryotes, but haven't thought about it.
-
-		iL = Lineage.begin();
-		while (iL != Lineage.end() && *iL <= id_count)
+		if(Space[i][j] != NULL)
 		{
-			AllFossilIDs.push_back(*iL);
-
-			//Find location of this individual in the field.
-			lastCA = NULL;
-			for(i=0; i<NR; i++)	for(j=0; j<NC; j++)
-			{
-				if (Space[i][j] != NULL)
-				{
-					if (Space[i][j]->Vesicle->fossil_id == *iL)
-					{
-						lastCA = Space[i][j]->Vesicle->Ancestor;
-						break;
-					}
-				}
-			}
-
-			//Store entire lineage of this individual.
+			lastCA = Space[i][j]->Vesicle->Ancestor;
 			while(lastCA != NULL)
 			{
 				AllFossilIDs.push_back(lastCA->fossil_id);
 				lastCA = lastCA->Ancestor;
-			}
-			iL++;
-		}
-	}
-
-	else
-	{
-		//Trace all living individuals back to the beginning, storing all individuals along their lineage.
-		for(i=0; i<NR; i++)	for(j=0; j<NC; j++)
-		{
-			if(Space[i][j] != NULL)
-			{
-				lastCA = Space[i][j]->Vesicle->Ancestor;
-				while(lastCA != NULL)
-				{
-					AllFossilIDs.push_back(lastCA->fossil_id);
-					lastCA = lastCA->Ancestor;
-				}
 			}
 		}
 	}
@@ -807,7 +716,7 @@ void Population::PruneFossilRecord()
 		fossilID = (*iF)->fossil_id;
 		findit = std::find(AllFossilIDs.begin(),AllFossilIDs.end(),fossilID);
 		// If not, delete the fossil unless it is still alive or is still saved in the graveyard. If a prokaryote dies, the graveyard-flag remains for one ShowGeneralProgress() cycle at most, so that the fossil can be deleted at the next pruning step. If ShowGeneralProgress() precedes PruneFossilRecord(), this is issue is even avoided, because flags are already removed off dead prokaryotes.
-		if(findit==AllFossilIDs.end() && (!(*iF)->alive || (trace_lineage && Time == SimTime)) )	//Fossil not needed/found in relevant branches AND either the organelle is already dead OR we're tracing a lineage (in which case we want to clean our tree more quickly, live individuals will not suddenly produce offspring that are in the lineage record).
+		if(findit==AllFossilIDs.end() && (!(*iF)->alive))	//Fossil not needed/found in relevant branches AND either the organelle is already dead OR we're tracing a lineage (in which case we want to clean our tree more quickly, live individuals will not suddenly produce offspring that are in the lineage record).
 		{
 			if (!(*iF)->alive)	delete *iF;	//Only delete things that are not alive anymore.
 			iF = FossilSpace->FossilRecord.erase(iF);
@@ -860,8 +769,7 @@ void Population::OutputGrid(bool backup)
 		}
 		else	//Print internal state and genome of prokaryote to file.
 		{
-			nuts nutrients = NutrientSpace[i][j];
-			fprintf(f, "%d %d -2 %f\t%s\n", i, j, std::get<2>(nutrients), Space[i][j]->Vesicle->Output(backup).c_str());
+			fprintf(f, "%d %d -2 %f\t%s\n", i, j, NutrientSpace[i][j], Space[i][j]->Vesicle->Output(backup).c_str());
 		}
 	}
 
@@ -874,8 +782,8 @@ void Population::OutputGrid(bool backup)
 
 void Population::ShowGeneralProgress()
 {
-	int i, j, symbiont_count=0;
-	int cell_count[2][nr_sectors] = {0};
+	int i, j;
+	int cell_count[nr_sectors] = {0};
 	int stage_counts[3][6] = {0};
 	i_org iS;
 
@@ -883,20 +791,20 @@ void Population::ShowGeneralProgress()
 	{
 		if ( Space[i][j] != NULL )
 		{
-			cell_count[Space[i][j]->kind][j/(NC/nr_sectors)]++;	// sector = j/(NC/nr_sectors)
+			cell_count[j/(NC/nr_sectors)]++;	// sector = j/(NC/nr_sectors)
 			stage_counts[0][Space[i][j]->Vesicle->Stage]++;
-			if (invasion_experiment && invasion_complete==-1 && Time>equilibration_time && j==NC-1)	invasion_complete = Time;
 		}
 	}
 
 	cout << "Time " << Time << "\tCells ";
 	for (i=0; i<nr_sectors; i++)
 	{
-		cout << cell_count[0][i];
+		cout << cell_count[i];
 		if (i != nr_sectors-1)	cout << "|";
 	}
+	cout << endl;
 
-	if (cell_count[0][0]+cell_count[0][1]+cell_count[0][2]+cell_count[0][3]+cell_count[0][4]+cell_count[0][5]+symbiont_count == 0)	//Easier to use symbiont_count as we did not split this over sectors.
+	if (cell_count[0]+cell_count[1]+cell_count[2]+cell_count[3]+cell_count[4]+cell_count[5] == 0)	//Easier to use symbiont_count as we did not split this over sectors.
 	{
 		cout << "And since there is no more life, we will stop the experiment here.\n" << endl;
 		exit(1);

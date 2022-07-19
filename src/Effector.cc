@@ -5,7 +5,7 @@ Effector::Effector() : Gene(EFFECTOR)
 	sequence.reset();
 }
 
-Effector::Effector(int typ, int thr, std::bitset<effector_length>& seq, int exp) : Gene(EFFECTOR, typ, thr, sig, exp)
+Effector::Effector(int typ, int thr, std::bitset<effector_length>& seq, int exp) : Gene(EFFECTOR, typ, thr, exp)
 {
 	sequence = seq;
 }
@@ -29,7 +29,7 @@ bool Effector::Mutate(int organelle)
 	bool is_mutated = false;
 
 	Gene::Mutate(organelle);	//Mutate threshold
-	if ( MutateBitstring(sequence, mu[organelle][SEQUENCE][EFFECTOR]) )
+	if ( MutateBitstring(sequence, mu[SEQUENCE][EFFECTOR]) )
 	{
 		is_mutated = true;
 		DefineTypeFromSeq();		//Check if we have to change the type.

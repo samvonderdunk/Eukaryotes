@@ -2,14 +2,21 @@
 
 Cell::Cell()
 {
+	Vesicle = NULL;
+	Vesicle = new Organelle();
 }
 
 Cell::Cell(int k)
 {
+	Vesicle = NULL;
+	Vesicle = new Organelle();
+	barcode = k;
 }
 
 Cell::~Cell()
 {
+	delete Vesicle;
+	Vesicle = NULL;
 }
 
 void Cell::CalculateCellFitness()
@@ -31,8 +38,8 @@ void Cell::DeathOfCell()
 {
 	if (Vesicle != NULL)
 	{
-		if (Vesicle->mutant || trace_lineage || log_lineage)		Vesicle->alive = false;
-		else																										delete Vesicle;
+		if (Vesicle->mutant)		Vesicle->alive = false;
+		else										delete Vesicle;
 
 		Vesicle = NULL;
 	}
@@ -61,7 +68,7 @@ Cell* Cell::Division(Cell** NewSite, Fossils* FP, unsigned long long* pid_count)
 		NewCell->barcode = barcode;
 		(*pid_count)++;
 		NewCell->Vesicle->Mitosis(Vesicle, *pid_count);
-		if (NewCell->Vesicle->mutant || trace_lineage || log_lineage)		FP->BuryFossil(NewCell->Vesicle);
+		if (NewCell->Vesicle->mutant)		FP->BuryFossil(NewCell->Vesicle);
 
 		if (*NewSite != NULL)
 		{
@@ -86,11 +93,11 @@ void Cell::UpdateOrganelles()
 	Vesicle->G->UpdateGeneExpression();	//Update gene expression states.
 }
 
-void Cell::Replication(nuts n)
+void Cell::Replication(double nuts)
 {
 	if (Vesicle->Stage == 2 && Vesicle->privilige)
 	{
-		Vesicle->Replicate(Vesicle->nutrient_claim * std::get<2>(n));
+		Vesicle->Replicate(Vesicle->nutrient_claim * nuts);
 	}
 }
 
@@ -262,7 +269,7 @@ string Cell::Show()
 	string Content="";
 	std::stringstream ss;
 
-	ss << "<" << kind << "|" << barcode << ">" << endl;
+	ss << "<" << barcode << ">" << endl;
 
 	Content += ss.str();
 	ss.clear();

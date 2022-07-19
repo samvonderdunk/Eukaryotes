@@ -72,7 +72,7 @@ const bool cell_fitness = true;	//Fitness defined by nr_houses at the cell level
 const bool minimum_houses = true;	//Fitness is only decreased when the cell or organelle has fewer house hold genes than nr_household_genes; if false, the cell or organelle needs to have exactly the right number of household genes for fitness = 1.
 
 //Genome parameters
-const int nr_household_genes =			100;
+const int nr_household_genes =			50;
 
 //Regulation parameters
 const double k_zero =		0.0000001;
@@ -123,6 +123,11 @@ const int add_finish_time = 1000;
 
 /* MUTATION PARAMETERS */
 
+// Used by nutshare_evolve option.
+const double init_nutrient_claim =				1.0;	//If we start with 4 symbionts and 1 hosts, that means they initially share fairly.
+const double nutrient_claim_mu =					0.001;
+const double nutrient_claim_mu_delta =		0.05;
+
 const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
 
 //Mutation rates are specified like this:
@@ -138,6 +143,7 @@ const int WeightRange = 3;  //Weights range from -WeightRange to +WeightRange.
 #define TYPE 7
 
 extern double mu[8][4];
+extern double muWGD;
 
 //NOTE: watch out with bitsets, if you print the entire set, the order of bits is reversed (i.e. the 1-bit is the first bit if you iterate through the set, but printed on the right of the entire string).
 

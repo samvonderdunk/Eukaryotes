@@ -39,7 +39,7 @@ void Organelle::UpdateState()
 	it_cntr = 0;
 	while (ir != G->ExpressedGenes->end())
 	{
-		if (it_cntr < G->nr_native_expressed || mu[0][TYPE][REGULATOR]!=0.0)	//Native genes from the organelle itself; just look at the type. OR, gene types are mutating independently so we also directly consider gene types 1-5.
+		if (it_cntr < G->nr_native_expressed || mu[TYPE][REGULATOR]!=0.0)	//Native genes from the organelle itself; just look at the type. OR, gene types are mutating independently so we also directly consider gene types 1-5.
 		{
 			if ((*ir)->type < 6)			readout.set((*ir)->type-1);	//Exp===1.
 		}
@@ -108,8 +108,8 @@ void Organelle::Mitosis(Organelle* parent, unsigned long long id_count)
 
 	if (G->is_mutated)	mutant = true;
 
-	if (parent->mutant || trace_lineage || log_lineage)		Ancestor = parent;
-	else																									Ancestor = parent->Ancestor;
+	if (parent->mutant)		Ancestor = parent;
+	else									Ancestor = parent->Ancestor;
 }
 
 void Organelle::Replicate(double resource)

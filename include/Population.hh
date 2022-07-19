@@ -3,8 +3,6 @@
 
 #include "Header.hh"
 #include "Cell.hh"
-#include "Prokaryote.hh"
-#include "Eukaryote.hh"
 #include "Fossils.hh"
 
 class Population
@@ -43,7 +41,6 @@ class Population
 		void ReadBackupFile();
 		void ReadAncestorFile();
 		Organelle* FindInFossilRecord(unsigned long long AncID);
-		void ReadLineageFile();
 
 		void PruneFossilRecord();
 		void OutputGrid(bool backup);
