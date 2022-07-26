@@ -816,10 +816,10 @@ void Population::ReadBackupFile()
 	char* data_element, *number;
 	string::iterator sit;
 	Genome::i_bead it;
-	int r, c, s, begin_data, end_data, success, stage, pfork, pterm, nr, nc, count_lines = 0, nn = 0, idx_primary, idx_secondary, it_cntr;
+	int r, c, s, b, begin_data, end_data, success, stage, pfork, pterm, nr, nc, count_lines = 0, nn = 0, idx_primary, idx_secondary, it_cntr;
 	unsigned long long org_id, anc_id;
 	char temp_is_mutant[20], temp_priv[20];
-	double fit, nutcl;
+	double fit, nutcl, n;
 	size_t pos;
 	Organelle* O, * OF, * SaveO;
 	Cell* C;
@@ -994,16 +994,16 @@ void Population::ReadBackupFile()
 				}
 
 				data_element = (char*)line.c_str();
-				success = sscanf(data_element, "%d %d %d\t", &r, &c, &s);
-				if (success != 3)
+				success = sscanf(data_element, "%d %d %d %lf %d\t", &r, &c, &s, &n, &b);
+				if (success != 5)
 				{
-					cerr << "Could not read r, c, s from non-empty site. Backup file potentially corrupt.\n" << endl;
+					cerr << "Could not read r, c, s, n, b from non-empty site. Backup file potentially corrupt.\n" << endl;
 				}
 				if (s == -1)
 				{
 					C = new Cell();
 					C->Host = O;
-					C->barcode = count_lines;
+					C->barcode = b;
 					Space[r][c] = C;
 				}
 				else
