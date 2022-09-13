@@ -75,9 +75,9 @@ const bool cell_fitness = true;	//Fitness defined by nr_houses at the cell level
 const bool minimum_houses = true;	//Fitness is only decreased when the cell or organelle has fewer house hold genes than nr_household_genes; if false, the cell or organelle needs to have exactly the right number of household genes for fitness = 1.
 
 //Genome parameters
-const int nr_household_genes =			100;
-const double leakage_to_host =			0.01;
-const double leakage_to_symbiont =	0.01;
+const int nr_household_genes =			0;
+const double leakage_to_host =			0.00;
+const double leakage_to_symbiont =	0.00;
 
 //Regulation parameters
 const double k_zero =		0.0000001;
@@ -119,7 +119,7 @@ const double default_conditions[nr_sectors] =	{30.};
 //       claim_H is the fraction of nutrients claimed by the host over its symbionts,
 //       n_iH is the number of nutrients ending up in the host.
 //       n_iS is the number of nutrients ending up in each of the symbionts.
-const int default_strain_competition = 1;
+const int default_strain_competition = 2;
 //Options for strain competition (i.e. initial distribution):
 // 1, each strain in its own sector (vertical stripes).
 // 2, all strains mixed (i.e. each site has equal probability to be any of the strains).

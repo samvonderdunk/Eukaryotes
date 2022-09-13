@@ -76,8 +76,8 @@ string Regulator::Show(bool terminal, bool type_only) const
 		{
 			ss << signalp[i];
 		}
+		ss << ":";
 	}
-	ss << ":";
 	for (i=0; i<regulator_length; i++)
 	{
 		ss << sequence[i];
