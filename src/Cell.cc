@@ -80,12 +80,22 @@ void Cell::GeneTransport()
 			{	//Protein translocated to host.
 				ir2 = ir;
 				ir--;
-				Host->G->ExpressedGenes->splice(Host->G->ExpressedGenes->end(), *Symbionts->at(s)->G->ExpressedGenes, ir2);
+				if (allow_communication)	//Proteins allowed to enter the host.
+				{
+					Host->G->ExpressedGenes->splice(Host->G->ExpressedGenes->end(), *Symbionts->at(s)->G->ExpressedGenes, ir2);
+				}
+				else	//Proteins not allowed into the host (but still removed from the symbiont).
+				{
+					Symbionts->at(s)->G->ExpressedGenes->erase(ir2);
+				}
 				Symbionts->at(s)->G->nr_native_expressed--;
 			}
 			else if (((*ir)->signalp.test(0) && (*ir)->signalp.test(1)) || uniform() < leakage_to_host)
 			{	//Protein also transported to host.
-				Host->G->ExpressedGenes->push_back(*ir);
+				if (allow_communication)
+				{
+					Host->G->ExpressedGenes->push_back(*ir);
+				}
 			}
 			ir++;
 		}
@@ -102,17 +112,30 @@ void Cell::GeneTransport()
 					ir2 = ir;
 					ir--;
 					it_cntr--;	//Important, bug in the first attempt of M. commu V.
-					Symbionts->at(s)->G->ExpressedGenes->splice(Symbionts->at(s)->G->ExpressedGenes->end(), *Host->G->ExpressedGenes, ir2);
+					if (allow_communication)
+					{
+						Symbionts->at(s)->G->ExpressedGenes->splice(Symbionts->at(s)->G->ExpressedGenes->end(), *Host->G->ExpressedGenes, ir2);
+					}
+					else
+					{
+						Host->G->ExpressedGenes->erase(ir2);
+					}
 					Host->G->nr_native_expressed--;	//I think this will be fine (although it defines the while-loop), because the iterator takes a step back.
 				}
 				else
 				{
-					Symbionts->at(s)->G->ExpressedGenes->push_back(*ir);
+					if (allow_communication)
+					{
+						Symbionts->at(s)->G->ExpressedGenes->push_back(*ir);
+					}
 				}
 			}
 			else if (((*ir)->signalp.test(0) && (*ir)->signalp.test(1)) || uniform() < leakage_to_symbiont)
 			{
-				Symbionts->at(s)->G->ExpressedGenes->push_back(*ir);
+				if (allow_communication)
+				{
+					Symbionts->at(s)->G->ExpressedGenes->push_back(*ir);
+				}
 			}
 			ir++;
 			it_cntr++;

@@ -75,7 +75,7 @@ const bool cell_fitness = true;	//Fitness defined by nr_houses at the cell level
 const bool minimum_houses = true;	//Fitness is only decreased when the cell or organelle has fewer house hold genes than nr_household_genes; if false, the cell or organelle needs to have exactly the right number of household genes for fitness = 1.
 
 //Genome parameters
-const int nr_household_genes =			0;
+const int nr_household_genes =			100;
 const double leakage_to_host =			0.00;
 const double leakage_to_symbiont =	0.00;
 
@@ -218,6 +218,7 @@ extern bool trace_lineage;
 extern bool log_lineage;
 extern bool mutations_on;
 extern bool well_mixing;
+extern bool allow_communication;	//Allows you to run the programme and not allow communication between compartments. Proteins are still exported from host or from symbiont, but they are not imported into the other organelle. This allows me to see if active communication evolved between host and symbiont.
 
 extern int init_stage;
 extern int pick_i;
