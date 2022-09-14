@@ -22,10 +22,10 @@ Population::~Population()	//Skips deconstructor of Cell, because we need to chec
 	{
 		if((Space[i][j]) != NULL)
 		{
-			if (Space[i][j]->Host->mutant || trace_lineage || log_lineage)	FossilSpace->EraseFossil(Space[i][j]->Host->fossil_id);
+			if (Space[i][j]->Host->mutant || trace_lineage || log_lineage || log_site)	FossilSpace->EraseFossil(Space[i][j]->Host->fossil_id);
 			for (s=0; s<Space[i][j]->nr_symbionts; s++)
 			{
-				if (Space[i][j]->Symbionts->at(s)->mutant || trace_lineage || log_lineage)	FossilSpace->EraseFossil(Space[i][j]->Symbionts->at(s)->fossil_id);
+				if (Space[i][j]->Symbionts->at(s)->mutant || trace_lineage || log_lineage || log_site)	FossilSpace->EraseFossil(Space[i][j]->Symbionts->at(s)->fossil_id);
 			}
 			delete Space[i][j];
 			Space[i][j] = NULL;
@@ -215,6 +215,9 @@ void Population::UpdatePopulation()
 		i = update_order[u]/NC;
 		j = update_order[u]%NC;
 
+		//Log the central site of the grid.
+		if (log_site && (i == NR/2 && j == NC/2))		OutputLineage(i, j);
+
 		if (Space[i][j] != NULL)
 		{
 			random_shuffle(Space[i][j]->Symbionts->begin(), Space[i][j]->Symbionts->end(), uniform_shuffle);
@@ -326,7 +329,7 @@ void Population::UpdatePopulation()
 					{
 						NewCell->DNATransferToHost();
 					}
-					if (NewCell->Host->mutant || trace_lineage || log_lineage)
+					if (NewCell->Host->mutant || trace_lineage || log_lineage || log_site)
 					{
 						FossilSpace->BuryFossil(NewCell->Host);	//Bury fossil only after potential transfer events (also count as mutations).
 						for (s=0; s<NewCell->nr_symbionts; s++)	//Check whether cut-and-paste led to new mutants among symbionts.
@@ -472,7 +475,7 @@ void Population::CloneSymbiont(int source_i, int source_j, int s, Cell* NewCell)
 	SymbiontCopy = new Organelle();
 	id_count++;
 	SymbiontCopy->CloneOrganelle(Space[source_i][source_j]->Symbionts->at(s), id_count);
-	if (SymbiontCopy->mutant || trace_lineage || log_lineage)		FossilSpace->BuryFossil(SymbiontCopy);
+	if (SymbiontCopy->mutant || trace_lineage || log_lineage || log_site)		FossilSpace->BuryFossil(SymbiontCopy);
 	NewCell->Symbionts->push_back(SymbiontCopy);
 	NewCell->nr_symbionts++;
 }
@@ -1348,10 +1351,17 @@ void Population::OutputLineage(int i, int j)
 
 	nuts nutrients = HandleNutrientClaims(i, j);
 
-	fprintf(f, "%d %d %d -1 %f\t%s\n", Time, i, j, nutrients.first, Space[i][j]->Host->Output(true).c_str());
-	for (s=0; s<Space[i][j]->nr_symbionts; s++)
+	if (Space[i][j]==NULL)
 	{
-		fprintf(f, "%d %d %d %d %f\t%s\n", Time, i, j, s, nutrients.second, Space[i][j]->Symbionts->at(s)->Output(true).c_str());
+		fprintf(f, "%d %d %d NULL %f\tNULL\n", Time, i, j, nutrients.first);
+	}
+	else
+	{
+		fprintf(f, "%d %d %d -1 %f\t%s\n", Time, i, j, nutrients.first, Space[i][j]->Host->Output(true).c_str());
+		for (s=0; s<Space[i][j]->nr_symbionts; s++)
+		{
+			fprintf(f, "%d %d %d %d %f\t%s\n", Time, i, j, s, nutrients.second, Space[i][j]->Symbionts->at(s)->Output(true).c_str());
+		}
 	}
 
 	fclose(f);

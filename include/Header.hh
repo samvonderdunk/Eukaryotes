@@ -216,6 +216,7 @@ extern bool follow_single_individual;
 extern bool follow_with_fixed_symbionts;
 extern bool trace_lineage;
 extern bool log_lineage;
+extern bool log_site;
 extern bool mutations_on;
 extern bool well_mixing;
 extern bool allow_communication;	//Allows you to run the programme and not allow communication between compartments. Proteins are still exported from host or from symbiont, but they are not imported into the other organelle. This allows me to see if active communication evolved between host and symbiont.
