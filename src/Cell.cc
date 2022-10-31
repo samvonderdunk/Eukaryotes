@@ -80,7 +80,7 @@ void Cell::GeneTransport()
 			{	//Protein translocated to host.
 				ir2 = ir;
 				ir--;
-				if (allow_communication)	//Proteins allowed to enter the host.
+				if (allow_communication || uniform() < leakage_to_host)	//Proteins allowed to enter the host.
 				{
 					Host->G->ExpressedGenes->splice(Host->G->ExpressedGenes->end(), *Symbionts->at(s)->G->ExpressedGenes, ir2);
 				}
@@ -90,12 +90,9 @@ void Cell::GeneTransport()
 				}
 				Symbionts->at(s)->G->nr_native_expressed--;
 			}
-			else if (((*ir)->signalp.test(0) && (*ir)->signalp.test(1)) || uniform() < leakage_to_host)
+			else if ( (((*ir)->signalp.test(0) && (*ir)->signalp.test(1)) && allow_communication ) || uniform() < leakage_to_host)
 			{	//Protein also transported to host.
-				if (allow_communication)
-				{
-					Host->G->ExpressedGenes->push_back(*ir);
-				}
+				Host->G->ExpressedGenes->push_back(*ir);
 			}
 			ir++;
 		}
@@ -112,7 +109,7 @@ void Cell::GeneTransport()
 					ir2 = ir;
 					ir--;
 					it_cntr--;	//Important, bug in the first attempt of M. commu V.
-					if (allow_communication)
+					if (allow_communication || uniform() < leakage_to_symbiont)
 					{
 						Symbionts->at(s)->G->ExpressedGenes->splice(Symbionts->at(s)->G->ExpressedGenes->end(), *Host->G->ExpressedGenes, ir2);
 					}
@@ -124,18 +121,15 @@ void Cell::GeneTransport()
 				}
 				else
 				{
-					if (allow_communication)
+					if (allow_communication || uniform() < leakage_to_symbiont)
 					{
 						Symbionts->at(s)->G->ExpressedGenes->push_back(*ir);
 					}
 				}
 			}
-			else if (((*ir)->signalp.test(0) && (*ir)->signalp.test(1)) || uniform() < leakage_to_symbiont)
+			else if ( (((*ir)->signalp.test(0) && (*ir)->signalp.test(1)) && allow_communication) || uniform() < leakage_to_symbiont)
 			{
-				if (allow_communication)
-				{
-					Symbionts->at(s)->G->ExpressedGenes->push_back(*ir);
-				}
+				Symbionts->at(s)->G->ExpressedGenes->push_back(*ir);
 			}
 			ir++;
 			it_cntr++;
