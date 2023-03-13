@@ -73,11 +73,12 @@ const int nr_gene_types = 30;	//Pick a random integer between 0 and this. Indepe
 const bool empty_division_killing = true;	//Hosts first divide, potentially killing a neighbour, before realising that the new cell does not get symbionts and dies right away.
 const bool cell_fitness = true;	//Fitness defined by nr_houses at the cell level (averaging symbiont n_h and adding it to host n_h); if false, fitness is defined by the n_h that each organelle carries at birth.
 const bool minimum_houses = true;	//Fitness is only decreased when the cell or organelle has fewer house hold genes than nr_household_genes; if false, the cell or organelle needs to have exactly the right number of household genes for fitness = 1.
+const bool symmetric_division = false;	//Distribute symbionts as symmetrically as possible.
 
 //Genome parameters
 const int nr_household_genes =								100;
-const double default_leakage_to_host =				0.01;
-const double default_leakage_to_symbiont =		0.01;
+const double default_leakage_to_host =				0.0;
+const double default_leakage_to_symbiont =		0.0;
 
 //Regulation parameters
 const double k_zero =		0.0000001;
@@ -96,10 +97,10 @@ const int default_TimeSaveBackup =			10000;
 const double death_rate_host =								0.001;
 const double death_rate_symbiont =						0.001;
 const int default_nutrient_competition =			2;
-const int nr_sectors =												1;	// 11 for Standard gradient, 9 for new gradient.
-// const double default_conditions[nr_sectors] =	{80., 70., 60., 50., 40., 30., 20., 10., 8., 5., 2.};	//Standard gradient from Prokaryotes.
+const int nr_sectors =												11;	// 11 for Standard gradient, 9 for new gradient.
+const double default_conditions[nr_sectors] =	{80., 70., 60., 50., 40., 30., 20., 10., 8., 5., 2.};	//Standard gradient from Prokaryotes.
 // const double default_conditions[nr_sectors] =	{50., 20., 10., 5., 2., 1., 0.5, 0.2, 0.1};	//New, challenging gradient.
-const double default_conditions[nr_sectors] =	{30.};
+// const double default_conditions[nr_sectors] =	{30.};
 
 //Options for nutrient_competition:
 // 0, constant nutrient level, unaffected by cells.

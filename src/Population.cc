@@ -299,7 +299,14 @@ void Population::UpdatePopulation()
 					if (moran_symbionts)	CloneSymbiont(i, j, s, NewCell);
 					else
 					{
-						if (uniform() < 0.5)	//Transfer the symbiont to the new cell (just a matter of using the right pointers).
+						if (symmetric_division && NewCell->nr_symbionts < Space[i][j]->nr_symbionts)	//Symmetric division.
+						{
+							NewCell->Symbionts->push_back(Space[i][j]->Symbionts->at(s));
+							Space[i][j]->Symbionts->erase(Space[i][j]->Symbionts->begin()+s);
+							NewCell->nr_symbionts++;
+							Space[i][j]->nr_symbionts--;
+						}
+						else if (!symmetric_division && uniform() < 0.5)	//Transfer the symbiont to the new cell (just a matter of using the right pointers).
 						{
 							NewCell->Symbionts->push_back(Space[i][j]->Symbionts->at(s));
 							Space[i][j]->Symbionts->erase(Space[i][j]->Symbionts->begin()+s);
